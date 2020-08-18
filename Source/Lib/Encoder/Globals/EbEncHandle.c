@@ -2485,6 +2485,10 @@ void copy_api_from_app(
     scs_ptr->static_config.prune_ref_rec_part           = ((EbSvtAv1EncConfiguration*)config_struct)->prune_ref_rec_part;
     // NSQ table
     scs_ptr->static_config.nsq_table                    = ((EbSvtAv1EncConfiguration*)config_struct)->nsq_table;
+#if CDF_CLI
+    // cdf update mode
+    scs_ptr->static_config.cdf_update_level = ((EbSvtAv1EncConfiguration*)config_struct)->cdf_update_level;
+#endif
     // frame end cdf update mode
     scs_ptr->static_config.frame_end_cdf_update         = ((EbSvtAv1EncConfiguration*)config_struct)->frame_end_cdf_update;
 
@@ -3300,6 +3304,13 @@ static EbErrorType verify_settings(
       return_error = EB_ErrorBadParameter;
     }
 
+#if CDF_CLI
+    if (config->cdf_update_level != 0 && config->cdf_update_level != 1 && config->cdf_update_level != -1) {
+        SVT_LOG("Error instance %u: Invalid cdf_update_level flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->cdf_update_level);
+        return_error = EB_ErrorBadParameter;
+    }
+#endif
+
     if (config->frame_end_cdf_update != 0 && config->frame_end_cdf_update != 1 && config->frame_end_cdf_update != -1) {
       SVT_LOG("Error instance %u: Invalid frame_end_cdf_update flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->frame_end_cdf_update);
       return_error = EB_ErrorBadParameter;
@@ -3464,6 +3475,9 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->prune_unipred_me = DEFAULT;
     config_ptr->prune_ref_rec_part = DEFAULT;
     config_ptr->nsq_table = DEFAULT;
+#if CDF_CLI
+    config_ptr->cdf_update_level = DEFAULT;
+#endif
     config_ptr->frame_end_cdf_update = DEFAULT;
     config_ptr->set_chroma_mode = DEFAULT;
     config_ptr->disable_cfl_flag = DEFAULT;

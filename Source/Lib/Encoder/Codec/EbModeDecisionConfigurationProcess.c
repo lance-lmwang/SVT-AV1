@@ -1140,6 +1140,95 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
     context_ptr->adp_level = pcs_ptr->parent_pcs_ptr->enc_mode;
 
     // CDF
+#if CDF_CLI
+    if (scs_ptr->static_config.cdf_update_level == DEFAULT) {
+#if M8_CDF
+#if UPGRADE_M6_M7_M8
+#if !UNIFY_SC_NSC
+        if (pcs_ptr->parent_pcs_ptr->sc_content_detected)
+#if APR25_12AM_ADOPTIONS
+#if JUNE17_ADOPTIONS
+            if (pcs_ptr->enc_mode <= ENC_M5)
+#else
+#if PRESET_SHIFITNG
+            if (pcs_ptr->enc_mode <= ENC_M4)
+#else
+            if (pcs_ptr->enc_mode <= ENC_M6)
+#endif
+#endif
+#else
+            if (pcs_ptr->enc_mode <= ENC_M7)
+#endif
+                pcs_ptr->update_cdf = 1;
+            else
+#if M5_I_CDF
+                pcs_ptr->update_cdf = pcs_ptr->slice_type == I_SLICE ? 1 : 0;
+#else
+                pcs_ptr->update_cdf = 0;
+#endif
+        else
+#endif
+#if MAY19_ADOPTIONS
+#if JUNE17_ADOPTIONS
+#if SHIFT_PRESETS
+            if (pcs_ptr->enc_mode <= ENC_M4)
+#else
+            if (pcs_ptr->enc_mode <= ENC_M5)
+#endif
+#else
+#if PRESET_SHIFITNG
+            if (pcs_ptr->enc_mode <= ENC_M4)
+#else
+            if (pcs_ptr->enc_mode <= ENC_M6)
+#endif
+#endif
+#else
+            if (pcs_ptr->enc_mode <= ENC_M5)
+#endif
+                pcs_ptr->update_cdf = 1;
+            else
+#if M5_I_CDF
+                pcs_ptr->update_cdf = pcs_ptr->slice_type == I_SLICE ? 1 : 0;
+#else
+                pcs_ptr->update_cdf = 0;
+#endif
+#else
+        pcs_ptr->update_cdf = (pcs_ptr->enc_mode <= ENC_M5) ? 1 : 0;
+#endif
+#else
+        if (pcs_ptr->parent_pcs_ptr->sc_content_detected)
+#if MAR2_M7_ADOPTIONS
+#if MAR10_ADOPTIONS
+            if (pcs_ptr->enc_mode <= ENC_M8)
+#else
+            if (pcs_ptr->enc_mode <= ENC_M7)
+#endif
+#else
+            if (pcs_ptr->enc_mode <= ENC_M6)
+#endif
+                pcs_ptr->update_cdf = 1;
+            else
+                pcs_ptr->update_cdf = 0;
+        else
+            pcs_ptr->update_cdf =
+#if MAR3_M6_ADOPTIONS
+#if MAR10_ADOPTIONS
+            (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M8) ? 1 : 0;
+#else
+            (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M6) ? 1 : 0;
+#endif
+#else
+            (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5) ? 1 : 0;
+#endif
+#if !REMOVED_MEM_OPT_CDF
+        if (pcs_ptr->update_cdf)
+            assert(scs_ptr->cdf_mode == 0 && "use cdf_mode 0");
+#endif
+#endif
+    }
+    else
+        pcs_ptr->update_cdf = scs_ptr->static_config.cdf_update_level;
+#else
 #if M8_CDF
 #if UPGRADE_M6_M7_M8
 #if !UNIFY_SC_NSC
@@ -1223,6 +1312,8 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
         assert(scs_ptr->cdf_mode == 0 && "use cdf_mode 0");
 #endif
 #endif
+#endif
+
     // Filter INTRA
 #if FILTER_INTRA_CLI
     // pic_filter_intra_level specifies whether filter intra would be active

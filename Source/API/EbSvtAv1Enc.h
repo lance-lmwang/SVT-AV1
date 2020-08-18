@@ -355,6 +355,14 @@ typedef struct EbSvtAv1EncConfiguration {
     *
     * Default is -1. */
     int nsq_table;
+
+#if 1 // CDF_CLI
+    /* CDF Update
+    *
+    * Default is -1. */
+    int cdf_update_level;
+#endif
+
     /* frame end cdf update
     *
     * Default is -1. */

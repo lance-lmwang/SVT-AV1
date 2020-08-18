@@ -156,6 +156,9 @@ EbErrorType copy_configuration_parameters(EbConfig *config, EbAppContext *callba
     callback_data->eb_enc_parameters.prune_unipred_me         = config->prune_unipred_me;
     callback_data->eb_enc_parameters.prune_ref_rec_part       = config->prune_ref_rec_part;
     callback_data->eb_enc_parameters.nsq_table                = config->nsq_table;
+#if 1 // CDF_CLI
+    callback_data->eb_enc_parameters.cdf_update_level         = config->cdf_update_level;
+#endif
     callback_data->eb_enc_parameters.frame_end_cdf_update     = config->frame_end_cdf_update;
 #if 1 // OBMC_CLI
     callback_data->eb_enc_parameters.obmc_level               = (int8_t)config->obmc_level;

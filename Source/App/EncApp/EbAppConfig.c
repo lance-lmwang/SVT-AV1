@@ -232,6 +232,9 @@
 #define PRUNE_UNIPRED_ME_NEW_TOKEN "--enable-prune-unipred-me"
 #define PRUNE_REF_REC_PART_NEW_TOKEN "--enable-prune-ref-rec-part"
 #define NSQ_TABLE_NEW_TOKEN "--enable-nsq-table-use"
+#if 1 // CDF_CLI
+#define CDF_UPDATE_LEVEL_NEW_TOKEN "--cdf-update-level"
+#endif
 #define FRAME_END_CDF_UPDATE_NEW_TOKEN "--enable-framend-cdf-upd-mode"
 #define LOCAL_WARPED_ENABLE_NEW_TOKEN "--enable-local-warp"
 #define GLOBAL_MOTION_ENABLE_NEW_TOKEN "--enable-global-motion"
@@ -483,6 +486,11 @@ static void set_prune_ref_rec_part_flag(const char *value, EbConfig *cfg) {
 static void set_nsq_table_flag(const char *value, EbConfig *cfg) {
     cfg->nsq_table = strtol(value, NULL, 0);
 };
+#if 1 // CDF_CLI
+static void set_cdf_update_level_flag(const char *value, EbConfig *cfg) {
+    cfg->cdf_update_level = strtol(value, NULL, 0);
+};
+#endif
 static void set_frame_end_cdf_update_flag(const char *value, EbConfig *cfg) {
     cfg->frame_end_cdf_update = strtol(value, NULL, 0);
 };
@@ -1077,6 +1085,12 @@ ConfigEntry config_entry_specific[] = {
       NSQ_TABLE_NEW_TOKEN,
       "Enable nsq table (0: OFF, 1: ON, -1: DEFAULT)",
       set_nsq_table_flag},
+#if 1 // CDF_CLI
+    {SINGLE_INPUT,
+     CDF_UPDATE_LEVEL_NEW_TOKEN,
+     "Enable cdf update mode (0: OFF, 1: ON, -1: DEFAULT)",
+     set_cdf_update_level_flag},
+#endif
      {SINGLE_INPUT,
       FRAME_END_CDF_UPDATE_NEW_TOKEN,
       "Enable frame end cdf update mode (0: OFF, 1: ON, -1: DEFAULT)",
@@ -1679,6 +1693,12 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, PRUNE_UNIPRED_ME_NEW_TOKEN, "Prune Uni pred Me", set_prune_unipred_me_flag},
     {SINGLE_INPUT, PRUNE_REF_REC_PART_NEW_TOKEN, "Prune Ref Rec Part", set_prune_ref_rec_part_flag},
     {SINGLE_INPUT, NSQ_TABLE_NEW_TOKEN, "Nsq Table", set_nsq_table_flag},
+#if 1 // CDF_CLI
+    {SINGLE_INPUT,
+    CDF_UPDATE_LEVEL_NEW_TOKEN,
+    "Cdf Update",
+    set_cdf_update_level_flag},
+#endif
     {SINGLE_INPUT,
      FRAME_END_CDF_UPDATE_NEW_TOKEN,
      "Frame End Cdf Update",
@@ -1790,6 +1810,9 @@ void eb_config_ctor(EbConfig *config_ptr) {
     config_ptr->prune_unipred_me                          = DEFAULT;
     config_ptr->prune_ref_rec_part                        = DEFAULT;
     config_ptr->nsq_table                                 = DEFAULT;
+#if 1 // CDF_CLI
+    config_ptr->cdf_update_level                          = DEFAULT;
+#endif
     config_ptr->frame_end_cdf_update                      = DEFAULT;
     config_ptr->set_chroma_mode                           = DEFAULT;
     config_ptr->disable_cfl_flag                          = DEFAULT;
