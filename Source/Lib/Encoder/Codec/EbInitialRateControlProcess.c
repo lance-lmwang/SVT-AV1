@@ -1196,7 +1196,7 @@ void tpl_mc_flow_dispenser(
 #if TPL_IMP
                     int64_t recon_error = 1, sse = 1;
 #endif
-                    int32_t best_rf_idx = -1;
+                    uint64_t best_ref_poc = 0;
                     int64_t best_inter_cost = INT64_MAX;
                     MV final_best_mv = {0, 0};
 #if REMOVE_MRP_MODE
@@ -1225,7 +1225,7 @@ void tpl_mc_flow_dispenser(
 #endif
                         if(!pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index])
                             continue;
-                        uint32_t ref_poc = pcs_ptr->ref_order_hint[rf_idx];
+                        uint64_t ref_poc = pcs_ptr->ref_pic_poc_array[list_index][ref_pic_index];
                         uint32_t ref_frame_idx = 0;
 #if FIX_WARNINGS_WIN
                         while(ref_frame_idx < MAX_TPL_LA_SW && encode_context_ptr->poc_map_idx[ref_frame_idx] != ref_poc)
@@ -1288,7 +1288,7 @@ void tpl_mc_flow_dispenser(
                         inter_cost = aom_satd(coeff, 256);
                         if (inter_cost < best_inter_cost) {
                             memcpy(best_coeff, coeff, sizeof(best_coeff));
-                            best_rf_idx = rf_idx;
+                            best_ref_poc = ref_poc;
                             best_inter_cost = inter_cost;
                             final_best_mv = best_mv;
 
@@ -1315,7 +1315,7 @@ void tpl_mc_flow_dispenser(
 
                     if (best_mode == NEWMV) {
                         // inter recon with rec_picture as reference pic
-                        uint32_t ref_poc = pcs_ptr->ref_order_hint[best_rf_idx];
+                        uint64_t ref_poc = best_ref_poc;
                         uint32_t ref_frame_idx = 0;
 #if FIX_WARNINGS_WIN
                         while(ref_frame_idx < MAX_TPL_LA_SW && encode_context_ptr->poc_map_idx[ref_frame_idx] != ref_poc)
@@ -1411,9 +1411,9 @@ void tpl_mc_flow_dispenser(
                     tpl_stats.recrf_dist = AOMMAX(tpl_stats.srcrf_dist, tpl_stats.recrf_dist);
                     tpl_stats.recrf_rate = AOMMAX(tpl_stats.srcrf_rate, tpl_stats.recrf_rate);
 
-                    if (!frame_is_intra_only(pcs_ptr) && best_rf_idx != -1) {
+                    if (!frame_is_intra_only(pcs_ptr) && best_mode == NEWMV) {
                         tpl_stats.mv = final_best_mv;
-                        tpl_stats.ref_frame_poc = pcs_ptr->ref_order_hint[best_rf_idx];
+                        tpl_stats.ref_frame_poc = best_ref_poc;
                     }
                     // Motion flow dependency dispenser.
                     result_model_store(pcs_ptr, &tpl_stats, mb_origin_x, mb_origin_y);
