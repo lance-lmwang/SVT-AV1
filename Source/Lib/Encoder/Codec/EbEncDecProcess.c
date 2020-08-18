@@ -2047,7 +2047,10 @@ void md_subpel_me_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_me_lev
     MdSubPelSearchCtrls *md_subpel_me_ctrls = &mdctxt->md_subpel_me_ctrls;
 
     switch (md_subpel_me_level) {
-    case 0: md_subpel_me_ctrls->enabled = 0; break;
+    case 0: 
+        md_subpel_me_ctrls->enabled = 0;
+        md_subpel_me_ctrls->sub_search_pos_cnt = 0; 
+        break;
     case 1:
         md_subpel_me_ctrls->enabled = 1;
         md_subpel_me_ctrls->subpel_search_type = USE_8_TAPS;
@@ -2078,7 +2081,10 @@ void md_subpel_pme_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_pme_l
     MdSubPelSearchCtrls *md_subpel_pme_ctrls = &mdctxt->md_subpel_pme_ctrls;
 
     switch (md_subpel_pme_level) {
-    case 0: md_subpel_pme_ctrls->enabled = 0; break;
+    case 0: 
+        md_subpel_pme_ctrls->enabled = 0;
+        md_subpel_pme_ctrls->sub_search_pos_cnt = 0;
+        break;
     case 1:
         md_subpel_pme_ctrls->enabled = 1;
         md_subpel_pme_ctrls->subpel_search_type = USE_8_TAPS;

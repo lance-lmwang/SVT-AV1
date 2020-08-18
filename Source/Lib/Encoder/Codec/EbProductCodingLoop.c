@@ -7484,6 +7484,11 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                         best_mvp_x,
                         best_mvp_y);
                 }
+#if LOG_MV_VALIDITY
+                //check if final MV is within AV1 limits
+                check_mv_validity(best_search_mvx,
+                    best_search_mvy, 0);
+#endif
                 context_ptr->best_pme_mv[list_idx][ref_idx][0] = best_search_mvx;
                 context_ptr->best_pme_mv[list_idx][ref_idx][1] = best_search_mvy;
                 context_ptr->valid_pme_mv[list_idx][ref_idx] = 1;
@@ -14261,7 +14266,7 @@ void md_encode_block(PictureControlSet *pcs_ptr,
     // Read MVPs (rounded-up to the closest integer) for use in md_sq_motion_search() and/or predictive_me_search() and/or perform_md_reference_pruning()
     if (pcs_ptr->slice_type != I_SLICE &&
 #if UPGRADE_SUBPEL
-    (context_ptr->md_sq_me_ctrls.enabled || context_ptr->predictive_me_level || context_ptr->ref_pruning_ctrls.inter_to_inter_pruning_enabled || context_ptr->ref_pruning_ctrls.intra_to_inter_pruning_enabled || context_ptr->md_subpel_me_ctrls.enabled || context_ptr->md_subpel_pme_ctrls.enabled))
+        (context_ptr->md_sq_me_ctrls.enabled || context_ptr->predictive_me_level || context_ptr->ref_pruning_ctrls.inter_to_inter_pruning_enabled || context_ptr->ref_pruning_ctrls.intra_to_inter_pruning_enabled || context_ptr->md_subpel_me_ctrls.enabled || context_ptr->md_subpel_pme_ctrls.enabled))
 #else
        (context_ptr->md_sq_me_ctrls.enabled || context_ptr->predictive_me_level || context_ptr->ref_pruning_ctrls.inter_to_inter_pruning_enabled || context_ptr->ref_pruning_ctrls.intra_to_inter_pruning_enabled))
 #endif
