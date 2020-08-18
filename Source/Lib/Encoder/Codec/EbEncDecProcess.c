@@ -2047,9 +2047,9 @@ void md_subpel_me_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_me_lev
     MdSubPelSearchCtrls *md_subpel_me_ctrls = &mdctxt->md_subpel_me_ctrls;
 
     switch (md_subpel_me_level) {
-    case 0: 
+    case 0:
         md_subpel_me_ctrls->enabled = 0;
-        md_subpel_me_ctrls->sub_search_pos_cnt = 0; 
+        md_subpel_me_ctrls->sub_search_pos_cnt = 0;
         break;
     case 1:
         md_subpel_me_ctrls->enabled = 1;
@@ -2081,7 +2081,7 @@ void md_subpel_pme_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_pme_l
     MdSubPelSearchCtrls *md_subpel_pme_ctrls = &mdctxt->md_subpel_pme_ctrls;
 
     switch (md_subpel_pme_level) {
-    case 0: 
+    case 0:
         md_subpel_pme_ctrls->enabled = 0;
         md_subpel_pme_ctrls->sub_search_pos_cnt = 0;
         break;
@@ -10786,7 +10786,7 @@ uint16_t depth_cycles_reduction_th[6][5][4] = {
 #if BLOCK_BASED_DEPTH_REFINMENT
 uint8_t is_parent_to_current_deviation_small(SequenceControlSet *scs_ptr,
     ModeDecisionContext *context_ptr, const BlockGeom *blk_geom, uint32_t blk_index) {
-       
+
     int64_t parent_to_current_deviation = MIN_SIGNED_VALUE;
     // block-based depth refinement using cost is applicable for only [s_depth=-1, e_depth=1]
         // Get the parent of the current block

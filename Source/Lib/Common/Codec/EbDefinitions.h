@@ -668,7 +668,7 @@ extern "C" {
 #define FASTER_INTRA                    1
 #endif
 #define FIX_R2R                          1 // Fixed accessing invalid temporal-information @ adapt_me for non-lp=1/compound construction for pme.
-#define BALANCE_M6_M7                    1 // Balance M6/M7 settings 
+#define BALANCE_M6_M7                    1 // Balance M6/M7 settings
 
 #endif
 // END  SVT_02_TEMP /////////////////////////////////////////////////////////
