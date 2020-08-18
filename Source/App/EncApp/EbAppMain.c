@@ -133,6 +133,9 @@ int32_t main(int32_t argc, char *argv[]) {
         else if (pass == ENCODE_LAST_PASS)
             configs[inst_cnt]->pass = 2;
 #endif
+#if 1 //DEFAULT_2PASS
+            eb_2pass_config_update(configs[inst_cnt]);
+#endif
             return_errors[inst_cnt] = EB_ErrorNone;
         }
 

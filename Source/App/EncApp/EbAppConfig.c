@@ -1734,6 +1734,22 @@ ConfigEntry config_entry[] = {
 /**********************************
  * Constructor
  **********************************/
+#if 1//DEFAULT_2PASS
+void eb_2pass_config_update(EbConfig *config_ptr) {
+    if (config_ptr->pass == ENCODE_FIRST_PASS) {
+        config_ptr->enc_mode = MAX_ENC_PRESET;
+        config_ptr->look_ahead_distance = 1;
+        config_ptr->enable_tpl_la = 0;
+        config_ptr->rate_control_mode = 0;
+    }
+    else if (config_ptr->pass == ENCODE_LAST_PASS) {
+        config_ptr->look_ahead_distance = 16;
+        config_ptr->enable_tpl_la = 1;
+    }
+    config_ptr->intra_refresh_type     = 2;
+    return;
+}
+#endif
 void eb_config_ctor(EbConfig *config_ptr) {
     memset(config_ptr, 0, sizeof(*config_ptr));
     config_ptr->error_log_file       = stderr;
@@ -2262,6 +2278,27 @@ static EbErrorType verify_settings(EbConfig *config, uint32_t channel_number) {
             return EB_ErrorBadParameter;
         }
     }
+#endif
+#if 1//DEFAULT_2PASS
+    if (pass != DEFAULT || config->input_stat_file || config->output_stat_file)
+        if (config->hierarchical_levels != 4) {
+            fprintf(config->error_log_file,
+                "Error instance %u: 2 pass encode for hierarchical_levels %d is not supported\n",
+                channel_number + 1, config->hierarchical_levels);
+            return EB_ErrorBadParameter;
+        }
+        if (config->enable_overlays) {
+            fprintf(config->error_log_file,
+                "Error instance %u: 2 pass encode for overlays is not supported\n",
+                channel_number + 1);
+            return EB_ErrorBadParameter;
+        }
+        if (config->intra_refresh_type != 2) {
+            fprintf(config->error_log_file,
+                "Error instance %u: 2 pass encode for intra_refresh_type %d is not supported\n",
+                channel_number + 1,config->intra_refresh_type);
+            return EB_ErrorBadParameter;
+        }
 #endif
     return return_error;
 }

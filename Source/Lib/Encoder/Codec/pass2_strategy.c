@@ -2726,7 +2726,7 @@ void av1_get_second_pass_params(PictureParentControlSet *pcs_ptr) {
             : MAX_GF_LENGTH_LAP;
     if (rc->intervals_till_gf_calculate_due == 0)
       impose_gf_length(pcs_ptr, MAX_NUM_GF_INTERVALS);
-    
+
 #if 0 // not supported
     if (max_gop_length > 16 && scs_ptr->static_config.enable_tpl_la &&
         1/*!cpi->sf.tpl_sf.disable_gop_length_decision*/) {

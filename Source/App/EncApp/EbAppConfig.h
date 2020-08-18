@@ -545,7 +545,9 @@ typedef struct EbConfig {
     int                 mrp_level;
 #endif
 } EbConfig;
-
+#if 1//DEFAULT_2PASS
+extern void eb_2pass_config_update(EbConfig *config_ptr);
+#endif
 extern void eb_config_ctor(EbConfig *config_ptr);
 extern void eb_config_dtor(EbConfig *config_ptr);
 
