@@ -356,9 +356,6 @@ void mode_decision_update_neighbor_arrays(PictureControlSet *  pcs_ptr,
                                    NEIGHBOR_ARRAY_UNIT_LEFT_MASK);
 
     // Update the Inter Pred Type Neighbor Array
-#if SHUT_FAST_RATE_PD0
-    if (!context_ptr->shut_fast_rate)
-#endif
     neighbor_array_unit_mode_write(context_ptr->inter_pred_dir_neighbor_array,
                                    &inter_pred_direction_index,
                                    origin_x,
@@ -368,9 +365,6 @@ void mode_decision_update_neighbor_arrays(PictureControlSet *  pcs_ptr,
                                    NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
     // Update the refFrame Type Neighbor Array
-#if SHUT_FAST_RATE_PD0
-    if (!context_ptr->shut_fast_rate)
-#endif
     neighbor_array_unit_mode_write(context_ptr->ref_frame_type_neighbor_array,
                                    &ref_frame_type,
                                    origin_x,
@@ -787,9 +781,6 @@ void md_update_all_neighbour_arrays(PictureControlSet *pcs_ptr, ModeDecisionCont
 #else
     mode_decision_update_neighbor_arrays(
         pcs_ptr, context_ptr, last_blk_index_mds, pcs_ptr->intra_md_open_loop_flag, EB_FALSE);
-#endif
-#if SHUT_FAST_RATE_PD0
-    if (!context_ptr->shut_fast_rate)
 #endif
     update_mi_map(context_ptr,
                   context_ptr->blk_ptr,
