@@ -1007,6 +1007,9 @@ typedef struct ModeDecisionContext {
     uint8_t switch_md_mode_based_on_sq_coeff;
     CoeffBSwMdCtrls cb_sw_md_ctrls;
 #endif
+#if MV_COST_REFACTOR
+    MV ref_mv;
+#endif
 } ModeDecisionContext;
 
 typedef void (*EbAv1LambdaAssignFunc)(uint32_t *fast_lambda, uint32_t *full_lambda,
