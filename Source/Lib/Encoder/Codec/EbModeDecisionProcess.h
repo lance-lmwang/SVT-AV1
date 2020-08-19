@@ -291,6 +291,15 @@ typedef struct RefPruningControls {
 #endif
 }RefPruningControls;
 #endif
+#if BLOCK_BASED_DEPTH_REFINMENT
+typedef struct DepthRefinementCtrls {
+    uint8_t enabled;
+
+    int64_t sub_to_current_th; // decrease towards a more agressive level
+    int64_t parent_to_current_th; // decrease towards a more agressive level
+
+}DepthRefinementCtrls;
+#endif
 #if BLOCK_REDUCTION_ALGORITHM_1 || BLOCK_REDUCTION_ALGORITHM_2
 typedef struct DepthReductionCtrls {
     uint8_t enabled;
@@ -331,8 +340,9 @@ typedef struct MdNsqMotionSearchCtrls {
 typedef struct MdSqMotionSearchCtrls {
     uint8_t enabled;                    // 0: SQ motion search @ MD OFF; 1: SQ motion search @ MD ON
     uint8_t use_ssd;                    // 0: search using SAD; 1: search using SSD
-
+#if !FIX_R2R
     int16_t size_colocated_area;        // size_colocated_area = f(8x8)
+#endif
     uint16_t pame_distortion_th;        // TH for pa_me distortion to determine whether to search (distortion per pixel)
 
     uint8_t  sprs_lev0_enabled;         // 0: OFF; 1: ON
@@ -773,7 +783,11 @@ typedef struct ModeDecisionContext {
 #endif
     uint8_t      dc_cand_only_flag;
     EbBool       disable_angle_z2_intra_flag;
+#if SHUT_FAST_RATE_PD0
+    uint8_t      shut_fast_rate; // use coeff rate and slipt flag rate only
+#else
     uint8_t      full_cost_shut_fast_rate_flag;
+#endif
 #if !SWITCH_MODE_BASED_ON_SQ_COEFF
     EbBool       coeff_based_nsq_cand_reduction;
 #endif
@@ -810,6 +824,10 @@ typedef struct ModeDecisionContext {
     uint8_t      inter_inter_distortion_based_reference_pruning;
     uint8_t      inter_intra_distortion_based_reference_pruning;
 #endif
+#if BLOCK_BASED_DEPTH_REFINMENT
+    uint8_t block_based_depth_refinement_level;
+    DepthRefinementCtrls depth_refinement_ctrls;
+#endif
 #if BLOCK_REDUCTION_ALGORITHM_1 || BLOCK_REDUCTION_ALGORITHM_2
     uint8_t      block_based_depth_reduction_level;
     DepthReductionCtrls depth_reduction_ctrls;
@@ -843,7 +861,9 @@ typedef struct ModeDecisionContext {
 #endif
 #endif
     uint8_t      md_max_ref_count;
+#if !SHUT_FAST_RATE_PD0
     EbBool       md_skip_mvp_generation;
+#endif
     int16_t      pred_me_full_pel_search_width;
     int16_t      pred_me_full_pel_search_height;
 

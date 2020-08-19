@@ -2031,7 +2031,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 #if M6_LOOP_FILTER_MODE
 #if UNIFY_SC_NSC
 #if SHIFT_PRESETS
+#if BALANCE_M6_M7 // loop_filter
+        if (pcs_ptr->enc_mode <= ENC_M6)
+#else
         if (pcs_ptr->enc_mode <= ENC_M5)
+#endif
 #else
         if (pcs_ptr->enc_mode <= ENC_M6)
 #endif
@@ -2493,7 +2497,11 @@ EbErrorType signal_derivation_multi_processes_oq(
         else
             pcs_ptr->intra_pred_mode = 3;
 #else
+#if FASTER_INTRA
+        else if (pcs_ptr->enc_mode <= ENC_M6)
+#else
         else
+#endif
 #if SHUT_LAYER_BASED_FEATURES
             pcs_ptr->intra_pred_mode = 1;
 #else
@@ -2501,6 +2509,13 @@ EbErrorType signal_derivation_multi_processes_oq(
                 pcs_ptr->intra_pred_mode = 1;
             else
                 pcs_ptr->intra_pred_mode = 3;
+#if FASTER_INTRA
+    else
+        if (pcs_ptr->slice_type == I_SLICE)
+            pcs_ptr->intra_pred_mode = 1;
+        else
+            pcs_ptr->intra_pred_mode = 3;
+#endif
 #endif
 #endif
 #else
@@ -3068,7 +3083,11 @@ EbErrorType signal_derivation_multi_processes_oq(
                     context_ptr->tf_level = 0;
             }
 #if SHIFT_PRESETS
+#if BALANCE_M6_M7 // tf
+            else if (pcs_ptr->enc_mode <= ENC_M6) {
+#else
             else if (pcs_ptr->enc_mode <= ENC_M5) {
+#endif
 #else
             else if (pcs_ptr->enc_mode <= ENC_M6) {
 #endif

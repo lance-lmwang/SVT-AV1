@@ -650,8 +650,29 @@ extern "C" {
 #define UNIFY_LEVELS                    1 // Have the mode-switching features use the regular MD feature levels when switching modes
 #define AUG5_ADOPTS                     1 // Adoptions for MR and M2
 #define NEW_LAMBDA_SCALING_FACTOR       1 // Change the value of one of the parameters used during TPL scaling factor generation
+#define LOSSLESS_OPT                    1 // Lossless opt
+#if LOSSLESS_OPT
+#define OPT_0                         1 // bypass distortion_based_modulator() if no nsq
+#define OPT_1                         1 // no T-1 @ PD0 and no recon samples update if context_ptr->skip_intra == 1
+#define OPT_2                         1 // bypass sse_gradian_band init if no nsq
+#define OPT_3                         0 // bypass ref pruning init if no mrp
+#define OPT_4                         1 // bypass variance computation @ PD0; source_variance used only @ PD2 for inter-inter compound reduction and for txs early exit
+#define OPT_5                         1 // shut useless pred depth refinement operations
 #endif
+#define SHUT_FAST_RATE_PD0               1 // Improve PD0 rate estimation
+#define M7_OPT                           1 // Faster_M7
+#if M7_OPT
+#define BLOCK_BASED_DEPTH_REFINMENT     1
+#define FAST_TXT                        1
+#define OPT_ADAPT_ME                    1
+#define IFS_PUSH_BACK_STAGE_3           1
+#define FASTER_INTRA                    1
+#endif
+#define FIX_R2R                          1 // Fixed accessing invalid temporal-information @ adapt_me for non-lp=1/compound construction for pme.
+#define BALANCE_M6_M7                    1 // Balance M6/M7 settings
 // END  SVT_02_TEMP /////////////////////////////////////////////////////////
+#endif
+
 
 #if NEW_DELAY
 #define SCD_LAD            6  //number of future frames
@@ -1242,6 +1263,13 @@ typedef struct InterpFilterParams {
     InterpFilter   interp_filter;
 } InterpFilterParams;
 
+#if FAST_TXT
+typedef enum TxSearchLevel {
+   TX_SEARCH_DCT_DCT_ONLY, // DCT_DCT only
+   TX_SEARCH_ALL_TX_TYPES, // Tx search all type(s)
+   TX_SEARCH_DCT_TX_TYPES, // Tx search DCT type(s): DCT_DCT, V_DCT, H_DCT
+} TxSearchLevel;
+#else
 typedef enum TxSearchLevel {
     TX_SEARCH_OFF,
 #if !REMOVE_UNUSED_CODE_PH2
@@ -1250,13 +1278,22 @@ typedef enum TxSearchLevel {
     TX_SEARCH_INTER_DEPTH,
     TX_SEARCH_FULL_LOOP
 } TxSearchLevel;
-
+#endif
+#if IFS_PUSH_BACK_STAGE_3
+typedef enum IfsLevel {
+    IFS_OFF,  // IFS OFF
+    IFS_MDS0, // IFS @ md_stage_0()
+    IFS_MDS1, // IFS @ md_stage_1()
+    IFS_MDS2, // IFS @ md_stage_2()
+    IFS_MDS3, // IFS @ md_stage_3()
+} IfsLevel;
+#else
 typedef enum InterpolationSearchLevel {
     IT_SEARCH_OFF,
     IT_SEARCH_FAST_LOOP_UV_BLIND,
     IT_SEARCH_FAST_LOOP,
 } InterpolationSearchLevel;
-
+#endif
 typedef enum NsqSearchLevel {
     NSQ_SEARCH_OFF,
     NSQ_SEARCH_LEVEL1,

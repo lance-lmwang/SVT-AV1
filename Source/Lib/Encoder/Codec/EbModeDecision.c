@@ -567,6 +567,11 @@ void choose_best_av1_mv_pred(ModeDecisionContext *           context_ptr,
                              uint8_t *bestDrlIndex, // output
                              IntMv    best_pred_mv[2] // output
 ) {
+#if SHUT_FAST_RATE_PD0
+    if (context_ptr->shut_fast_rate) {
+        return;
+    }
+#endif
     uint8_t  drli, max_drl_index;
     IntMv    nearestmv[2];
     IntMv    nearmv[2];
@@ -941,6 +946,10 @@ EbBool is_valid_unipred_ref(
     struct ModeDecisionContext *context_ptr,
     uint8_t inter_cand_group,
     uint8_t list_idx, uint8_t ref_idx) {
+#if OPT_3
+    if (!context_ptr->ref_pruning_ctrls.inter_to_inter_pruning_enabled && !context_ptr->ref_pruning_ctrls.intra_to_inter_pruning_enabled)
+        return EB_TRUE;
+#endif
     if (!context_ptr->ref_filtering_res[inter_cand_group][list_idx][ref_idx].do_ref && (ref_idx || !context_ptr->ref_pruning_ctrls.closest_refs[inter_cand_group])) {
         return EB_FALSE;
     }
@@ -954,7 +963,10 @@ EbBool is_valid_bipred_ref(
     uint8_t inter_cand_group,
     uint8_t list_idx_0, uint8_t ref_idx_0,
     uint8_t list_idx_1, uint8_t ref_idx_1) {
-
+#if OPT_3
+    if (!context_ptr->ref_pruning_ctrls.inter_to_inter_pruning_enabled && !context_ptr->ref_pruning_ctrls.intra_to_inter_pruning_enabled)
+        return EB_TRUE;
+#endif
     // Both ref should be 1 for bipred refs to be valid: if 1 is not best_refs then there is a chance to exit the injection
     if (!context_ptr->ref_filtering_res[inter_cand_group][list_idx_0][ref_idx_0].do_ref ||
         !context_ptr->ref_filtering_res[inter_cand_group][list_idx_1][ref_idx_1].do_ref )
@@ -5005,8 +5017,13 @@ void inject_predictive_me_candidates(
                                                       to_inject_mv_y_l1,
                                                       to_inject_ref_type) == EB_FALSE) {
                     if (context_ptr->inter_comp_ctrls.mrp_pruning_w_distortion)
+#if FIX_R2R
+                        if (is_reference_best_pme(context_ptr, list_idx_0, ref_idx_0, 2) == 0 ||
+                            is_reference_best_pme(context_ptr, list_idx_1, ref_idx_1, 2) == 0)
+#else
                         if (is_reference_best_pme(context_ptr, 0, ref_idx_0, 2) == 0 ||
                             is_reference_best_pme(context_ptr, 1, ref_idx_1, 2) == 0)
+#endif
                             tot_comp_types = MD_COMP_AVG;
 
                     for (cur_type = MD_COMP_AVG; cur_type <= tot_comp_types; cur_type++) {
@@ -5062,6 +5079,16 @@ void inject_predictive_me_candidates(
                                                 cand_array[cand_total_cnt].motion_vector_yl1,
                                                 &cand_array[cand_total_cnt].drl_index,
                                                 best_pred_mv);
+#if FIX_R2R
+                        cand_array[cand_total_cnt].motion_vector_pred_x[REF_LIST_0] =
+                            best_pred_mv[0].as_mv.col;
+                        cand_array[cand_total_cnt].motion_vector_pred_y[REF_LIST_0] =
+                            best_pred_mv[0].as_mv.row;
+                        cand_array[cand_total_cnt].motion_vector_pred_x[REF_LIST_1] =
+                            best_pred_mv[1].as_mv.col;
+                        cand_array[cand_total_cnt].motion_vector_pred_y[REF_LIST_1] =
+                            best_pred_mv[1].as_mv.row;
+#else
                         cand_array[cand_total_cnt].motion_vector_pred_x[list_idx_0] =
                             best_pred_mv[0].as_mv.col;
                         cand_array[cand_total_cnt].motion_vector_pred_y[list_idx_0] =
@@ -5070,7 +5097,7 @@ void inject_predictive_me_candidates(
                             best_pred_mv[1].as_mv.col;
                         cand_array[cand_total_cnt].motion_vector_pred_y[list_idx_1] =
                             best_pred_mv[1].as_mv.row;
-
+#endif
                         //MVP REFINE
                         if (cur_type == MD_COMP_AVG && tot_comp_types > MD_COMP_AVG)
                             calc_pred_masked_compound(

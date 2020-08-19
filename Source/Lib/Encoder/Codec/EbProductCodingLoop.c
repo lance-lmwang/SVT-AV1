@@ -199,8 +199,11 @@ void mode_decision_update_neighbor_arrays(PictureControlSet *  pcs_ptr,
                            : EB_FALSE;
 
     uint16_t tile_idx = context_ptr->tile_index;
-
+#if IFS_PUSH_BACK_STAGE_3
+    if (context_ptr->interpolation_search_level != IFS_OFF)
+#else
     if (context_ptr->interpolation_search_level != IT_SEARCH_OFF)
+#endif
         neighbor_array_unit_mode_write32(context_ptr->interpolation_type_neighbor_array,
                                          context_ptr->blk_ptr->interp_filters,
                                          origin_x,
@@ -353,7 +356,6 @@ void mode_decision_update_neighbor_arrays(PictureControlSet *  pcs_ptr,
                                    NEIGHBOR_ARRAY_UNIT_LEFT_MASK);
 
     // Update the Inter Pred Type Neighbor Array
-
     neighbor_array_unit_mode_write(context_ptr->inter_pred_dir_neighbor_array,
                                    &inter_pred_direction_index,
                                    origin_x,
@@ -370,7 +372,9 @@ void mode_decision_update_neighbor_arrays(PictureControlSet *  pcs_ptr,
                                    bwdith,
                                    bheight,
                                    NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-
+#if OPT_1 // no T-1 @ PD0
+    if (!context_ptr->skip_intra) {
+#endif
     if (!context_ptr->hbd_mode_decision) {
 #if !REMOVE_UNUSED_CODE_PH2
         if (intraMdOpenLoop == EB_FALSE) {
@@ -526,7 +530,9 @@ void mode_decision_update_neighbor_arrays(PictureControlSet *  pcs_ptr,
                                              bwheight_uv);
         }
     }
-
+#if OPT_1 // no T-1 @ PD0
+    }
+#endif
     return;
 }
 
@@ -829,6 +835,9 @@ void init_sq_nsq_block(SequenceControlSet *scs_ptr, ModeDecisionContext *context
         context_ptr->md_local_blk_unit[blk_idx].left_neighbor_partition = INVALID_NEIGHBOR_DATA;
         context_ptr->md_local_blk_unit[blk_idx].above_neighbor_partition = INVALID_NEIGHBOR_DATA;
 #if SSE_BASED_SPLITTING
+#if OPT_2
+        if (context_ptr->md_disallow_nsq == EB_FALSE)
+#endif
         for (uint8_t shape_idx = 0; shape_idx < NUMBER_OF_SHAPES; shape_idx++)
             context_ptr->md_local_blk_unit[blk_idx].sse_gradian_band[shape_idx] = 1;
 #endif
@@ -1398,6 +1407,14 @@ void fast_loop_core(ModeDecisionCandidateBuffer *candidate_buffer, PictureContro
     } else
         chroma_fast_distortion = 0;
     // Fast Cost
+#if SHUT_FAST_RATE_PD0
+    if (context_ptr->shut_fast_rate) {
+        *(candidate_buffer->fast_cost_ptr) = luma_fast_distortion + chroma_fast_distortion;
+        candidate_ptr->fast_luma_rate = 0;
+        candidate_ptr->fast_chroma_rate = 0;
+    }
+    else {
+#endif
     *(candidate_buffer->fast_cost_ptr) = av1_product_fast_cost_func_table[candidate_ptr->type](
         blk_ptr,
         candidate_buffer->candidate_ptr,
@@ -1427,11 +1444,15 @@ void fast_loop_core(ModeDecisionCandidateBuffer *candidate_buffer, PictureContro
         context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].skip_flag_context,
 #endif
         context_ptr->md_inter_intra_level,
+#if !SHUT_FAST_RATE_PD0
         context_ptr->full_cost_shut_fast_rate_flag,
+#endif
         1,
         context_ptr->intra_luma_left_mode,
         context_ptr->intra_luma_top_mode);
-
+#if SHUT_FAST_RATE_PD0
+    }
+#endif
 #if R2R_FIX
     // Init full cost in case we by pass stage1/stage2
     if (context_ptr->md_staging_mode == MD_STAGING_MODE_0) {
@@ -4401,12 +4422,17 @@ void md_stage_0(
         context_ptr->fast_lambda_md[EB_8_BIT_MD];
 #endif
     // Set MD Staging fast_loop_core settings
+#if IFS_PUSH_BACK_STAGE_3
+    context_ptr->md_staging_skip_interpolation_search =
+        (context_ptr->interpolation_search_level == IFS_MDS0) ? EB_FALSE : EB_TRUE;
+#else
     context_ptr->md_staging_skip_interpolation_search =
         (context_ptr->md_staging_mode == MD_STAGING_MODE_1 ||
          context_ptr->md_staging_mode == MD_STAGING_MODE_2)
             ? EB_TRUE
             : context_ptr->interpolation_search_level >= IT_SEARCH_FAST_LOOP_UV_BLIND ? EB_FALSE
                                                                                       : EB_TRUE;
+#endif
 #if REMOVE_CHROMA_INTRA_S0
     context_ptr->md_staging_skip_chroma_pred = EB_TRUE;
 #else
@@ -5497,16 +5523,42 @@ uint8_t check_spatial_mv_size(ModeDecisionContext *ctx, uint8_t list_idx, uint8_
     }
     return search_area_multiplier;
 }
-
+#if FIX_R2R
+/*
+ * Check the size of the temporal MVs
+ *
+ * Return a motion category, based on the MV size.
+ */
+uint8_t check_temporal_mv_size(PictureControlSet *pcs, ModeDecisionContext *ctx) {
+#else
 /*
  * Check the size of the temporal MVs of the co-located block, of the reference frame specified by list_idx and ref_idx.
  *
  * Return a motion category, based on the MV size.
  */
 uint8_t check_temporal_mv_size(PictureControlSet *pcs, ModeDecisionContext *ctx, uint8_t list_idx, uint8_t ref_idx) {
+#endif
 
     uint8_t search_area_multiplier = 0;
 
+#if FIX_R2R
+    Av1Common * cm = pcs->parent_pcs_ptr->av1_cm;
+    int32_t     mi_row = ctx->blk_origin_y >> MI_SIZE_LOG2;
+    int32_t     mi_col = ctx->blk_origin_x >> MI_SIZE_LOG2;
+    TPL_MV_REF *prev_frame_mvs = pcs->tpl_mvs + (mi_row >> 1) * (cm->mi_stride >> 1) +
+        (mi_col >> 1);
+    TPL_MV_REF *mv = prev_frame_mvs;
+    if (prev_frame_mvs->mfmv0.as_int != INVALID_MV) {
+        if (ABS(mv->mfmv0.as_mv.row) > MEDIUM_TEMPORAL_MV_TH ||
+            ABS(mv->mfmv0.as_mv.col) > MEDIUM_TEMPORAL_MV_TH) {
+            search_area_multiplier = MAX(2, search_area_multiplier);
+        }
+        else if (ABS(mv->mfmv0.as_mv.row) > LOW_TEMPORAL_MV_TH ||
+            ABS(mv->mfmv0.as_mv.col) > LOW_TEMPORAL_MV_TH) {
+            search_area_multiplier = MAX(1, search_area_multiplier);
+        }
+    }
+#else
     EbReferenceObject *ref_obj = (EbReferenceObject *)pcs->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
     Av1Common *cm = pcs->parent_pcs_ptr->av1_cm;
     const int frame_mvs_stride = ROUND_POWER_OF_TWO(cm->mi_cols, 1);
@@ -5540,6 +5592,7 @@ uint8_t check_temporal_mv_size(PictureControlSet *pcs, ModeDecisionContext *ctx,
             }
         }
     }
+#endif
     return search_area_multiplier;
 }
 #if FIX_MV_BOUND
@@ -5615,7 +5668,11 @@ void md_sq_motion_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
             EbReferenceObject *ref_obj = (EbReferenceObject *)pcs->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
 
             if (!(ref_obj == NULL || ref_obj->frame_type == KEY_FRAME || ref_obj->frame_type == INTRA_ONLY_FRAME)) {
+#if FIX_R2R
+                search_area_multiplier = check_temporal_mv_size(pcs, ctx);
+#else
                 search_area_multiplier = check_temporal_mv_size(pcs, ctx, list_idx, ref_idx);
+#endif
             }
             else {
                 search_area_multiplier = check_spatial_mv_size(ctx, list_idx, ref_idx, me_mv_x, me_mv_y);
@@ -6301,6 +6358,7 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
 #if PERFORM_SUB_PEL_MD
 #if UPGRADE_SUBPEL
                 if (context_ptr->md_subpel_me_ctrls.enabled) {
+
                     md_subpel_search(pcs_ptr,
                         context_ptr,
                         context_ptr->md_subpel_me_ctrls,
@@ -6557,6 +6615,7 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
         }
     }
 #endif
+#if !OPT_3
 #if M8_CLEAN_UP
 #if ON_OFF_FEATURE_MRP
     if ((!context_ptr->ref_pruning_ctrls.inter_to_inter_pruning_enabled && !context_ptr->ref_pruning_ctrls.intra_to_inter_pruning_enabled) ||
@@ -6568,7 +6627,7 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
     if (!context_ptr->ref_pruning_ctrls.inter_to_inter_pruning_enabled && !context_ptr->ref_pruning_ctrls.intra_to_inter_pruning_enabled)
 #endif
         return;
-
+#endif
     // Distortion measure
     EbBool use_ssd = EB_FALSE;
 
@@ -7401,17 +7460,25 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                                    &best_search_distortion);
 
 #if UPGRADE_SUBPEL
-                int besterr = md_subpel_search(pcs_ptr,
-                    context_ptr,
-                    context_ptr->md_subpel_pme_ctrls,
-                    pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr, // 10BIT not supported
-                    list_idx,
-                    ref_idx,
-                    &best_search_mvx,
-                    &best_search_mvy,
-                    best_mvp_x,
-                    best_mvp_y);
+                int besterr = (int)best_search_distortion;
+                if (context_ptr->md_subpel_pme_ctrls.enabled) {
 
+                    besterr = md_subpel_search(pcs_ptr,
+                        context_ptr,
+                        context_ptr->md_subpel_pme_ctrls,
+                        pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr, // 10BIT not supported
+                        list_idx,
+                        ref_idx,
+                        &best_search_mvx,
+                        &best_search_mvy,
+                        best_mvp_x,
+                        best_mvp_y);
+                }
+#if LOG_MV_VALIDITY
+                //check if final MV is within AV1 limits
+                check_mv_validity(best_search_mvx,
+                    best_search_mvy, 0);
+#endif
                 context_ptr->best_pme_mv[list_idx][ref_idx][0] = best_search_mvx;
                 context_ptr->best_pme_mv[list_idx][ref_idx][1] = best_search_mvy;
                 context_ptr->valid_pme_mv[list_idx][ref_idx] = 1;
@@ -9706,6 +9773,11 @@ void tx_type_search(PictureControlSet *pcs_ptr,
     uint64_t txb_full_distortion_txt[TX_TYPES][DIST_CALC_TOTAL]= { 0 };
 #endif
     for (tx_type = txk_start; tx_type < txk_end; ++tx_type) {
+#if FAST_TXT
+        if (context_ptr->tx_search_level == TX_SEARCH_DCT_TX_TYPES)
+            if (tx_type != DCT_DCT && tx_type != V_DCT && tx_type != H_DCT)
+                continue;
+#endif
 #if COEFF_BASED_TXT_BYPASS
         // Perform search selectively based on statistics (DCT_DCT always performed)
         if (context_ptr->txt_cycles_red_ctrls.enabled && tx_type != DCT_DCT) {
@@ -10764,7 +10836,11 @@ void perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_buffer,
                 context_ptr->tx_search_level == TX_SEARCH_FULL_LOOP ? EB_FALSE : EB_TRUE;
         else
 #endif
+#if FAST_TXT
+            tx_search_skip_flag = context_ptr->tx_search_level != TX_SEARCH_DCT_DCT_ONLY
+#else
             tx_search_skip_flag = context_ptr->tx_search_level == TX_SEARCH_FULL_LOOP
+#endif
 #if TXT_CONTROL
             ? get_tx_search_config(context_ptr,
                 context_ptr->blk_geom->sq_size,
@@ -10784,7 +10860,11 @@ void perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_buffer,
     }
     else
         tx_search_skip_flag =
+#if FAST_TXT
+            context_ptr->tx_search_level != TX_SEARCH_DCT_DCT_ONLY ? EB_FALSE : EB_TRUE;
+#else
             context_ptr->tx_search_level == TX_SEARCH_FULL_LOOP ? EB_FALSE : EB_TRUE;
+#endif
     // Transform Depth Loop
     for (context_ptr->tx_depth = start_tx_depth; context_ptr->tx_depth <= end_tx_depth;
          context_ptr->tx_depth++) {
@@ -11760,14 +11840,24 @@ void md_stage_1(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
         candidate_ptr->txs_level = 0;
 #endif
 #if REFACTOR_SIGNALS
+#if IFS_PUSH_BACK_STAGE_3
+        context_ptr->md_staging_perform_inter_pred =
+            (context_ptr->interpolation_search_level == IFS_MDS1) ? EB_TRUE : EB_FALSE;
+#else
         context_ptr->md_staging_perform_inter_pred = EB_TRUE;
+#endif
 #else
         context_ptr->md_staging_skip_full_pred            = EB_FALSE;
 #endif
 #if IFS_MD_STAGE_3 && !IFS_MD_STAGE_1
         context_ptr->md_staging_skip_interpolation_search = EB_TRUE;
 #else
+#if IFS_PUSH_BACK_STAGE_3
+        context_ptr->md_staging_skip_interpolation_search =
+            (context_ptr->interpolation_search_level == IFS_MDS1) ? EB_FALSE : EB_TRUE;
+#else
         context_ptr->md_staging_skip_interpolation_search = EB_FALSE;
+#endif
 #endif
 #if CLEAN_UP_SKIP_CHROMA_PRED_SIGNAL
         context_ptr->md_staging_skip_chroma_pred = EB_TRUE;
@@ -11840,11 +11930,21 @@ void md_stage_2(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
         context_ptr->md_staging_skip_rdoq                 = EB_FALSE;
         context_ptr->md_staging_skip_full_chroma          = EB_TRUE;
 #if REFACTOR_SIGNALS
+#if IFS_PUSH_BACK_STAGE_3
+        context_ptr->md_staging_perform_inter_pred =
+            (context_ptr->interpolation_search_level == IFS_MDS2) ? EB_TRUE : EB_FALSE;
+#else
         context_ptr->md_staging_perform_inter_pred = EB_FALSE;
+#endif
 #else
         context_ptr->md_staging_skip_full_pred            = EB_TRUE;
 #endif
+#if IFS_PUSH_BACK_STAGE_3
+        context_ptr->md_staging_skip_interpolation_search =
+            (context_ptr->interpolation_search_level == IFS_MDS2) ? EB_FALSE : EB_TRUE;
+#else
         context_ptr->md_staging_skip_interpolation_search = EB_TRUE;
+#endif
 #if CLEAN_UP_SKIP_CHROMA_PRED_SIGNAL
         context_ptr->md_staging_skip_chroma_pred = EB_TRUE;
 #else
@@ -12039,9 +12139,14 @@ void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
 #if IFS_MD_STAGE_3 && !IFS_MD_STAGE_1
         context_ptr->md_staging_skip_interpolation_search = EB_FALSE;
 #else
+#if IFS_PUSH_BACK_STAGE_3
+        context_ptr->md_staging_skip_interpolation_search =
+            (context_ptr->interpolation_search_level == IFS_MDS3) ? EB_FALSE : EB_TRUE;
+#else
         context_ptr->md_staging_skip_interpolation_search =
             (context_ptr->md_staging_mode == MD_STAGING_MODE_1 ||
              context_ptr->md_staging_mode == MD_STAGING_MODE_2);
+#endif
 #endif
 #if CLEAN_UP_SKIP_CHROMA_PRED_SIGNAL
         context_ptr->md_staging_skip_chroma_pred = EB_FALSE;
@@ -12630,7 +12735,11 @@ EbErrorType signal_derivation_block(
 #if INTER_COMP_REDESIGN
 #if SOFT_CYCLES_REDUCTION
     // Set inter_inter_distortion_based_reference_pruning
+#if OPT_3
+    if  (pcs->parent_pcs_ptr->mrp_ctrls.ref_list0_count_try > 1 || pcs->parent_pcs_ptr->mrp_ctrls.ref_list1_count_try > 1) {
+#else
     if (pcs->slice_type != I_SLICE) {
+#endif
         if (context_ptr->pd_pass == PD_PASS_0)
             context_ptr->inter_inter_distortion_based_reference_pruning = 0;
         else if (context_ptr->pd_pass == PD_PASS_1)
@@ -13331,7 +13440,9 @@ void search_best_independent_uv_mode(PictureControlSet *  pcs_ptr,
                     context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].skip_flag_context,
 #endif
                     context_ptr->md_inter_intra_level,
+#if !SHUT_FAST_RATE_PD0
                     context_ptr->full_cost_shut_fast_rate_flag,
+#endif
                     1,
                     context_ptr->intra_luma_left_mode,
                     context_ptr->intra_luma_top_mode);
@@ -14062,7 +14173,10 @@ void md_encode_block(PictureControlSet *pcs_ptr,
     if (is_block_allowed(pcs_ptr, context_ptr)) {
 #endif
     const AomVarianceFnPtr *fn_ptr = &mefn_ptr[context_ptr->blk_geom->bsize];
-    context_ptr->source_variance =
+#if OPT_4
+    if (context_ptr->pd_pass == PD_PASS_2) // source_variance used only @ PD2 for inter-inter compound reduction and for txs early exit
+#endif
+        context_ptr->source_variance =
         eb_av1_get_sby_perpixel_variance(fn_ptr,
                                             (input_picture_ptr->buffer_y + input_origin_index),
                                             input_picture_ptr->stride_y,
@@ -14110,7 +14224,11 @@ void md_encode_block(PictureControlSet *pcs_ptr,
     }
     FrameHeader *frm_hdr       = &pcs_ptr->parent_pcs_ptr->frm_hdr;
     // Generate MVP(s)
+#if SHUT_FAST_RATE_PD0
+    if (!context_ptr->shut_fast_rate) {
+#else
     if (!context_ptr->md_skip_mvp_generation) {
+#endif
         if (frm_hdr->allow_intrabc) // pcs_ptr->slice_type == I_SLICE
             generate_av1_mvp_table(&context_ptr->sb_ptr->tile_info,
                                     context_ptr,
@@ -14138,7 +14256,7 @@ void md_encode_block(PictureControlSet *pcs_ptr,
     // Read MVPs (rounded-up to the closest integer) for use in md_sq_motion_search() and/or predictive_me_search() and/or perform_md_reference_pruning()
     if (pcs_ptr->slice_type != I_SLICE &&
 #if UPGRADE_SUBPEL
-    (context_ptr->md_sq_me_ctrls.enabled || context_ptr->predictive_me_level || context_ptr->ref_pruning_ctrls.inter_to_inter_pruning_enabled || context_ptr->ref_pruning_ctrls.intra_to_inter_pruning_enabled || context_ptr->md_subpel_me_ctrls.enabled || context_ptr->md_subpel_pme_ctrls.enabled))
+        (context_ptr->md_sq_me_ctrls.enabled || context_ptr->predictive_me_level || context_ptr->ref_pruning_ctrls.inter_to_inter_pruning_enabled || context_ptr->ref_pruning_ctrls.intra_to_inter_pruning_enabled || context_ptr->md_subpel_me_ctrls.enabled || context_ptr->md_subpel_pme_ctrls.enabled))
 #else
        (context_ptr->md_sq_me_ctrls.enabled || context_ptr->predictive_me_level || context_ptr->ref_pruning_ctrls.inter_to_inter_pruning_enabled || context_ptr->ref_pruning_ctrls.intra_to_inter_pruning_enabled))
 #endif
@@ -14171,6 +14289,9 @@ void md_encode_block(PictureControlSet *pcs_ptr,
 #endif
 #if MD_REFERENCE_MASKING
     // Perform md reference pruning
+#if OPT_3
+    if (context_ptr->ref_pruning_ctrls.inter_to_inter_pruning_enabled || context_ptr->ref_pruning_ctrls.intra_to_inter_pruning_enabled)
+#endif
     perform_md_reference_pruning(
         pcs_ptr, context_ptr, input_picture_ptr, blk_origin_index);
 #endif
@@ -14467,6 +14588,9 @@ void md_encode_block(PictureControlSet *pcs_ptr,
         context_ptr->parent_sq_pred_mode[sq_index] = candidate_buffer->candidate_ptr->pred_mode;
     }
 #if REMOVE_UNUSED_CODE_PH2
+#if OPT_1 // no T-1 @ PD0
+    if (!context_ptr->skip_intra)
+#endif
     av1_perform_inverse_transform_recon(
         context_ptr, candidate_buffer);
 #if !CLEAN_UP_SB_DATA_8
@@ -14519,6 +14643,9 @@ void md_encode_block(PictureControlSet *pcs_ptr,
         if (!context_ptr->hbd_mode_decision) {
 #if SSE_BASED_SPLITTING
 #if FIX_WARNINGS
+#if OPT_0
+            if (context_ptr->pd_pass == PD_PASS_0 && pcs_ptr->parent_pcs_ptr->disallow_nsq == EB_FALSE)
+#endif
             distortion_based_modulator(context_ptr,input_picture_ptr, input_origin_index,
 #else
             distortion_based_modulator(pcs_ptr, context_ptr,input_picture_ptr, input_origin_index,
