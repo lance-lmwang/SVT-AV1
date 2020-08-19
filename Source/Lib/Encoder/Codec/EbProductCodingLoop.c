@@ -116,7 +116,7 @@ static int32_t nsq_weight_per_qp[64] = { -5,  -5,  -5,  -5,  -5,  -5,  -5,  -5, 
 #if MV_COST_REFACTOR //----
 void svt_init_mv_cost_params(MV_COST_PARAMS *mv_cost_params, ModeDecisionContext *context_ptr, const MV *ref_mv, uint8_t base_q_idx, uint32_t rdmult);
 #if ADD_MV_COST //----
-INLINE int mv_err_cost_(const MV *mv, const MV_COST_PARAMS *mv_cost_params);
+int fp_mv_err_cost(const MV *mv, const MV_COST_PARAMS *mv_cost_params);
 #endif
 AomVarianceFnPtr mefn_ptr[BlockSizeS_ALL];
 #endif
@@ -4904,7 +4904,7 @@ void md_full_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context
             MV best_mv;
             best_mv.col = mvx + (refinement_pos_x * 8);
             best_mv.row = mvy + (refinement_pos_y * 8);
-            distortion += mv_err_cost_(&best_mv, &ms_params->mv_cost_params);
+            distortion += fp_mv_err_cost(&best_mv, &ms_params->mv_cost_params);
 #endif
             if (distortion < *best_distortion) {
 #if ADAPTIVE_ME_SEARCH

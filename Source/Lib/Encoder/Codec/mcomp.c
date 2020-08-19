@@ -90,11 +90,9 @@ static INLINE int mv_err_cost(const MV *mv, const MV *ref_mv,
     default: assert(0 && "Invalid rd_cost_type"); return 0;
   }
 }
-#if MV_COST_REFACTOR
-INLINE int mv_err_cost_(const MV *mv,
-#else
+
 static INLINE int mv_err_cost_(const MV *mv,
-#endif
+
                                const MV_COST_PARAMS *mv_cost_params) {
   return mv_err_cost(mv, mv_cost_params->ref_mv, mv_cost_params->mvjcost,
                      mv_cost_params->mvcost, mv_cost_params->error_per_bit,
@@ -470,5 +468,13 @@ int av1_find_best_sub_pixel_tree(MacroBlockD *xd, const struct AV1Common *const 
   }
 
   return besterr;
+}
+#endif
+// =============================================================================
+//  SVT Functions 
+// =============================================================================
+#if ADD_MV_COST
+int fp_mv_err_cost(const MV *mv,  const MV_COST_PARAMS *mv_cost_params) {
+    return mv_err_cost_(mv, mv_cost_params);
 }
 #endif
