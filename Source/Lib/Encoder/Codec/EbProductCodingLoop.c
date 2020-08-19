@@ -5892,9 +5892,9 @@ int md_subpel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
 int md_subpel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr, MdSubPelSearchCtrls md_subpel_ctrls,
     EbPictureBufferDesc *input_picture_ptr,
     uint8_t list_idx, uint8_t ref_idx, int16_t *me_mv_x, int16_t *me_mv_y, int16_t ref_mv_x, int16_t ref_mv_y) {
-#endif
-    FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
 
+    FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
+#endif
     const Av1Common *const cm = pcs_ptr->parent_pcs_ptr->av1_cm;
     MacroBlockD *xd = context_ptr->blk_ptr->av1xd;
 #if !MVCOST_REFACTOR
