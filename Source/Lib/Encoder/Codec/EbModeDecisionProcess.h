@@ -17,9 +17,7 @@
 #include "EbNeighborArrays.h"
 #include "EbObject.h"
 #include "EbEncInterPrediction.h"
-#if MVCOST_REFACTOR
-#include "mcomp.h"
-#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -1009,10 +1007,8 @@ typedef struct ModeDecisionContext {
     uint8_t switch_md_mode_based_on_sq_coeff;
     CoeffBSwMdCtrls cb_sw_md_ctrls;
 #endif
-#if MVCOST_REFACTOR
-    SUBPEL_MOTION_SEARCH_PARAMS *ms_params_struct;
-    MV *ref_mv;
-    MvLimits *mv_limits;
+#if MV_COST_REFACTOR
+    MV ref_mv;
 #endif
 } ModeDecisionContext;
 

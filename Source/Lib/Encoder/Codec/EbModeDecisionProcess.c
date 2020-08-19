@@ -118,13 +118,6 @@ static void mode_decision_context_dctor(EbPtr p) {
     EB_DELETE(obj->temp_residual_ptr);
     EB_DELETE(obj->temp_recon_ptr);
 #endif
-#if MVCOST_REFACTOR
-    EB_FREE_ARRAY(obj->ms_params_struct->var_params.ms_buffers.ref);
-    EB_FREE_ARRAY(obj->ms_params_struct->var_params.ms_buffers.src);
-    EB_FREE_ARRAY(obj->ms_params_struct);  
-    EB_FREE_ARRAY(obj->ref_mv);
-    EB_FREE_ARRAY(obj->mv_limits);
-#endif
 }
 
 /******************************************************
@@ -591,14 +584,6 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
     }
 #endif
 #endif
-#if MVCOST_REFACTOR
-    EB_MALLOC_ARRAY(context_ptr->ms_params_struct, 1);
-    EB_MALLOC_ARRAY(context_ptr->ms_params_struct->var_params.ms_buffers.ref, 1);
-    EB_MALLOC_ARRAY(context_ptr->ms_params_struct->var_params.ms_buffers.src, 1);
-    EB_MALLOC_ARRAY(context_ptr->ref_mv, 1);
-    EB_MALLOC_ARRAY(context_ptr->mv_limits, 1);
-#endif
-
     return EB_ErrorNone;
 }
 

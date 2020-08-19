@@ -670,10 +670,9 @@ extern "C" {
 #define FIX_R2R                          1 // Fixed accessing invalid temporal-information @ adapt_me for non-lp=1/compound construction for pme.
 #define BALANCE_M6_M7                    1 // Balance M6/M7 settings
 
-#define FP_SEARCH_MVCOST                 1
-#if FP_SEARCH_MVCOST
-#define MVCOST_REFACTOR                 1
-#endif
+#define MV_COST_REFACTOR                 1
+#define ADD_MV_COST                      0
+
 #endif
 // END  SVT_02_TEMP /////////////////////////////////////////////////////////
 
