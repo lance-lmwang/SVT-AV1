@@ -6760,7 +6760,10 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
                     pcs_ptr->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
                 EbPictureBufferDesc *ref_pic = hbd_mode_decision ? ref_obj->reference_picture16bit
                                                                  : ref_obj->reference_picture;
-
+#if PME_CLIPPING
+                clip_mv_on_pic_boundary(context_ptr->blk_origin_x, context_ptr->blk_origin_y, context_ptr->blk_geom->bwidth, context_ptr->blk_geom->bheight,
+                    ref_pic, &context_ptr->mvp_array[list_idx][ref_idx][mvp_index].col, &context_ptr->mvp_array[list_idx][ref_idx][mvp_index].row);
+#else
 #if BOUNDARY_CHECK
                 // Skip the pred_me at the boundary
 #if ADAPTIVE_ME_SEARCH
@@ -6787,6 +6790,7 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
                     context_ptr->blk_origin_y +
                     (mvp_y_array[mvp_index] >> 3) < -ref_pic->origin_y)
                     continue;
+#endif
 #endif
 #endif
 #if INT_RECON_OFFSET_FIX
@@ -6876,6 +6880,10 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
                 EbReferenceObject *ref_obj = pcs_ptr->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
                 EbPictureBufferDesc *ref_pic =
                     hbd_mode_decision ? ref_obj->reference_picture16bit : ref_obj->reference_picture;
+#if PME_CLIPPING
+                clip_mv_on_pic_boundary(context_ptr->blk_origin_x, context_ptr->blk_origin_y, context_ptr->blk_geom->bwidth, context_ptr->blk_geom->bheight,
+                    ref_pic, &me_mv_x, &me_mv_y);
+#else
 #if BOUNDARY_CHECK
                 // Check the boundary, may over the boundary because of the round-up
                 EbBool out_of_boundary = EB_FALSE;
@@ -6892,7 +6900,7 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
                     out_of_boundary = EB_TRUE;
                 if (!out_of_boundary) {
 #endif
-
+#endif
 #if INT_RECON_OFFSET_FIX
                 // Never be negative here
                 int32_t ref_origin_index =
@@ -6939,8 +6947,10 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
                                 context_ptr->blk_geom->bwidth);
                     }
                 }
+#if !PME_CLIPPING
 #if BOUNDARY_CHECK
                 }
+#endif
 #endif
             }
 
@@ -7367,7 +7377,10 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                     EbPictureBufferDesc *ref_pic = hbd_mode_decision
                                                        ? ref_obj->reference_picture16bit
                                                        : ref_obj->reference_picture;
-
+#if PME_CLIPPING
+                    clip_mv_on_pic_boundary(context_ptr->blk_origin_x, context_ptr->blk_origin_y, context_ptr->blk_geom->bwidth, context_ptr->blk_geom->bheight,
+                        ref_pic, &context_ptr->mvp_array[list_idx][ref_idx][mvp_index].col, &context_ptr->mvp_array[list_idx][ref_idx][mvp_index].row);
+#else
 #if BOUNDARY_CHECK
                     // Skip the pred_me at the boundary
 #if ADAPTIVE_ME_SEARCH
@@ -7394,6 +7407,7 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                         context_ptr->blk_origin_y +
                         (mvp_y_array[mvp_index] >> 3) < -ref_pic->origin_y)
                         continue;
+#endif
 #endif
 #endif
 #if INT_RECON_OFFSET_FIX
