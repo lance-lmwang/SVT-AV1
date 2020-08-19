@@ -671,7 +671,7 @@ extern "C" {
 #define BALANCE_M6_M7                    1 // Balance M6/M7 settings
 
 #define MV_COST_REFACTOR                 1
-#define ADD_MV_COST                      0
+#define ADD_MV_COST                      1
 
 #endif
 // END  SVT_02_TEMP /////////////////////////////////////////////////////////
