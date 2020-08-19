@@ -6376,6 +6376,17 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
 #if ADAPTIVE_ME_SEARCH
                 }
 #endif
+#if MVCOST_REFACTOR
+                // Generate ms_params
+                generate_ms_params(pcs_ptr,
+                    context_ptr,
+                    context_ptr->md_subpel_me_ctrls,
+                    pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr, // 10BIT not supported
+                    list_idx,
+                    ref_idx,
+                    context_ptr->mvp_array[list_idx][ref_idx][0].col,  // use nearest as a ref MV
+                    context_ptr->mvp_array[list_idx][ref_idx][0].row); // use nearest as a ref MV
+#endif
 #else
                 uint32_t pu_stride = scs_ptr->mrp_mode == 0 ? ME_MV_MRP_MODE_0 : ME_MV_MRP_MODE_1;
                 if (list_idx == 0) {
@@ -6440,16 +6451,6 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
 #if FIX_MV_BOUND
                     clip_mv_on_pic_boundary(context_ptr->blk_origin_x, context_ptr->blk_origin_y, context_ptr->blk_geom->bwidth, context_ptr->blk_geom->bheight,
                         ref_pic, &me_mv_x, &me_mv_y);
-#endif
-#if MVCOST_REFACTOR
-                    generate_ms_params(pcs_ptr,
-                        context_ptr,
-                        context_ptr->md_subpel_me_ctrls,
-                        pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr, // 10BIT not supported
-                        list_idx,
-                        ref_idx,
-                        context_ptr->mvp_array[list_idx][ref_idx][0].col,  // use nearest as a ref MV
-                        context_ptr->mvp_array[list_idx][ref_idx][0].row); // use nearest as a ref MV
 #endif
                     md_subpel_search(pcs_ptr,
                         context_ptr,
@@ -7517,7 +7518,17 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
 #endif
                     }
                 }
-
+#if MVCOST_REFACTOR
+                // Generate ms_params
+                generate_ms_params(pcs_ptr,
+                    context_ptr,
+                    context_ptr->md_subpel_pme_ctrls,
+                    pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr, // 10BIT not supported
+                    list_idx,
+                    ref_idx,
+                    best_mvp_x,
+                    best_mvp_y);
+#endif
                 // Step 2: perform full pel search around the best MVP
                 best_mvp_x = (best_mvp_x + 4) & ~0x07;
                 best_mvp_y = (best_mvp_y + 4) & ~0x07;
@@ -7561,16 +7572,6 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                         : ref_obj->reference_picture;
                     clip_mv_on_pic_boundary(context_ptr->blk_origin_x, context_ptr->blk_origin_y, context_ptr->blk_geom->bwidth, context_ptr->blk_geom->bheight,
                         ref_pic, &best_search_mvx, &best_search_mvy);
-#endif
-#if MVCOST_REFACTOR
-                    generate_ms_params(pcs_ptr,
-                        context_ptr,
-                        context_ptr->md_subpel_pme_ctrls,
-                        pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr, // 10BIT not supported
-                        list_idx,
-                        ref_idx,
-                        best_mvp_x,
-                        best_mvp_y);
 #endif
                     besterr = md_subpel_search(pcs_ptr,
                         context_ptr,
