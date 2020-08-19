@@ -5886,10 +5886,13 @@ void generate_ms_params(PictureControlSet *pcs_ptr, ModeDecisionContext *context
     ms_buffers->obmc_mask = NULL;
 }
 #endif
+#if MVCOST_REFACTOR
+int md_subpel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr, int16_t *me_mv_x, int16_t *me_mv_y) {
+#else
 int md_subpel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr, MdSubPelSearchCtrls md_subpel_ctrls,
     EbPictureBufferDesc *input_picture_ptr,
     uint8_t list_idx, uint8_t ref_idx, int16_t *me_mv_x, int16_t *me_mv_y, int16_t ref_mv_x, int16_t ref_mv_y) {
-
+#endif
     FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
 
     const Av1Common *const cm = pcs_ptr->parent_pcs_ptr->av1_cm;
@@ -6452,6 +6455,12 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                     clip_mv_on_pic_boundary(context_ptr->blk_origin_x, context_ptr->blk_origin_y, context_ptr->blk_geom->bwidth, context_ptr->blk_geom->bheight,
                         ref_pic, &me_mv_x, &me_mv_y);
 #endif
+#if MVCOST_REFACTOR
+                    md_subpel_search(pcs_ptr,
+                        context_ptr,
+                        &me_mv_x,
+                        &me_mv_y);
+#else
                     md_subpel_search(pcs_ptr,
                         context_ptr,
                         context_ptr->md_subpel_me_ctrls,
@@ -6462,6 +6471,7 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                         &me_mv_y,
                         context_ptr->mvp_array[list_idx][ref_idx][0].col,  // use nearest as a ref MV
                         context_ptr->mvp_array[list_idx][ref_idx][0].row); // use nearest as a ref MV
+#endif
 #else
                 if (context_ptr->md_subpel_search_ctrls.enabled &&
                     (((context_ptr->blk_geom->bwidth == context_ptr->blk_geom->bheight) && ((context_ptr->blk_geom->bsize != BLOCK_4X4) || (context_ptr->md_subpel_search_ctrls.do_4x4))) || // SQ no 4x4 or do_4x4
@@ -7573,6 +7583,12 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                     clip_mv_on_pic_boundary(context_ptr->blk_origin_x, context_ptr->blk_origin_y, context_ptr->blk_geom->bwidth, context_ptr->blk_geom->bheight,
                         ref_pic, &best_search_mvx, &best_search_mvy);
 #endif
+#if MVCOST_REFACTOR
+                    md_subpel_search(pcs_ptr,
+                        context_ptr,
+                        &best_search_mvx,
+                        &best_search_mvy);
+#else
                     besterr = md_subpel_search(pcs_ptr,
                         context_ptr,
                         context_ptr->md_subpel_pme_ctrls,
@@ -7583,6 +7599,7 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                         &best_search_mvy,
                         best_mvp_x,
                         best_mvp_y);
+#endif
                 }
 #if LOG_MV_VALIDITY
                 //check if final MV is within AV1 limits
