@@ -5832,7 +5832,7 @@ void md_sq_motion_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
 #endif
 
 #if UPGRADE_SUBPEL
-#if !ADD_MV_COST //----
+#if !MV_COST_REFACTOR //----
 void svt_init_mv_cost_params(MV_COST_PARAMS *mv_cost_params, ModeDecisionContext *context_ptr, const MV *ref_mv, uint8_t base_q_idx);
 AomVarianceFnPtr mefn_ptr[BlockSizeS_ALL];
 #endif
