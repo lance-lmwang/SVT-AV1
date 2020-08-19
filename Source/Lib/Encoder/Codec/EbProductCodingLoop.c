@@ -115,7 +115,9 @@ static int32_t nsq_weight_per_qp[64] = { -5,  -5,  -5,  -5,  -5,  -5,  -5,  -5, 
 #endif
 #if MV_COST_REFACTOR //----
 void svt_init_mv_cost_params(MV_COST_PARAMS *mv_cost_params, ModeDecisionContext *context_ptr, const MV *ref_mv, uint8_t base_q_idx, uint32_t rdmult);
+#if ADD_MV_COST //----
 INLINE int mv_err_cost_(const MV *mv, const MV_COST_PARAMS *mv_cost_params);
+#endif
 AomVarianceFnPtr mefn_ptr[BlockSizeS_ALL];
 #endif
 EbErrorType generate_md_stage_0_cand(SuperBlock *sb_ptr, ModeDecisionContext *context_ptr,
