@@ -65,7 +65,11 @@ int av1_mv_bit_cost(const MV *mv, const MV *ref_mv, const int *mvjcost,
 // Returns the cost of using the current mv during the motion search. This is
 // used when var is used as the error metric.
 #define PIXEL_TRANSFORM_ERROR_SCALE 4
+#if ADD_MV_COST
+INLINE int mv_err_cost(const MV *mv, const MV *ref_mv,
+#else
 static INLINE int mv_err_cost(const MV *mv, const MV *ref_mv,
+#endif
                               const int *mvjcost, const int *const mvcost[2],
                               int error_per_bit, MV_COST_TYPE mv_cost_type) {
   const MV diff = { mv->row - ref_mv->row, mv->col - ref_mv->col };
