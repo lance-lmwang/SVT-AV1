@@ -113,11 +113,9 @@ static int32_t nsq_weight_per_qp[64] = { -5,  -5,  -5,  -5,  -5,  -5,  -5,  -5, 
 #if TX_EARLY_EXIT
 #define TXS_EXIT_VAR_TH 256
 #endif
-#if FP_MV_COST //----
-void svt_init_mv_cost_params(MV_COST_PARAMS *mv_cost_params, ModeDecisionContext *context_ptr, const MV *ref_mv, uint8_t base_q_idx, uint32_t rdmult);
-#if FP_MV_COST //----
+#if FP_MV_COST
+void svt_init_mv_cost_params(MV_COST_PARAMS *mv_cost_params, ModeDecisionContext *context_ptr, const MV *ref_mv, uint8_t base_q_idx, uint32_t rdmult, uint8_t hbd_mode_decision);
 int fp_mv_err_cost(const MV *mv, const MV_COST_PARAMS *mv_cost_params);
-#endif
 AomVarianceFnPtr mefn_ptr[BlockSizeS_ALL];
 #endif
 EbErrorType generate_md_stage_0_cand(SuperBlock *sb_ptr, ModeDecisionContext *context_ptr,
@@ -4627,7 +4625,7 @@ void md_full_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context
     uint32_t rdmult = use_ssd ?
         context_ptr->full_lambda_md[hbd_mode_decision ? EB_10_BIT_MD : EB_8_BIT_MD] :
         context_ptr->fast_lambda_md[hbd_mode_decision ? EB_10_BIT_MD : EB_8_BIT_MD];
-    svt_init_mv_cost_params(&ms_params->mv_cost_params, context_ptr, &context_ptr->ref_mv, frm_hdr->quantization_params.base_q_idx, rdmult);
+    svt_init_mv_cost_params(&ms_params->mv_cost_params, context_ptr, &context_ptr->ref_mv, frm_hdr->quantization_params.base_q_idx, rdmult, hbd_mode_decision);
 #endif
     uint32_t                     distortion;
     ModeDecisionCandidateBuffer *candidate_buffer =
@@ -5875,7 +5873,7 @@ int md_subpel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
 
     // Mvcost params
 #if FP_MV_COST //----
-    svt_init_mv_cost_params(&ms_params->mv_cost_params, context_ptr, &ref_mv, frm_hdr->quantization_params.base_q_idx, context_ptr->full_lambda_md[EB_8_BIT_MD]);// 10BIT not supported
+    svt_init_mv_cost_params(&ms_params->mv_cost_params, context_ptr, &ref_mv, frm_hdr->quantization_params.base_q_idx, context_ptr->full_lambda_md[EB_8_BIT_MD], 0);// 10BIT not supported
 #else
     svt_init_mv_cost_params(&ms_params->mv_cost_params, context_ptr, &ref_mv, frm_hdr->quantization_params.base_q_idx);
 #endif
