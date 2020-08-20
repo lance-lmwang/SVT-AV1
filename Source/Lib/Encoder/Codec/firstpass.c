@@ -1963,7 +1963,7 @@ Input   : encoder mode and tune
 Output  : EncDec Kernel signal(s)
 ******************************************************/
 EbErrorType first_pass_signal_derivation_mode_decision_config_kernel(
-    SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
+    PictureControlSet *pcs_ptr,
     ModeDecisionConfigurationContext *context_ptr) {
 
     EbErrorType return_error = EB_ErrorNone;

@@ -4065,9 +4065,6 @@ enum {
 // that are not marked as coded with 0,0 motion in the first pass.
 #define FAST_MOVING_KF_GROUP_THRESH 5
 #define MEDIUM_MOVING_KF_GROUP_THRESH 30
-#if !TWOPASS_RC
-#define STATIC_KF_GROUP_THRESH 70
-#endif
 #define MAX_QPS_COMP_I 150
 #define MAX_QPS_COMP_I_LR 42
 #define MAX_QPS_COMP_NONI 300
@@ -5140,7 +5137,7 @@ static void adjust_active_best_and_worst_quality_org(PictureControlSet *pcs_ptr,
 
     // Static forced key frames Q restrictions dealt with elsewhere.
     if (!frame_is_intra_only(pcs_ptr->parent_pcs_ptr) || !this_key_frame_forced
-        /*|| (cpi->twopass.last_kfgroup_zeromotion_pct < STATIC_MOTION_THRESH)*/) {
+        || (twopass->last_kfgroup_zeromotion_pct < STATIC_MOTION_THRESH)) {
         const int qdelta = av1_frame_type_qdelta_org(rc, gf_group, pcs_ptr->parent_pcs_ptr->gf_group_index, active_worst_quality, bit_depth);
         active_worst_quality =
             AOMMAX(active_worst_quality + qdelta, active_best_quality);
@@ -6416,8 +6413,6 @@ static void get_intra_q_and_bounds(PictureControlSet *pcs_ptr,
         // backward reference.
         const int qindex = rc->last_boosted_qindex;
         const double last_boosted_q = eb_av1_convert_qindex_to_q(qindex, bit_depth);
-        //const int delta_qindex = av1_compute_qdelta(
-        //        rc, last_boosted_q, last_boosted_q * 0.25, bit_depth);
         const int delta_qindex = eb_av1_compute_qdelta(last_boosted_q, last_boosted_q * 0.25, bit_depth);
         active_best_quality = AOMMAX(qindex + delta_qindex, rc->best_quality);
     } else if (rc->this_key_frame_forced) {
@@ -6433,16 +6428,12 @@ static void get_intra_q_and_bounds(PictureControlSet *pcs_ptr,
             qindex = AOMMIN(rc->last_kf_qindex, rc->last_boosted_qindex);
             active_best_quality = qindex;
             last_boosted_q = eb_av1_convert_qindex_to_q(qindex, bit_depth);
-            //delta_qindex = av1_compute_qdelta(rc, last_boosted_q,
-            //        last_boosted_q * 1.25, bit_depth);
             delta_qindex = eb_av1_compute_qdelta(last_boosted_q, last_boosted_q * 1.25, bit_depth);
             active_worst_quality =
                 AOMMIN(qindex + delta_qindex, active_worst_quality);
         } else {
             qindex = rc->last_boosted_qindex;
             last_boosted_q = eb_av1_convert_qindex_to_q(qindex, bit_depth);
-            //delta_qindex = av1_compute_qdelta(rc, last_boosted_q,
-            //        last_boosted_q * 0.50, bit_depth);
             delta_qindex = eb_av1_compute_qdelta(last_boosted_q, last_boosted_q * 0.50, bit_depth);
             active_best_quality = AOMMAX(qindex + delta_qindex, rc->best_quality);
         }
@@ -6475,7 +6466,6 @@ static void get_intra_q_and_bounds(PictureControlSet *pcs_ptr,
         // Convert the adjustment factor to a qindex delta
         // on active_best_quality.
         q_val = eb_av1_convert_qindex_to_q(active_best_quality, bit_depth);
-        //active_best_quality += av1_compute_qdelta(rc, q_val, q_val * q_adj_factor, bit_depth);
         active_best_quality += eb_av1_compute_qdelta(q_val, q_val * q_adj_factor, bit_depth);
 #if 0
         // Tweak active_best_quality for AOM_Q mode when superres is on, as this
