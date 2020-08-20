@@ -624,6 +624,7 @@ extern "C" {
 #define TURN_OFF_CDF_UPDATE     1
 #define TURN_OFF_EC_FIRST_PASS  1
 #define DEFAULT_2PASS           1
+#define FASTER_FIRST_PASS           1
 #endif
 // END  SVT_02_TEMP /////////////////////////////////////////////////////////
 
