@@ -4046,6 +4046,18 @@ enum {
     RATE_FACTOR_LEVELS = 6
 } rate_factor_level;
 
+#if USE_GF_UPDATE_FOR_LAMBDA
+enum {
+    KF_UPDATE,
+    LF_UPDATE,
+    GF_UPDATE,
+    ARF_UPDATE,
+    OVERLAY_UPDATE,
+    INTNL_OVERLAY_UPDATE,  // Internal Overlay Frame
+    INTNL_ARF_UPDATE,      // Internal Altref Frame
+    FRAME_UPDATE_TYPES
+} UENUM1BYTE(FRAME_UPDATE_TYPE);
+#else
 enum {
     KF_UPDATE            = 0,
     LF_UPDATE            = 1,
@@ -4059,6 +4071,7 @@ enum {
     INTNL_ARF_UPDATE     = 9, // Internal Altref Frame (candidate for ALTREF2)
     FRAME_UPDATE_TYPES   = 10
 } frame_update_type;
+#endif
 
 // that are not marked as coded with 0,0 motion in the first pass.
 #define FAST_MOVING_KF_GROUP_THRESH 5
@@ -5450,8 +5463,14 @@ static int adaptive_qindex_calc_two_pass(PictureControlSet *pcs_ptr, RATE_CONTRO
     int                 active_worst_quality = qindex;
     rc->arf_q                                = 0;
     int q;
+#if USE_GF_UPDATE_FOR_LAMBDA
+    int is_src_frame_alt_ref, refresh_golden_frame, refresh_alt_ref_frame, is_intrl_arf_boost,
+        rf_level;
+    uint8_t update_type;
+#else
     int is_src_frame_alt_ref, refresh_golden_frame, refresh_alt_ref_frame, is_intrl_arf_boost,
         rf_level, update_type;
+#endif
     is_src_frame_alt_ref  = 0;
     refresh_golden_frame  = frame_is_intra_only(pcs_ptr->parent_pcs_ptr) ? 1 : 0;
     refresh_alt_ref_frame = (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0) ? 1 : 0;
@@ -5832,7 +5851,31 @@ static void sb_qp_derivation_two_pass(PictureControlSet *pcs_ptr) {
         }
     }
 }
+#if USE_GF_UPDATE_FOR_LAMBDA
+// The table we use is modified from libaom; here is the original, from libaom:
+//static const int rd_frame_type_factor[FRAME_UPDATE_TYPES] = { 128, 144, 128,
+//                                                              128, 144, 144,
+//                                                              128 };
+static const int rd_frame_type_factor[FRAME_UPDATE_TYPES] = { 128, 164, 128,
+                                                              128, 164, 164,
+                                                              128 };
 
+/*
+ * Set the sse lambda based on the bit_depth, then update based on frame position.
+ */
+int compute_rdmult_sse(uint8_t q_index, FrameType frame_type, uint8_t temporal_layer_index, uint8_t bit_depth) {
+    int64_t rdmult = bit_depth == 8  ? av1_lambda_mode_decision8_bit_sse[q_index] :
+                     bit_depth == 10 ? av1lambda_mode_decision10_bit_sse[q_index] :
+                                       av1lambda_mode_decision12_bit_sse[q_index];
+
+    // Update rdmult based on the frame's position in the miniGOP
+    if (frame_type != KEY_FRAME) {
+        uint8_t gf_update_type = temporal_layer_index == 0 ? ARF_UPDATE : temporal_layer_index < 4 ? INTNL_ARF_UPDATE : LF_UPDATE;
+        rdmult = (rdmult * rd_frame_type_factor[gf_update_type]) >> 7;
+    }
+    return (int)rdmult;
+}
+#endif
 #if TPL_LA
 #if TPL_LA_LAMBDA_SCALING
 static void sb_setup_lambda(PictureControlSet *pcs_ptr,
@@ -5863,12 +5906,18 @@ static void sb_setup_lambda(PictureControlSet *pcs_ptr,
             base_block_count += 1.0;
         }
     }
+#if USE_GF_UPDATE_FOR_LAMBDA
+    uint8_t bit_depth = pcs_ptr->hbd_mode_decision ? 10 : 8;
+    const int orig_rdmult = compute_rdmult_sse(ppcs_ptr->frm_hdr.quantization_params.base_q_idx, ppcs_ptr->frm_hdr.frame_type, pcs_ptr->temporal_layer_index, bit_depth);
+    const int new_rdmult  = compute_rdmult_sse(sb_ptr->qindex, ppcs_ptr->frm_hdr.frame_type, pcs_ptr->temporal_layer_index, bit_depth);
+#else
     const int orig_rdmult = pcs_ptr->hbd_mode_decision ?
         av1lambda_mode_decision10_bit_sse[ppcs_ptr->frm_hdr.quantization_params.base_q_idx]:
         av1_lambda_mode_decision8_bit_sse[ppcs_ptr->frm_hdr.quantization_params.base_q_idx];
     const int new_rdmult = pcs_ptr->hbd_mode_decision ?
         av1lambda_mode_decision10_bit_sse[sb_ptr->qindex]:
         av1_lambda_mode_decision8_bit_sse[sb_ptr->qindex];
+#endif
     const double scaling_factor = (double)new_rdmult / (double)orig_rdmult;
     double scale_adj = log(scaling_factor) - log_sum / base_block_count;
     scale_adj = exp(scale_adj);

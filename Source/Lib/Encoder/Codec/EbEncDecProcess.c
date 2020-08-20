@@ -264,6 +264,9 @@ static void reset_enc_dec(EncDecContext *context_ptr, PictureControlSet *pcs_ptr
 #endif
 #if TPL_LA_LAMBDA_SCALING
     (*av1_lambda_assignment_function_table[pcs_ptr->parent_pcs_ptr->pred_structure])(
+#if USE_GF_UPDATE_FOR_LAMBDA
+        pcs_ptr,
+#endif
 #if QP2QINDEX
         &context_ptr->pic_fast_lambda[EB_8_BIT_MD],
         &context_ptr->pic_full_lambda[EB_8_BIT_MD],
@@ -280,6 +283,9 @@ static void reset_enc_dec(EncDecContext *context_ptr, PictureControlSet *pcs_ptr
         EB_TRUE);
 
     (*av1_lambda_assignment_function_table[pcs_ptr->parent_pcs_ptr->pred_structure])(
+#if USE_GF_UPDATE_FOR_LAMBDA
+        pcs_ptr,
+#endif
 #if QP2QINDEX
         &context_ptr->pic_fast_lambda[EB_10_BIT_MD],
         &context_ptr->pic_full_lambda[EB_10_BIT_MD],

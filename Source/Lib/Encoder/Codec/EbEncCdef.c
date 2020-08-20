@@ -1247,6 +1247,9 @@ void finish_cdef_search(EncDecContext *context_ptr, PictureControlSet *pcs_ptr,
     uint16_t qp_index = (uint8_t)pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
     uint32_t fast_lambda, full_lambda;
     (*av1_lambda_assignment_function_table[pcs_ptr->parent_pcs_ptr->pred_structure])(
+#if USE_GF_UPDATE_FOR_LAMBDA
+        pcs_ptr,
+#endif
         &fast_lambda,
         &full_lambda,
         (uint8_t)pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth,

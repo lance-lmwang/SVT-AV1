@@ -1011,10 +1011,15 @@ typedef struct ModeDecisionContext {
     MV ref_mv;
 #endif
 } ModeDecisionContext;
-
+#if USE_GF_UPDATE_FOR_LAMBDA
+typedef void (*EbAv1LambdaAssignFunc)(PictureControlSet* pcs_ptr, uint32_t *fast_lambda, uint32_t *full_lambda,
+                                      uint8_t bit_depth, uint16_t qp_index,
+                                      EbBool multiply_lambda);
+#else
 typedef void (*EbAv1LambdaAssignFunc)(uint32_t *fast_lambda, uint32_t *full_lambda,
                                       uint8_t bit_depth, uint16_t qp_index,
         EbBool                        multiply_lambda);
+#endif
 #if !TPL_LA_LAMBDA_SCALING
 typedef void (*EbLambdaAssignFunc)(uint32_t *fast_lambda, uint32_t *full_lambda,
                                    uint32_t *fast_chroma_lambda, uint32_t *full_chroma_lambda,

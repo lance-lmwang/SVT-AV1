@@ -673,6 +673,8 @@ extern "C" {
 
 #define FP_MV_COST                       1 // Add mvcost @ the ME of MD: pme, adapt_me, nsq_me
 #define CLEAN_UP_MV_CLIPPING             1 // Clean-up MV clipping
+
+#define USE_GF_UPDATE_FOR_LAMBDA         1 // Scale sse lambda based on where the frame is positioned in the miniGOP (based on TL)
 #endif
 // END  SVT_02_TEMP /////////////////////////////////////////////////////////
 
