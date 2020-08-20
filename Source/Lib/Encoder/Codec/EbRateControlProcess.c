@@ -6379,10 +6379,10 @@ void process_tpl_stats_frame_kf_gfu_boost(PictureControlSet *pcs_ptr) {
                 min_boost_factor, MAX_BOOST_COMBINE_FACTOR, rc->gfu_boost,
                 gfu_boost, rc->num_stats_used_for_gfu_boost);
     } else {
-        const int gfu_boost = (int)(200.0 / pcs_ptr->parent_pcs_ptr->r0);
-        rc->gfu_boost = combine_prior_with_tpl_boost_org(
-                MIN_BOOST_COMBINE_FACTOR, MAX_BOOST_COMBINE_FACTOR,
-                rc->gfu_boost, gfu_boost, rc->frames_to_key);
+        rc->gfu_boost       = get_gfu_boost_from_r0_lap(MIN_BOOST_COMBINE_FACTOR,
+                                                  MAX_GFUBOOST_FACTOR,
+                                                  pcs_ptr->parent_pcs_ptr->r0,
+                                                  rc->frames_to_key);
     }
 #if USE_OLD_SETTING
     if(scs_ptr->static_config.rate_control_mode == 0)
@@ -6460,8 +6460,8 @@ static void get_intra_q_and_bounds(PictureControlSet *pcs_ptr,
             q_adj_factor -= 0.25;
 #endif
         // Make a further adjustment based on the kf zero motion measure.
-        q_adj_factor +=
-            0.05 - (0.001 * (double)twopass->kf_zeromotion_pct);
+        q_adj_factor += 
+            0.05 - (0.001 * (double)MAX(twopass->kf_zeromotion_pct, pcs_ptr->parent_pcs_ptr->kf_zeromotion_pct));
 
         // Convert the adjustment factor to a qindex delta
         // on active_best_quality.
@@ -6535,7 +6535,7 @@ static int get_active_best_quality(PictureControlSet *pcs_ptr,
     // Use the lower of active_worst_quality and recent
     // average Q as basis for GF/ARF best Q limit unless last frame was
     // a key frame.
-    if (rc->frames_since_key > 1 &&
+    if (rc_mode == AOM_VBR &&  rc->frames_since_key > 1 &&
             rc->avg_frame_qindex[INTER_FRAME] < active_worst_quality) {
         q = rc->avg_frame_qindex[INTER_FRAME];
     }
