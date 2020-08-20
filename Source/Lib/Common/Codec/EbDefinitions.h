@@ -672,7 +672,7 @@ extern "C" {
 #define BALANCE_M6_M7                    1 // Balance M6/M7 settings
 
 #define FP_MV_COST                       1 // Add mvcost @ the ME of MD: pme, adapt_me, nsq_me
-#define CLEAN_UP_MV_CLIPPING             1 // Clean-up PME MV clipping
+#define CLEAN_UP_MV_CLIPPING             1 // Clean-up MV clipping
 #endif
 // END  SVT_02_TEMP /////////////////////////////////////////////////////////
 
