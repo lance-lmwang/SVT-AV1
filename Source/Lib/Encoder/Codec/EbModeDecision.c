@@ -3679,8 +3679,11 @@ void eb_av1_setup_pred_block(BlockSize sb_type, struct Buf2D dst[MAX_MB_PLANE],
 
 // Values are now correlated to quantizer.
 static int sad_per_bit16lut_8[QINDEX_RANGE];
+#if FP_MV_COST
+static int sad_per_bit_lut_10[QINDEX_RANGE];
+#else
 static int sad_per_bit4lut_8[QINDEX_RANGE];
-
+#endif
 extern AomVarianceFnPtr mefn_ptr[BlockSizeS_ALL];
 
 int av1_find_best_obmc_sub_pixel_tree_up(ModeDecisionContext *context_ptr, IntraBcContext *x,
