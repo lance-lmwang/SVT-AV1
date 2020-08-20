@@ -6292,7 +6292,12 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
 #if ME_MEM_OPT
 #if REMOVE_MRP_MODE
 #if ADAPTIVE_ME_SEARCH
-                if ((context_ptr->blk_geom->bwidth != context_ptr->blk_geom->bheight) && context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].avail_blk_flag) {
+                if (context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].avail_blk_flag &&
+                    // If NSQ then use the MV of SQ as default MV center
+                    (context_ptr->blk_geom->bwidth != context_ptr->blk_geom->bheight) &&
+                    // Not applicable for BLOCK_128X64 and BLOCK_64X128 as the 2nd part of each and BLOCK_128X128 do not share the same me_results
+                    context_ptr->blk_geom->bsize != BLOCK_64X128 && context_ptr->blk_geom->bsize != BLOCK_128X64) {
+
                     me_mv_x = (context_ptr->sb_me_mv[context_ptr->blk_geom->sqi_mds][list_idx][ref_idx][0] + 4) & ~0x07;
                     me_mv_y = (context_ptr->sb_me_mv[context_ptr->blk_geom->sqi_mds][list_idx][ref_idx][1] + 4) & ~0x07;
 
@@ -12601,6 +12606,14 @@ void move_blk_data_redund(PictureControlSet *pcs, ModeDecisionContext *context_p
     dst_cu->drl_ctx[1] = src_cu->drl_ctx[1];
     dst_cu->drl_ctx_near[0] = src_cu->drl_ctx_near[0];
     dst_cu->drl_ctx_near[1] = src_cu->drl_ctx_near[1];
+#endif
+#if UPGRADE_SUBPEL
+    for (int list_idx = 0; list_idx < MAX_NUM_OF_REF_PIC_LIST; list_idx++) {
+        for (int ref_idx = 0; ref_idx < MAX_REF_IDX; ref_idx++) {
+            context_ptr->sb_me_mv[dst_cu->mds_idx][list_idx][ref_idx][0] = context_ptr->sb_me_mv[src_cu->mds_idx][list_idx][ref_idx][0];
+            context_ptr->sb_me_mv[dst_cu->mds_idx][list_idx][ref_idx][1] = context_ptr->sb_me_mv[src_cu->mds_idx][list_idx][ref_idx][1];
+        }
+    }
 #endif
 }
 

@@ -672,9 +672,8 @@ extern "C" {
 #define BALANCE_M6_M7                    1 // Balance M6/M7 settings
 
 #define PME_CLIPPING                     1
-#define LARGE_NSQ_SEARCH_RANGE           0
-#define MV_COST_REFACTOR                 0
-#define ADD_MV_COST                      0
+#define MV_COST_REFACTOR                 1
+#define ADD_MV_COST                      1
 
 #endif
 // END  SVT_02_TEMP /////////////////////////////////////////////////////////

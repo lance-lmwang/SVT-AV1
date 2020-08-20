@@ -1866,13 +1866,8 @@ void md_nsq_motion_search_controls(ModeDecisionContext *mdctxt, uint8_t md_nsq_m
     case 2:
         md_nsq_motion_search_ctrls->enabled = 1;
         md_nsq_motion_search_ctrls->use_ssd = 0;
-#if LARGE_NSQ_SEARCH_RANGE
-        md_nsq_motion_search_ctrls->full_pel_search_width = 63;
-        md_nsq_motion_search_ctrls->full_pel_search_height = 63;
-#else
         md_nsq_motion_search_ctrls->full_pel_search_width = 15;
         md_nsq_motion_search_ctrls->full_pel_search_height = 15;
-#endif
 #if !PERFORM_SUB_PEL_MD
         md_nsq_motion_search_ctrls->perform_sub_pel = 1;
         md_nsq_motion_search_ctrls->half_pel_search_width = 3;
