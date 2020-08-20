@@ -6631,7 +6631,7 @@ void intra_bc_search(PictureControlSet *pcs, ModeDecisionContext *context_ptr,
 #if UPGRADE_SUBPEL
 void svt_init_mv_cost_params(MV_COST_PARAMS *mv_cost_params,
     ModeDecisionContext *context_ptr,
-#if MV_COST_REFACTOR
+#if FP_MV_COST
     const MV *ref_mv, uint8_t base_q_idx, uint32_t rdmult) {
 #else
     const MV *ref_mv, uint8_t base_q_idx) {
@@ -6639,7 +6639,7 @@ void svt_init_mv_cost_params(MV_COST_PARAMS *mv_cost_params,
     mv_cost_params->ref_mv = ref_mv;
     mv_cost_params->full_ref_mv = get_fullmv_from_mv(ref_mv);
     mv_cost_params->mv_cost_type = MV_COST_ENTROPY;
-#if MV_COST_REFACTOR
+#if FP_MV_COST
     mv_cost_params->error_per_bit = AOMMAX(rdmult >> RD_EPB_SHIFT, 1);
 #else
     mv_cost_params->error_per_bit = AOMMAX(context_ptr->full_lambda_md[EB_8_BIT_MD] >> RD_EPB_SHIFT, 1);

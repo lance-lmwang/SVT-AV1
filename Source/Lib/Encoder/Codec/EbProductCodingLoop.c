@@ -113,9 +113,9 @@ static int32_t nsq_weight_per_qp[64] = { -5,  -5,  -5,  -5,  -5,  -5,  -5,  -5, 
 #if TX_EARLY_EXIT
 #define TXS_EXIT_VAR_TH 256
 #endif
-#if MV_COST_REFACTOR //----
+#if FP_MV_COST //----
 void svt_init_mv_cost_params(MV_COST_PARAMS *mv_cost_params, ModeDecisionContext *context_ptr, const MV *ref_mv, uint8_t base_q_idx, uint32_t rdmult);
-#if ADD_MV_COST //----
+#if FP_MV_COST //----
 int fp_mv_err_cost(const MV *mv, const MV_COST_PARAMS *mv_cost_params);
 #endif
 AomVarianceFnPtr mefn_ptr[BlockSizeS_ALL];
@@ -4618,7 +4618,7 @@ void md_full_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context
     uint8_t hbd_mode_decision = context_ptr->hbd_mode_decision == EB_DUAL_BIT_MD
                                     ? EB_8_BIT_MD
                                     : context_ptr->hbd_mode_decision;
-#if ADD_MV_COST //----
+#if FP_MV_COST //----
     // Mvcost params
     SUBPEL_MOTION_SEARCH_PARAMS ms_params_struct;
     SUBPEL_MOTION_SEARCH_PARAMS *ms_params = &ms_params_struct;
@@ -4898,7 +4898,7 @@ void md_full_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                 }
             }
 #endif
-#if ADD_MV_COST //----
+#if FP_MV_COST //----
             MV best_mv;
             best_mv.col = mvx + (refinement_pos_x * 8);
             best_mv.row = mvy + (refinement_pos_y * 8);
@@ -5832,7 +5832,7 @@ void md_sq_motion_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
 #endif
 
 #if UPGRADE_SUBPEL
-#if !MV_COST_REFACTOR //----
+#if !FP_MV_COST //----
 void svt_init_mv_cost_params(MV_COST_PARAMS *mv_cost_params, ModeDecisionContext *context_ptr, const MV *ref_mv, uint8_t base_q_idx);
 AomVarianceFnPtr mefn_ptr[BlockSizeS_ALL];
 #endif
@@ -5874,7 +5874,7 @@ int md_subpel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
     av1_set_subpel_mv_search_range(&ms_params->mv_limits, (FullMvLimits *)&mv_limits, &ref_mv);
 
     // Mvcost params
-#if MV_COST_REFACTOR //----
+#if FP_MV_COST //----
     svt_init_mv_cost_params(&ms_params->mv_cost_params, context_ptr, &ref_mv, frm_hdr->quantization_params.base_q_idx, context_ptr->full_lambda_md[EB_8_BIT_MD]);// 10BIT not supported
 #else
     svt_init_mv_cost_params(&ms_params->mv_cost_params, context_ptr, &ref_mv, frm_hdr->quantization_params.base_q_idx);
@@ -6330,7 +6330,7 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
 #if ADAPTIVE_ME_SEARCH
                 }
 #endif
-#if MV_COST_REFACTOR
+#if FP_MV_COST
                 // Set ref MV
                 context_ptr->ref_mv.col = context_ptr->mvp_array[list_idx][ref_idx][0].col;
                 context_ptr->ref_mv.row = context_ptr->mvp_array[list_idx][ref_idx][0].row;
@@ -6765,7 +6765,7 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
                     pcs_ptr->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
                 EbPictureBufferDesc *ref_pic = hbd_mode_decision ? ref_obj->reference_picture16bit
                                                                  : ref_obj->reference_picture;
-#if PME_CLIPPING
+#if CLEAN_UP_MV_CLIPPING
                 clip_mv_on_pic_boundary(context_ptr->blk_origin_x, context_ptr->blk_origin_y, context_ptr->blk_geom->bwidth, context_ptr->blk_geom->bheight,
                     ref_pic, &context_ptr->mvp_array[list_idx][ref_idx][mvp_index].col, &context_ptr->mvp_array[list_idx][ref_idx][mvp_index].row);
 #else
@@ -6885,7 +6885,7 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
                 EbReferenceObject *ref_obj = pcs_ptr->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
                 EbPictureBufferDesc *ref_pic =
                     hbd_mode_decision ? ref_obj->reference_picture16bit : ref_obj->reference_picture;
-#if PME_CLIPPING
+#if CLEAN_UP_MV_CLIPPING
                 clip_mv_on_pic_boundary(context_ptr->blk_origin_x, context_ptr->blk_origin_y, context_ptr->blk_geom->bwidth, context_ptr->blk_geom->bheight,
                     ref_pic, &me_mv_x, &me_mv_y);
 #else
@@ -6952,7 +6952,7 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
                                 context_ptr->blk_geom->bwidth);
                     }
                 }
-#if !PME_CLIPPING
+#if !CLEAN_UP_MV_CLIPPING
 #if BOUNDARY_CHECK
                 }
 #endif
@@ -7382,7 +7382,7 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                     EbPictureBufferDesc *ref_pic = hbd_mode_decision
                                                        ? ref_obj->reference_picture16bit
                                                        : ref_obj->reference_picture;
-#if PME_CLIPPING
+#if CLEAN_UP_MV_CLIPPING
                     clip_mv_on_pic_boundary(context_ptr->blk_origin_x, context_ptr->blk_origin_y, context_ptr->blk_geom->bwidth, context_ptr->blk_geom->bheight,
                         ref_pic, &context_ptr->mvp_array[list_idx][ref_idx][mvp_index].col, &context_ptr->mvp_array[list_idx][ref_idx][mvp_index].row);
 #else
@@ -7478,7 +7478,7 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                     }
                 }
 
-#if MV_COST_REFACTOR
+#if FP_MV_COST
                 // Set ref MV
                 context_ptr->ref_mv.col = best_mvp_x;
                 context_ptr->ref_mv.row = best_mvp_y;

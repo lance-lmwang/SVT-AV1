@@ -1007,7 +1007,7 @@ typedef struct ModeDecisionContext {
     uint8_t switch_md_mode_based_on_sq_coeff;
     CoeffBSwMdCtrls cb_sw_md_ctrls;
 #endif
-#if MV_COST_REFACTOR
+#if FP_MV_COST
     MV ref_mv;
 #endif
 } ModeDecisionContext;

@@ -470,7 +470,7 @@ int av1_find_best_sub_pixel_tree(MacroBlockD *xd, const struct AV1Common *const 
 }
 #endif
 
-#if ADD_MV_COST
+#if FP_MV_COST
 // =============================================================================
 //  SVT Functions 
 // =============================================================================
