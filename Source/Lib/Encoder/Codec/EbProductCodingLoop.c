@@ -10027,7 +10027,7 @@ void tx_type_search(PictureControlSet *pcs_ptr,
             tx_type,
             PLANE_TYPE_Y,
 #if PARTIAL_FREQUENCY
-            context_ptr->pf_level);
+            context_ptr->pf_ctrls.pf_shape);
 #else
             DEFAULT_SHAPE);
 #endif

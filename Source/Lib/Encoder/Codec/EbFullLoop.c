@@ -1940,7 +1940,7 @@ void product_full_loop(ModeDecisionCandidateBuffer *candidate_buffer,
         candidate_buffer->candidate_ptr->transform_type[txb_itr],
         PLANE_TYPE_Y,
 #if PARTIAL_FREQUENCY
-        context_ptr->pf_level);
+        context_ptr->pf_ctrls.pf_shape);
 #else
         DEFAULT_SHAPE);
 #endif
@@ -2911,7 +2911,7 @@ void full_loop_r(SuperBlock *sb_ptr, ModeDecisionCandidateBuffer *candidate_buff
                 candidate_buffer->candidate_ptr->transform_type_uv,
                 PLANE_TYPE_UV,
 #if PARTIAL_FREQUENCY
-                context_ptr->pf_level);
+                context_ptr->pf_ctrls.pf_shape);
 #else
                 DEFAULT_SHAPE);
 #endif
@@ -3015,7 +3015,7 @@ void full_loop_r(SuperBlock *sb_ptr, ModeDecisionCandidateBuffer *candidate_buff
                 candidate_buffer->candidate_ptr->transform_type_uv,
                 PLANE_TYPE_UV,
 #if PARTIAL_FREQUENCY
-                context_ptr->pf_level);
+                context_ptr->pf_ctrls.pf_shape);
 #else
                 DEFAULT_SHAPE);
 #endif
