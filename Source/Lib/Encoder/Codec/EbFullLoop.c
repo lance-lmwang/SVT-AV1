@@ -1790,7 +1790,9 @@ int32_t av1_quantize_inv_quantize(
 
     SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
 #endif
-
+#if SHUT_RDOQ
+    perform_rdoq = 0;
+#endif
 #if SHUT_QUANT_FP
     if(0) {
 #else

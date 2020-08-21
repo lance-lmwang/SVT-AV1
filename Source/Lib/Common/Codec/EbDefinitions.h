@@ -677,7 +677,9 @@ extern "C" {
 #define USE_GF_UPDATE_FOR_LAMBDA         1 // Scale sse lambda based on where the frame is positioned in the miniGOP (based on TL)
 
 #define SHUT_QUANT_FP  0
-#define FAST_RDOQ_MODE 1
+#define FAST_RDOQ_MODE 0
+#define SHUT_RDOQ      1
+
 
 #endif
 // END  SVT_02_TEMP /////////////////////////////////////////////////////////
