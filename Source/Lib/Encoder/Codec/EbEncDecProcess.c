@@ -1927,12 +1927,9 @@ void set_pf_controls(ModeDecisionContext *mdctxt, uint8_t pf_level) {
         pf_ctrls->pf_shape = DEFAULT_SHAPE;
         break;
     case 2:
-        pf_ctrls->pf_shape = ONLY_DC_SHAPE;
-        break;
-    case 3:
         pf_ctrls->pf_shape = N2_SHAPE;
         break;
-    case 4:
+    case 3:
         pf_ctrls->pf_shape = N4_SHAPE;
         break;
     default:
@@ -7749,12 +7746,17 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
 
 #if PARTIAL_FREQUENCY
-    if (pd_pass == PD_PASS_0)
-        context_ptr->pf_level = 0;
-    else if (pd_pass == PD_PASS_1)
+    if (pcs_ptr->slice_type != I_SLICE) {
+        if (pd_pass == PD_PASS_0)
+            context_ptr->pf_level = 2;
+        else if (pd_pass == PD_PASS_1)
+            context_ptr->pf_level = 2;
+        else
+            context_ptr->pf_level = 2;
+    }
+    else {
         context_ptr->pf_level = 1;
-    else
-        context_ptr->pf_level = 1;
+    }
     set_pf_controls(context_ptr, context_ptr->pf_level);
 #endif
 #if ADAPTIVE_ME_SEARCH
