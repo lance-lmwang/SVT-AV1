@@ -5576,6 +5576,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
         context_ptr->predictive_me_level = 0;
 
+#if PME_OFF
+        context_ptr->predictive_me_level = 0;
+#endif
+
 #if ADD_SAD_AT_PME_SIGNAL
     // Level                    Settings
     // FALSE                    Use SSD at PME

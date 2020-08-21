@@ -1013,6 +1013,10 @@ typedef struct ModeDecisionContext {
 #if FP_MV_COST
     MV ref_mv;
 #endif
+
+#if EXIT_IF_DISTORTION
+    uint8_t distortion_zero_detected;
+#endif
 } ModeDecisionContext;
 #if USE_GF_UPDATE_FOR_LAMBDA
 typedef void (*EbAv1LambdaAssignFunc)(PictureControlSet* pcs_ptr, uint32_t *fast_lambda, uint32_t *full_lambda,

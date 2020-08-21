@@ -4912,6 +4912,13 @@ void md_full_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context
 #endif
                 *best_distortion = distortion;
             }
+
+#if EXIT_IF_DISTORTION
+            if (*best_distortion < ) {
+                return;
+            }
+                
+#endif
         }
     }
 #endif

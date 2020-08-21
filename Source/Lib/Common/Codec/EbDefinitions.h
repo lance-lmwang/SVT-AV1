@@ -682,7 +682,9 @@ extern "C" {
 #define COEFF_OPT                  1 // support only: no action
 #define ENABLE_COEFF_OPT           0
 #define OPT_SUBPEL                 0
-#define EXIT_PME                   1
+#define EXIT_PME                   0
+#define EXIT_IF_DISTORTION         0
+#define PME_OFF         1
 #endif
 // END  SVT_02_TEMP /////////////////////////////////////////////////////////
 
