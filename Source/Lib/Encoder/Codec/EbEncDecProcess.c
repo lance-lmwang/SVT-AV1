@@ -7750,7 +7750,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 
 #if PARTIAL_FREQUENCY
     if (pd_pass == PD_PASS_0)
-        context_ptr->pf_level = 1;
+        context_ptr->pf_level = 0;
     else if (pd_pass == PD_PASS_1)
         context_ptr->pf_level = 1;
     else
