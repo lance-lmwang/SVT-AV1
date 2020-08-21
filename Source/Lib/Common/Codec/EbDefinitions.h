@@ -677,6 +677,7 @@ extern "C" {
 #define USE_GF_UPDATE_FOR_LAMBDA         1 // Scale sse lambda based on where the frame is positioned in the miniGOP (based on TL)
 
 #define PARTIAL_FREQUENCY                1
+#define PF_MDS_1 1
 #endif
 // END  SVT_02_TEMP /////////////////////////////////////////////////////////
 

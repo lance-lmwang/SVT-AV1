@@ -7748,7 +7748,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #if PARTIAL_FREQUENCY
     if (pcs_ptr->slice_type != I_SLICE) {
         if (pd_pass == PD_PASS_0)
-            context_ptr->pf_level = 2;
+            context_ptr->pf_level = 1;
         else if (pd_pass == PD_PASS_1)
             context_ptr->pf_level = 1;
         else

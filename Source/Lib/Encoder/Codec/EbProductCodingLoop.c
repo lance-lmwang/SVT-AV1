@@ -10027,7 +10027,11 @@ void tx_type_search(PictureControlSet *pcs_ptr,
             tx_type,
             PLANE_TYPE_Y,
 #if PARTIAL_FREQUENCY
+#if PF_MDS_1
+            context_ptr->md_stage == MD_STAGE_1 ? N2_SHAPE : DEFAULT_SHAPE);
+#else
             context_ptr->pf_ctrls.pf_shape);
+#endif
 #else
             DEFAULT_SHAPE);
 #endif
