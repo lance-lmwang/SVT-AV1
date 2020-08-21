@@ -7514,8 +7514,13 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
 
 #if FP_MV_COST
                 // Set ref MV
+#if USE_SAME_MVP
+                context_ptr->ref_mv.col = context_ptr->mvp_array[list_idx][ref_idx][0].col;
+                context_ptr->ref_mv.row = context_ptr->mvp_array[list_idx][ref_idx][0].row;
+#else
                 context_ptr->ref_mv.col = best_mvp_x;
                 context_ptr->ref_mv.row = best_mvp_y;
+#endif
 #endif
                 // Step 2: perform full pel search around the best MVP
                 best_mvp_x = (best_mvp_x + 4) & ~0x07;
