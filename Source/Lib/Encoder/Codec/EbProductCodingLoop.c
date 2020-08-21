@@ -6424,6 +6424,11 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                         ref_idx,
                         &me_mv_x,
                         &me_mv_y);
+#if EXIT_PME
+                    // Copy sub ME MV before subpel
+                    context_ptr->sub_me_mv[list_idx][ref_idx].col = me_mv_x;
+                    context_ptr->sub_me_mv[list_idx][ref_idx].row = me_mv_y;
+#endif
 #else
                     md_subpel_search(pcs_ptr,
                         context_ptr,
@@ -7286,15 +7291,12 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                 pcs_ptr->parent_pcs_ptr->me_results[context_ptr->me_sb_addr];
 #endif
             uint32_t pa_me_distortion = ~0;//any non zero value
-#if EXIT_PME
-            int16_t me_mv_x = 32768;
-            int16_t me_mv_y = 32768;
-#endif
+
             if (is_me_data_present(context_ptr, me_results, list_idx, ref_idx)) {
-#if !EXIT_PME
+
                 int16_t me_mv_x;
                 int16_t me_mv_y;
-#endif
+
                 if (list_idx == 0) {
                     me_mv_x = context_ptr
                         ->sb_me_mv[context_ptr->blk_geom->blkidx_mds][REF_LIST_0][ref_idx][0];
@@ -7557,16 +7559,23 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
 
 
 #if EXIT_PME
-                if (me_mv_x != -32768 && me_mv_y != -32768) {
-                    if (ABS(context_ptr->fp_me_mv[list_idx][ref_idx].col - best_search_mvx) == 0 && ABS(context_ptr->fp_me_mv[list_idx][ref_idx].row - best_search_mvy) == 0)
-                        continue;
-
+                // Copy fp ME MV before subpel
+                context_ptr->fp_pme_mv[list_idx][ref_idx].col = best_search_mvx;
+                context_ptr->fp_pme_mv[list_idx][ref_idx].row = best_search_mvy;
+                uint8_t skip_pme_subpel = 0;
+                if (ABS(context_ptr->fp_me_mv[list_idx][ref_idx].col - context_ptr->fp_pme_mv[list_idx][ref_idx].col) == 0 && ABS(context_ptr->fp_me_mv[list_idx][ref_idx].row - context_ptr->fp_pme_mv[list_idx][ref_idx].row) == 0) {
+                    best_search_mvx = context_ptr->sub_me_mv[list_idx][ref_idx].col;
+                    best_search_mvy = context_ptr->sub_me_mv[list_idx][ref_idx].row;
+                    skip_pme_subpel = 1;
                 }
-
 #endif
 #if UPGRADE_SUBPEL
                 int besterr = (int)best_search_distortion;
+#if EXIT_PME
+                if (context_ptr->md_subpel_pme_ctrls.enabled && !skip_pme_subpel) {
+#else
                 if (context_ptr->md_subpel_pme_ctrls.enabled) {
+#endif
 #if FP_MV_COST
                     besterr = md_subpel_search(pcs_ptr,
                         context_ptr,
