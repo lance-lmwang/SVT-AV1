@@ -11009,7 +11009,7 @@ void build_starting_cand_block_array(SequenceControlSet *scs_ptr, PictureControl
 *  elements to be sent to the entropy coding engine
 *
 ********************************************************************************/
-void *mode_decision_kernel(void *input_ptr) {
+void *enc_dec_kernel(void *input_ptr) {
     // Context & SCS & PCS
     EbThreadContext *   thread_context_ptr = (EbThreadContext *)input_ptr;
     EncDecContext *     context_ptr        = (EncDecContext *)thread_context_ptr->priv;
@@ -11559,7 +11559,7 @@ void *mode_decision_kernel(void *input_ptr) {
                                     context_ptr);
 #else
                     // Encode Pass
-                    av1_encode_decode(
+                    av1_encode_pass(
                         scs_ptr, pcs_ptr, sb_ptr, sb_index, sb_origin_x, sb_origin_y, context_ptr);
 #endif
 
