@@ -681,7 +681,8 @@ extern "C" {
 #define SHUT_RDOQ                  0
 #define COEFF_OPT                  1 // support only: no action
 #define ENABLE_COEFF_OPT           0
-#define OPT_SUBPEL                 1
+#define OPT_SUBPEL                 0
+#define EXIT_PME                   1
 #endif
 // END  SVT_02_TEMP /////////////////////////////////////////////////////////
 

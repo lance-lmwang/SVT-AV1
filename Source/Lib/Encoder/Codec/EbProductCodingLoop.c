@@ -7274,10 +7274,15 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                 pcs_ptr->parent_pcs_ptr->me_results[context_ptr->me_sb_addr];
 #endif
             uint32_t pa_me_distortion = ~0;//any non zero value
+#if EXIT_PME
+            int16_t me_mv_x = 32768;
+            int16_t me_mv_y = 32768;
+#endif
             if (is_me_data_present(context_ptr, me_results, list_idx, ref_idx)) {
-
+#if !EXIT_PME
                 int16_t me_mv_x;
                 int16_t me_mv_y;
+#endif
                 if (list_idx == 0) {
                     me_mv_x = context_ptr
                         ->sb_me_mv[context_ptr->blk_geom->blkidx_mds][REF_LIST_0][ref_idx][0];
@@ -7533,6 +7538,13 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                                    &best_search_mvy,
                                    &best_search_distortion);
 
+
+#if EXIT_PME
+                if (me_mv_x != 32768 && me_mv_y != 32768)
+                    if (ABS(me_mv_x - best_search_mvx) <= 1 && ABS(me_mv_x - best_search_mvx) <= 1)
+                        continue;
+
+#endif
 #if UPGRADE_SUBPEL
                 int besterr = (int)best_search_distortion;
                 if (context_ptr->md_subpel_pme_ctrls.enabled) {
