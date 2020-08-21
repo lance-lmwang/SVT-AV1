@@ -6404,6 +6404,11 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
 #if UPGRADE_SUBPEL
                 if (context_ptr->md_subpel_me_ctrls.enabled) {
 #if FP_MV_COST
+#if EXIT_PME
+                    // Copy ME MV before subpel
+                    context_ptr->fp_me_mv[list_idx][ref_idx].col = me_mv_x;
+                    context_ptr->fp_me_mv[list_idx][ref_idx].row = me_mv_y;
+#endif
                     md_subpel_search(pcs_ptr,
                         context_ptr,
                         context_ptr->md_subpel_me_ctrls,
@@ -7540,9 +7545,11 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
 
 
 #if EXIT_PME
-                if (me_mv_x != -32768 && me_mv_y != -32768)
-                    if (ABS(me_mv_x - best_search_mvx) == 0 && ABS(me_mv_y - best_search_mvy) == 0)
+                if (me_mv_x != -32768 && me_mv_y != -32768) {
+                    if (ABS(context_ptr->fp_me_mv[list_idx][ref_idx].col - best_search_mvx) == 0 && ABS(context_ptr->fp_me_mv[list_idx][ref_idx].row - best_search_mvy) == 0)
                         continue;
+
+                }
 
 #endif
 #if UPGRADE_SUBPEL
