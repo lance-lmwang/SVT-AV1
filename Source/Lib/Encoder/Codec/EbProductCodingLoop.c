@@ -14965,6 +14965,33 @@ void md_encode_block(PictureControlSet *pcs_ptr,
 #endif
 }
 
+#if SEPARATE_SQW_P1_AND_P2
+uint8_t update_skip_nsq_hv_shapes(ModeDecisionContext *context_ptr) {
+    uint8_t skip_nsq = 0;
+    uint32_t nsq_hv_weight = 110;
+
+    // return immediately if the H/V cost-based skip is off
+    if (context_ptr->nsq_hv_level == 0) return skip_nsq;
+
+    uint32_t sqi = context_ptr->blk_geom->sqi_mds;
+    MdBlkStruct *local_cu_unit = context_ptr->md_local_blk_unit;
+    if (local_cu_unit[sqi].avail_blk_flag &&
+        local_cu_unit[sqi + 1].avail_blk_flag &&
+        local_cu_unit[sqi + 2].avail_blk_flag &&
+        local_cu_unit[sqi + 3].avail_blk_flag &&
+        local_cu_unit[sqi + 4].avail_blk_flag) {
+        uint64_t h_cost = local_cu_unit[sqi + 1].default_cost + local_cu_unit[sqi + 2].default_cost;
+        uint64_t v_cost = local_cu_unit[sqi + 3].default_cost + local_cu_unit[sqi + 4].default_cost;
+        if (context_ptr->blk_geom->shape == PART_HA || context_ptr->blk_geom->shape == PART_HB || context_ptr->blk_geom->shape == PART_H4) {
+            skip_nsq = (h_cost > ((v_cost * nsq_hv_weight) / 100));
+        }
+        if (context_ptr->blk_geom->shape == PART_VA || context_ptr->blk_geom->shape == PART_VB || context_ptr->blk_geom->shape == PART_V4) {
+            skip_nsq = (v_cost > ((h_cost * nsq_hv_weight) / 100));
+        }
+    }
+    return skip_nsq;
+}
+#endif
 /*
  * Determine if the evaluation of nsq blocks (HA, HB, VA, VB, H4, V4) can be skipped
  * based on the relative cost of the SQ, H, and V blocks.  The scaling factor sq_weight
@@ -15057,7 +15084,7 @@ uint8_t update_skip_nsq_shapes(
             // Determine if nsq shapes can be skipped based on the relative cost of SQ and H blocks
             skip_nsq = (h_cost > ((sq_cost * sq_weight) / 100));
 
-
+#if !SEPARATE_SQW_P1_AND_P2
             if (!skip_nsq && context_ptr->nsq_hv_level > 0) {
                 if (local_cu_unit[sqi + 3].avail_blk_flag && local_cu_unit[sqi + 4].avail_blk_flag) {
                     uint64_t v_cost = local_cu_unit[sqi + 3].default_cost + local_cu_unit[sqi + 4].default_cost;
@@ -15087,8 +15114,7 @@ uint8_t update_skip_nsq_shapes(
                     skip_nsq = (h_cost > ((v_cost * v_weight) / 100));
                 }
             }
-
-
+#endif
         }
     }
     if (context_ptr->blk_geom->shape == PART_VA || context_ptr->blk_geom->shape == PART_VB || context_ptr->blk_geom->shape == PART_V4) {
@@ -15128,6 +15154,7 @@ uint8_t update_skip_nsq_shapes(
 
             // Determine if nsq shapes can be skipped based on the relative cost of SQ and V blocks
             skip_nsq = (v_cost > ((sq_cost * sq_weight) / 100));
+#if !SEPARATE_SQW_P1_AND_P2
             if (!skip_nsq  && context_ptr->nsq_hv_level > 0) {
                 if (local_cu_unit[sqi + 1].avail_blk_flag && local_cu_unit[sqi + 2].avail_blk_flag) {
                     uint64_t h_cost = local_cu_unit[sqi + 1].default_cost + local_cu_unit[sqi + 2].default_cost;
@@ -15158,8 +15185,7 @@ uint8_t update_skip_nsq_shapes(
                     skip_nsq = (v_cost > ((h_cost * h_weight) / 100));
                 }
             }
-
-
+#endif
         }
     }
 
@@ -16109,6 +16135,7 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
             if (context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].avail_blk_flag)
                 switch_md_mode_based_on_sq_coeff = context_ptr->blk_geom->shape == PART_N || context_ptr->parent_sq_has_coeff[sq_index] != 0 ? EB_FALSE : EB_TRUE;
 
+            // First check based on SQ coeffs
             if (switch_md_mode_based_on_sq_coeff) {
                 if (coeffb_sw_md_ctrls->skip_block) {
                     zero_sq_coeff_skip_action = 1;
@@ -16123,6 +16150,44 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
 #endif
                 }
             }
+#if SWITCH_MODE_ON_HV_COEFF
+            // Use H/V coeff info in addition to SQ
+            else if (context_ptr->blk_geom->shape == PART_HA || context_ptr->blk_geom->shape == PART_HB || context_ptr->blk_geom->shape == PART_H4) {
+                if (context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds + 1].avail_blk_flag &&
+                    context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds + 2].avail_blk_flag) {
+                    switch_md_mode_based_on_sq_coeff = (context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds + 1].block_has_coeff ||
+                                                        context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds + 2].block_has_coeff)
+                                                        ? EB_FALSE : EB_TRUE;
+                    if (switch_md_mode_based_on_sq_coeff) {
+                        if (coeffb_sw_md_ctrls->skip_block) {
+                            zero_sq_coeff_skip_action = 1;
+                        }
+                        else {
+                            signal_derivation_enc_dec_kernel_oq(scs_ptr, pcs_ptr, context_ptr, coeffb_sw_md_ctrls->mode_offset);
+                            signal_derivation_block(pcs_ptr, context_ptr, coeffb_sw_md_ctrls->mode_offset);
+                        }
+                    }
+                }
+            }
+            // Use H/V coeff info in addition to SQ
+            else if (context_ptr->blk_geom->shape == PART_VA || context_ptr->blk_geom->shape == PART_VB || context_ptr->blk_geom->shape == PART_V4) {
+                if (context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds + 3].avail_blk_flag &&
+                    context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds + 4].avail_blk_flag) {
+                    switch_md_mode_based_on_sq_coeff = (context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds + 3].block_has_coeff ||
+                                                        context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds + 4].block_has_coeff)
+                                                        ? EB_FALSE : EB_TRUE;
+                    if (switch_md_mode_based_on_sq_coeff) {
+                        if (coeffb_sw_md_ctrls->skip_block) {
+                            zero_sq_coeff_skip_action = 1;
+                        }
+                        else {
+                            signal_derivation_enc_dec_kernel_oq(scs_ptr, pcs_ptr, context_ptr, coeffb_sw_md_ctrls->mode_offset);
+                            signal_derivation_block(pcs_ptr, context_ptr, coeffb_sw_md_ctrls->mode_offset);
+                        }
+                    }
+                }
+            }
+#endif
         }
 #endif
 
@@ -16271,7 +16336,34 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
 #if !REMOVE_SQ_WEIGHT_QP_CHECK && !SHUT_SQ_WEIGHT_INTRA_FILTER
             uint8_t sq_weight_based_nsq_skip = update_skip_nsq_shapes(scs_ptr, pcs_ptr, context_ptr);
 #else
+#if SEPARATE_SQW_P1_AND_P2
+            uint8_t sq_weight_based_nsq_skip = 0;
+
+            // Only apply sq_weight if not acting based on zero_coeff
+            if (!switch_md_mode_based_on_sq_coeff) {
+                // Perform sq_weight part 1
+                sq_weight_based_nsq_skip = update_skip_nsq_shapes(context_ptr);
+
+                if (sq_weight_based_nsq_skip && SQW_P1_MD_OFFSET) {
+                    // Apply MD offset instead of skipping
+                    signal_derivation_enc_dec_kernel_oq(scs_ptr, pcs_ptr, context_ptr, SQW_P1_MD_OFFSET);
+                    signal_derivation_block(pcs_ptr, context_ptr, SQW_P1_MD_OFFSET);
+                    sq_weight_based_nsq_skip = 0;
+                }
+                else if (!sq_weight_based_nsq_skip) {
+                    sq_weight_based_nsq_skip = update_skip_nsq_hv_shapes(context_ptr);
+
+                    if (sq_weight_based_nsq_skip && SQW_P2_MD_OFFSET) {
+                        // Apply MD offset instead of skipping
+                        signal_derivation_enc_dec_kernel_oq(scs_ptr, pcs_ptr, context_ptr, SQW_P2_MD_OFFSET);
+                        signal_derivation_block(pcs_ptr, context_ptr, SQW_P2_MD_OFFSET);
+                        sq_weight_based_nsq_skip = 0;
+                    }
+                }
+            }
+#else
             uint8_t sq_weight_based_nsq_skip = update_skip_nsq_shapes(context_ptr);
+#endif
 #endif
 #if !CLEAN_UP_SB_DATA_6
             skip_next_depth = context_ptr->blk_ptr->do_not_process_block;

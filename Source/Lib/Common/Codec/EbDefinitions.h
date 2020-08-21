@@ -675,6 +675,22 @@ extern "C" {
 #define CLEAN_UP_MV_CLIPPING             1 // Clean-up MV clipping
 
 #define USE_GF_UPDATE_FOR_LAMBDA         1 // Scale sse lambda based on where the frame is positioned in the miniGOP (based on TL)
+
+// Towards NSQ reduction
+#define SHUT_SQW                         0 // Turn off sq_weight
+#define SHUT_NSQ_STATS                   1 // Turn off nsq stats feature
+#define SHUT_COEFF_BASED_OFFSET          0 // Turn off mode switching based on zero coeffs
+
+#define SWITCH_MODE_ON_HV_COEFF          1 // use H/V zero-coeff info to apply mode offset/skip nsq blocks
+#define SEPARATE_SQW_P1_AND_P2           1 // separate sq_weight and nsq_hv_level; only apply sqw action if non-zero coeffs
+#define SWITCH_MODE_ON_SQW               1
+#if SWITCH_MODE_ON_SQW
+#define SQW_P1_MD_OFFSET                 3 // mode offset to apply for sq_weight part 1 (0 means skip)
+#define SQW_P2_MD_OFFSET                 0 // mode offset to apply for sq_weight part 2 (0 means skip)
+#else
+#define SQW_P1_MD_OFFSET                 0 // offset 0 b/c SWITCH_MODE_ON_SQW is OFF
+#define SQW_P2_MD_OFFSET                 0 // offset 0 b/c SWITCH_MODE_ON_SQW is OFF
+#endif
 #endif
 // END  SVT_02_TEMP /////////////////////////////////////////////////////////
 

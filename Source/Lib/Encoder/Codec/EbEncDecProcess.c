@@ -6785,6 +6785,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
     }
 #endif
+#if SHUT_NSQ_STATS
+    adaptive_md_cycles_level = 0;
+#endif
     adaptive_md_cycles_redcution_controls(context_ptr, adaptive_md_cycles_level);
 #endif
     // Weighting (expressed as a percentage) applied to
@@ -7017,7 +7020,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
                 sequence_control_set_ptr->static_config.sq_weight - 5;
 #endif
 #endif
-
+#if SHUT_SQW
+    context_ptr->sq_weight = (uint32_t)~0;
+#endif
 #if NEW_CYCLE_ALLOCATION && !DISALLOW_ALL_ACTIONS
     if (context_ptr->enable_area_based_cycles_allocation) {
         if (context_ptr->sb_class == LOW_COMPLEX_CLASS)
@@ -7246,7 +7251,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->switch_md_mode_based_on_sq_coeff = 2;
     else
         context_ptr->switch_md_mode_based_on_sq_coeff = 3;
-
+#if SHUT_COEFF_BASED_OFFSET
+    context_ptr->switch_md_mode_based_on_sq_coeff = 0;
+#endif
     coeff_based_switch_md_controls(context_ptr, context_ptr->switch_md_mode_based_on_sq_coeff);
 #else
     // Set coeff_based_nsq_cand_reduction
