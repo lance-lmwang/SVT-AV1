@@ -1939,7 +1939,11 @@ void product_full_loop(ModeDecisionCandidateBuffer *candidate_buffer,
         context_ptr->hbd_mode_decision ? BIT_INCREMENT_10BIT : BIT_INCREMENT_8BIT,
         candidate_buffer->candidate_ptr->transform_type[txb_itr],
         PLANE_TYPE_Y,
+#if PARTIAL_FREQUENCY
+        context_ptr->pf_level);
+#else
         DEFAULT_SHAPE);
+#endif
 
     int32_t seg_qp = pcs_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.segmentation_enabled
                          ? pcs_ptr->parent_pcs_ptr->frm_hdr.segmentation_params
@@ -2906,7 +2910,11 @@ void full_loop_r(SuperBlock *sb_ptr, ModeDecisionCandidateBuffer *candidate_buff
                 context_ptr->hbd_mode_decision ? BIT_INCREMENT_10BIT : BIT_INCREMENT_8BIT,
                 candidate_buffer->candidate_ptr->transform_type_uv,
                 PLANE_TYPE_UV,
+#if PARTIAL_FREQUENCY
+                context_ptr->pf_level);
+#else
                 DEFAULT_SHAPE);
+#endif
 
             int32_t seg_qp =
                 pcs_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.segmentation_enabled
@@ -3006,7 +3014,11 @@ void full_loop_r(SuperBlock *sb_ptr, ModeDecisionCandidateBuffer *candidate_buff
                 context_ptr->hbd_mode_decision ? BIT_INCREMENT_10BIT : BIT_INCREMENT_8BIT,
                 candidate_buffer->candidate_ptr->transform_type_uv,
                 PLANE_TYPE_UV,
+#if PARTIAL_FREQUENCY
+                context_ptr->pf_level);
+#else
                 DEFAULT_SHAPE);
+#endif
             int32_t seg_qp =
                 pcs_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.segmentation_enabled
                     ? pcs_ptr->parent_pcs_ptr->frm_hdr.segmentation_params

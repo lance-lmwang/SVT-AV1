@@ -1914,6 +1914,33 @@ void md_nsq_motion_search_controls(ModeDecisionContext *mdctxt, uint8_t md_nsq_m
     }
 }
 #endif
+#if PARTIAL_FREQUENCY
+void set_pf_controls(ModeDecisionContext *mdctxt, uint8_t pf_level) {
+
+   PfCtrls *pf_ctrls = &mdctxt->pf_ctrls;
+
+    switch (pf_level) {
+    case 0:
+        pf_ctrls->pf_shape = ONLY_DC_SHAPE;
+        break;
+    case 1:
+        pf_ctrls->pf_shape = DEFAULT_SHAPE;
+        break;
+    case 2:
+        pf_ctrls->pf_shape = ONLY_DC_SHAPE;
+        break;
+    case 3:
+        pf_ctrls->pf_shape = N2_SHAPE;
+        break;
+    case 4:
+        pf_ctrls->pf_shape = N4_SHAPE;
+        break;
+    default:
+        assert(0);
+        break;
+    }
+}
+#endif
 #if ADAPTIVE_ME_SEARCH
 void md_sq_motion_search_controls(ModeDecisionContext *mdctxt, uint8_t md_sq_mv_search_level) {
 
@@ -7720,6 +7747,16 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
     set_block_based_depth_reduction_controls(context_ptr, context_ptr->block_based_depth_reduction_level);
 #endif
+
+#if PARTIAL_FREQUENCY
+    if (pd_pass == PD_PASS_0)
+        context_ptr->pf_level = 1;
+    else if (pd_pass == PD_PASS_1)
+        context_ptr->pf_level = 1;
+    else
+        context_ptr->pf_level = 1;
+    set_pf_controls(context_ptr, context_ptr->pf_level);
+#endif
 #if ADAPTIVE_ME_SEARCH
     if (pd_pass == PD_PASS_0)
         context_ptr->md_sq_mv_search_level = 0;
@@ -12399,7 +12436,7 @@ void *enc_dec_kernel(void *input_ptr) {
 
                         // PD0 MD Tool(s) : Best ME candidate only as INTER candidate(s), DC only as INTRA candidate(s), Chroma blind, Spatial SSE,
                         // no MVP table generation, no fast rate @ full cost derivation, Md-Stage 0 and Md-Stage 2 using count=1 (i.e. only best md-stage-0 candidate)
-                        mode_decision_sb(scs_ptr,
+                        pd0(scs_ptr,
                                          pcs_ptr,
                                          mdc_ptr,
                                          sb_ptr,
@@ -12534,7 +12571,7 @@ void *enc_dec_kernel(void *input_ptr) {
 
                     // PD2 MD Tool(s): default MD Tool(s)
 
-                    mode_decision_sb(scs_ptr,
+                    pd2(scs_ptr,
                                      pcs_ptr,
                                      mdc_ptr,
                                      sb_ptr,

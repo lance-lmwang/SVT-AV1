@@ -318,6 +318,12 @@ typedef struct DepthReductionCtrls {
 
 }DepthReductionCtrls;
 #endif
+
+#if PARTIAL_FREQUENCY
+typedef struct PfCtrls {
+    EB_TRANS_COEFF_SHAPE pf_shape;
+} PfCtrls;
+#endif
 #if ADD_MD_NSQ_SEARCH
 typedef struct MdNsqMotionSearchCtrls {
     uint8_t enabled;                    // 0: NSQ motion search @ MD OFF; 1: NSQ motion search @ MD ON
@@ -831,6 +837,10 @@ typedef struct ModeDecisionContext {
 #if BLOCK_REDUCTION_ALGORITHM_1 || BLOCK_REDUCTION_ALGORITHM_2
     uint8_t      block_based_depth_reduction_level;
     DepthReductionCtrls depth_reduction_ctrls;
+#endif
+#if PARTIAL_FREQUENCY
+    uint8_t pf_level;
+    PfCtrls pf_ctrls;
 #endif
 #if ADAPTIVE_ME_SEARCH
     // Control signals for MD sparse search (used for increasing ME search for active clips)

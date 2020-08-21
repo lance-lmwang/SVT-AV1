@@ -3418,7 +3418,29 @@ EbErrorType av1_estimate_transform(int16_t *residual_buffer, uint32_t residual_s
         break;
     default: assert(0); break;
     }
-
+#if PARTIAL_FREQUENCY
+    if (trans_coeff_shape == N2_SHAPE) {
+        for (int i = 0; i < (tx_size_wide[transform_size] * tx_size_high[transform_size]); i++) {
+            if (i % tx_size_wide[transform_size] >= (tx_size_wide[transform_size] >> 1) || i / tx_size_high[transform_size] >= (tx_size_high[transform_size] >> 1)) {
+                coeff_buffer[i] = 0;
+            }
+        }
+    }
+    else if (trans_coeff_shape == N4_SHAPE) {
+        for (int i = 0; i < (tx_size_wide[transform_size] * tx_size_high[transform_size]); i++) {
+            if (i % tx_size_wide[transform_size] >= (tx_size_wide[transform_size] >> 2) || i / tx_size_high[transform_size] >= (tx_size_high[transform_size] >> 2)) {
+                coeff_buffer[i] = 0;
+            }
+        }
+    }
+    else if (trans_coeff_shape == ONLY_DC_SHAPE) {
+        for (int i = 0; i < (tx_size_wide[transform_size] * tx_size_high[transform_size]); i++) {
+            if (i > 0) {
+                coeff_buffer[i] = 0;
+            }
+        }
+    }
+#endif
     return return_error;
 }
 
