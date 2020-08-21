@@ -682,8 +682,9 @@ extern "C" {
 #define SHUT_COEFF_BASED_OFFSET          0 // Turn off mode switching based on zero coeffs
 
 #define SWITCH_MODE_ON_HV_COEFF          1 // use H/V zero-coeff info to apply mode offset/skip nsq blocks
-#define SEPARATE_SQW_P1_AND_P2           1 // separate sq_weight and nsq_hv_level; only apply sqw action if non-zero coeffs
-#define SWITCH_MODE_ON_SQW               1
+#define SEPARATE_SQW_P1_AND_P2           1 // separate sq_weight and nsq_hv_level
+#define ZERO_COEFF_OVERRIDE_SQW          0 // only apply sqw action if there is no zero-coeffs action
+#define SWITCH_MODE_ON_SQW               0
 #if SWITCH_MODE_ON_SQW
 #define SQW_P1_MD_OFFSET                 3 // mode offset to apply for sq_weight part 1 (0 means skip)
 #define SQW_P2_MD_OFFSET                 0 // mode offset to apply for sq_weight part 2 (0 means skip)

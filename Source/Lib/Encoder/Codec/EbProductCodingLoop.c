@@ -16389,9 +16389,10 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
 #else
 #if SEPARATE_SQW_P1_AND_P2
             uint8_t sq_weight_based_nsq_skip = 0;
-
+#if ZERO_COEFF_OVERRIDE_SQW
             // Only apply sq_weight if not acting based on zero_coeff
             if (!switch_md_mode_based_on_sq_coeff) {
+#endif
                 // Perform sq_weight part 1
                 sq_weight_based_nsq_skip = update_skip_nsq_shapes(context_ptr);
 
@@ -16438,9 +16439,18 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
 #endif
                     }
                 }
+#if ZERO_COEFF_OVERRIDE_SQW
             }
+#endif
 #else
+#if ZERO_COEFF_OVERRIDE_SQW
+            // Only apply sq_weight if not acting based on zero_coeff
+            if (!switch_md_mode_based_on_sq_coeff) {
+#endif
             uint8_t sq_weight_based_nsq_skip = update_skip_nsq_shapes(context_ptr);
+#if ZERO_COEFF_OVERRIDE_SQW
+            }
+#endif
 #endif
 #endif
 #if !CLEAN_UP_SB_DATA_6
