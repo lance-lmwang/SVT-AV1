@@ -1788,8 +1788,11 @@ int32_t av1_quantize_inv_quantize(
     SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
 #endif
 
-
+#if SHUT_QUANT_FP
+    if(0) {
+#else
     if (perform_rdoq) {
+#endif
         if (bit_increment || (is_encode_pass && scs_ptr->static_config.encoder_16bit_pipeline)) {
             eb_av1_highbd_quantize_fp_facade((TranLow *)coeff,
                                              n_coeffs,
