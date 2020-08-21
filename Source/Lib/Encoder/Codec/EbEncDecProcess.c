@@ -2066,12 +2066,12 @@ void md_subpel_me_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_me_lev
         break;
     case 2:
         md_subpel_me_ctrls->enabled = 1;
-#if OPT_SUBPEL
-        md_subpel_me_ctrls->subpel_search_type = USE_2_TAPS;
-#else
         md_subpel_me_ctrls->subpel_search_type = USE_4_TAPS;
-#endif
+#if OPT_SUBPEL
+        md_subpel_me_ctrls->subpel_iters_per_step = 0;
+#else
         md_subpel_me_ctrls->subpel_iters_per_step = 2;
+#endif
         md_subpel_me_ctrls->eight_pel_search_enabled = 0;
         md_subpel_me_ctrls->sub_search_pos_cnt = 1;
         break;
@@ -2104,12 +2104,12 @@ void md_subpel_pme_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_pme_l
         break;
     case 2:
         md_subpel_pme_ctrls->enabled = 1;
-#if OPT_SUBPEL
-        md_subpel_pme_ctrls->subpel_search_type = USE_2_TAPS;
-#else
         md_subpel_pme_ctrls->subpel_search_type = USE_4_TAPS;
-#endif
+#if OPT_SUBPEL
+        md_subpel_pme_ctrls->subpel_iters_per_step = 0;
+#else
         md_subpel_pme_ctrls->subpel_iters_per_step = 2;
+#endif
         md_subpel_pme_ctrls->eight_pel_search_enabled = 0;
         md_subpel_pme_ctrls->sub_search_pos_cnt = 1;
         break;
