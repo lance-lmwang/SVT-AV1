@@ -16104,7 +16104,7 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
         signal_derivation_block(pcs_ptr, context_ptr);
 #endif
 #endif
-#if SWITCH_MODE_BASED_ON_STATISTICS
+#if SWITCH_MODE_BASED_ON_STATISTICS && !ENABLE_NSQ_ASSIST_MODE
         // Use more aggressive (faster, but less accurate) settigns for unlikely paritions (incl. SQ)
         SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
         AMdCycleRControls*adaptive_md_cycles_red_ctrls = &context_ptr->admd_cycles_red_ctrls;
@@ -16121,6 +16121,20 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
                 EbEncMode md_enc_mode = MIN(ENC_M8, pcs_ptr->enc_mode + adaptive_md_cycles_red_ctrls->mode_offset);
                 signal_derivation_update(scs_ptr, pcs_ptr, context_ptr, md_enc_mode);
 #endif
+            }
+        }
+#endif
+#if ENABLE_NSQ_ASSIST_MODE
+        // Use more aggressive (faster, but less accurate) settigns for unlikely paritions (incl. SQ)
+        uint8_t stat_assist_info = 0;
+        AMdCycleRControls*adaptive_md_cycles_red_ctrls = &context_ptr->admd_cycles_red_ctrls;
+        if (adaptive_md_cycles_red_ctrls->enabled) {
+            int8_t pred_depth_refinement = context_ptr->md_local_blk_unit[blk_idx_mds].pred_depth_refinement;
+            pred_depth_refinement = MIN(pred_depth_refinement, 2);
+            pred_depth_refinement = MAX(pred_depth_refinement, -2);
+            pred_depth_refinement += 2;
+            if (context_ptr->ad_md_prob[pred_depth_refinement][context_ptr->blk_geom->shape] < adaptive_md_cycles_red_ctrls->switch_mode_th) {
+                stat_assist_info = 1;
             }
         }
 #endif
@@ -16142,8 +16156,20 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
                 }
                 else {
 #if UNIFY_LEVELS
+#if ENABLE_NSQ_ASSIST_MODE
+                    uint8_t mode_offset = coeffb_sw_md_ctrls->mode_offset;
+                    mode_offset = stat_assist_info ? mode_offset + ASSIST_OFFSET : mode_offset;
+                    if (mode_offset > 7) {
+                            zero_sq_coeff_skip_action = 1;
+                    }
+                    else {
+                        signal_derivation_enc_dec_kernel_oq(scs_ptr, pcs_ptr, context_ptr, mode_offset);
+                        signal_derivation_block(pcs_ptr, context_ptr, mode_offset);
+                    }
+#else
                     signal_derivation_enc_dec_kernel_oq(scs_ptr, pcs_ptr, context_ptr, coeffb_sw_md_ctrls->mode_offset);
                     signal_derivation_block(pcs_ptr, context_ptr, coeffb_sw_md_ctrls->mode_offset);
+#endif
 #else
                     EbEncMode md_enc_mode = MIN(ENC_M8, pcs_ptr->enc_mode + coeffb_sw_md_ctrls->mode_offset);
                     signal_derivation_update(scs_ptr, pcs_ptr, context_ptr, md_enc_mode);
@@ -16163,8 +16189,21 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
                             zero_sq_coeff_skip_action = 1;
                         }
                         else {
+#if ENABLE_NSQ_ASSIST_MODE
+                            uint8_t mode_offset = coeffb_sw_md_ctrls->mode_offset;
+                            mode_offset = stat_assist_info ? mode_offset + ASSIST_OFFSET : mode_offset;
+                            if (mode_offset > 7) {
+                                zero_sq_coeff_skip_action = 1;
+                            }
+                            else {
+                                signal_derivation_enc_dec_kernel_oq(scs_ptr, pcs_ptr, context_ptr, mode_offset);
+                                signal_derivation_block(pcs_ptr, context_ptr, mode_offset);
+                            }
+
+#else
                             signal_derivation_enc_dec_kernel_oq(scs_ptr, pcs_ptr, context_ptr, coeffb_sw_md_ctrls->mode_offset);
                             signal_derivation_block(pcs_ptr, context_ptr, coeffb_sw_md_ctrls->mode_offset);
+#endif
                         }
                     }
                 }
@@ -16181,8 +16220,20 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
                             zero_sq_coeff_skip_action = 1;
                         }
                         else {
+#if ENABLE_NSQ_ASSIST_MODE
+                            uint8_t mode_offset = coeffb_sw_md_ctrls->mode_offset;
+                            mode_offset = stat_assist_info ? mode_offset + ASSIST_OFFSET : mode_offset;
+                            if (mode_offset > 7) {
+                                zero_sq_coeff_skip_action = 1;
+                            }
+                            else {
+                                signal_derivation_enc_dec_kernel_oq(scs_ptr, pcs_ptr, context_ptr, mode_offset);
+                                signal_derivation_block(pcs_ptr, context_ptr, mode_offset);
+                            }
+#else
                             signal_derivation_enc_dec_kernel_oq(scs_ptr, pcs_ptr, context_ptr, coeffb_sw_md_ctrls->mode_offset);
                             signal_derivation_block(pcs_ptr, context_ptr, coeffb_sw_md_ctrls->mode_offset);
+#endif
                         }
                     }
                 }
@@ -16346,18 +16397,45 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
 
                 if (sq_weight_based_nsq_skip && SQW_P1_MD_OFFSET) {
                     // Apply MD offset instead of skipping
+#if ENABLE_NSQ_ASSIST_MODE
+                    uint8_t mode_offset = coeffb_sw_md_ctrls->mode_offset;
+                    mode_offset = stat_assist_info ? SQW_P1_MD_OFFSET + ASSIST_OFFSET : SQW_P1_MD_OFFSET;
+
+                    if (mode_offset > 7) {
+                        sq_weight_based_nsq_skip = 1;
+                    }
+                    else {
+                        signal_derivation_enc_dec_kernel_oq(scs_ptr, pcs_ptr, context_ptr, mode_offset);
+                        signal_derivation_block(pcs_ptr, context_ptr, mode_offset);
+                        sq_weight_based_nsq_skip = 0;
+                    }
+#else
                     signal_derivation_enc_dec_kernel_oq(scs_ptr, pcs_ptr, context_ptr, SQW_P1_MD_OFFSET);
                     signal_derivation_block(pcs_ptr, context_ptr, SQW_P1_MD_OFFSET);
                     sq_weight_based_nsq_skip = 0;
+#endif
                 }
                 else if (!sq_weight_based_nsq_skip) {
                     sq_weight_based_nsq_skip = update_skip_nsq_hv_shapes(context_ptr);
 
                     if (sq_weight_based_nsq_skip && SQW_P2_MD_OFFSET) {
                         // Apply MD offset instead of skipping
+#if ENABLE_NSQ_ASSIST_MODE
+                        uint8_t mode_offset = coeffb_sw_md_ctrls->mode_offset;
+                        mode_offset = stat_assist_info ? SQW_P2_MD_OFFSET + ASSIST_OFFSET : SQW_P2_MD_OFFSET;
+                        if (mode_offset > 7) {
+                            sq_weight_based_nsq_skip = 1;
+                        }
+                        else {
+                            signal_derivation_enc_dec_kernel_oq(scs_ptr, pcs_ptr, context_ptr, mode_offset);
+                            signal_derivation_block(pcs_ptr, context_ptr, mode_offset);
+                            sq_weight_based_nsq_skip = 0;
+                        }
+#else
                         signal_derivation_enc_dec_kernel_oq(scs_ptr, pcs_ptr, context_ptr, SQW_P2_MD_OFFSET);
                         signal_derivation_block(pcs_ptr, context_ptr, SQW_P2_MD_OFFSET);
                         sq_weight_based_nsq_skip = 0;
+#endif
                     }
                 }
             }

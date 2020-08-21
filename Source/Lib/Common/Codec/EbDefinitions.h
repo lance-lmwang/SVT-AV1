@@ -691,6 +691,10 @@ extern "C" {
 #define SQW_P1_MD_OFFSET                 0 // offset 0 b/c SWITCH_MODE_ON_SQW is OFF
 #define SQW_P2_MD_OFFSET                 0 // offset 0 b/c SWITCH_MODE_ON_SQW is OFF
 #endif
+#define ENABLE_NSQ_ASSIST_MODE           0 // Enable Stat feature as an assit to the coeff and sq_weight
+#if ENABLE_NSQ_ASSIST_MODE
+#define ASSIST_OFFSET                    2 // Offset added by the stat feature.
+#endif
 #endif
 // END  SVT_02_TEMP /////////////////////////////////////////////////////////
 

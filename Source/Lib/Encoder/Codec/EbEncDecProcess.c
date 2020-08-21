@@ -6785,7 +6785,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
     }
 #endif
-#if SHUT_NSQ_STATS
+#if SHUT_NSQ_STATS && !ENABLE_NSQ_ASSIST_MODE
     adaptive_md_cycles_level = 0;
 #endif
     adaptive_md_cycles_redcution_controls(context_ptr, adaptive_md_cycles_level);
@@ -9691,7 +9691,7 @@ static void build_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSe
                 tot_d1_blocks = MIN(17, tot_d1_blocks);
 #endif
             d1_blocks_accumlated = 0;
-#if SOFT_CYCLES_REDUCTION
+#if SOFT_CYCLES_REDUCTION && !ENABLE_NSQ_ASSIST_MODE
             for (d1_block_idx = 0; d1_block_idx < tot_d1_blocks; d1_block_idx++) {
                 if (results_ptr->leaf_data_array[blk_index + d1_block_idx].consider_block) {
                     AMdCycleRControls*adaptive_md_cycles_red_ctrls = &context_ptr->admd_cycles_red_ctrls;
