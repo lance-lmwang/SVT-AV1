@@ -1655,7 +1655,12 @@ static INLINE void set_dc_sign(int32_t *cul_level, int32_t dc_val) {
         *cul_level += 2 << COEFF_CONTEXT_BITS;
 }
 int32_t av1_quantize_inv_quantize(
-    PictureControlSet *pcs_ptr, ModeDecisionContext *md_context, int32_t *coeff,
+    PictureControlSet *pcs_ptr, ModeDecisionContext *md_context, 
+#if COEFF_OPT
+    int16_t *residual,
+    uint16_t residual_stride,
+#endif
+    int32_t *coeff,
 #if QP2QINDEX
     const uint32_t coeff_stride, int32_t *quant_coeff, int32_t *recon_coeff, uint32_t qindex,
 #else
@@ -1783,6 +1788,49 @@ int32_t av1_quantize_inv_quantize(
     else {
         perform_rdoq = ((md_context->md_staging_skip_rdoq == EB_FALSE || is_encode_pass) &&
             md_context->rdoq_level);
+
+#if ENABLE_COEFF_OPT
+        // Threshold values to be used for disabling coeff RD-optimization
+        // based on block MSE / qstep^2.
+        // TODO(any): Experiment the threshold logic based on variance metric.
+        // For each row, the indices are as follows.
+        // Index 0: Default mode evaluation, Winner mode processing is not applicable
+        // (Eg : IntraBc)
+        // Index 1: Mode evaluation.
+        // Index 2: Winner mode evaluation.
+        // Index 1 and 2 are applicable when enable_winner_mode_for_coeff_opt speed
+        // feature is ON
+        // There are 7 levels with increasing speed, mapping to vertical indices.
+        static unsigned int coeff_opt_dist_thresholds[7] = {
+             (unsigned int)~0, 3200, 1728, 864, 432, 216, 86 };
+
+        // Further refine based on the energy of the residual
+        if (is_inter && perform_rdoq) {
+            uint64_t block_sse =
+                aom_sum_squares_2d_i16(residual, residual_stride, width, height);
+            unsigned int block_mse_q8 =
+                (unsigned int)((256 * block_sse) / (width * height));
+
+            if (bit_increment) {
+                block_sse = ROUND_POWER_OF_TWO(block_sse, (pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth - 8) * 2);
+                block_mse_q8 = ROUND_POWER_OF_TWO(block_mse_q8, (pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth - 8) * 2);
+            }
+            block_sse *= 16;
+
+            const int dequant_shift = bit_increment ? pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth - 5 : 3;
+            const int qstep = candidate_plane.dequant_qtx[1] /*[AC]*/ >> dequant_shift;
+            // Use mse / qstep^2 based threshold logic to take decision of R-D
+            // optimization of coeffs. For smaller residuals, coeff optimization
+            // would be helpful. For larger residuals, R-D optimization may not be
+            // effective.
+            // TODO(any): Experiment with variance and mean based thresholds
+            const int is_small_residual =
+                ((uint64_t)block_mse_q8 <=
+                (uint64_t)86 /*coeff_opt_dist_thresholds[5] */ * qstep * qstep);
+            // Turn OFF RDOQ if large resudual
+            perform_rdoq = is_small_residual;
+        }
+#endif
     }
 #else
     EbBool perform_rdoq = ((md_context->md_staging_skip_rdoq == EB_FALSE || is_encode_pass) &&
@@ -1956,6 +2004,10 @@ void product_full_loop(ModeDecisionCandidateBuffer *candidate_buffer,
     candidate_buffer->candidate_ptr->quantized_dc[0][txb_itr] = av1_quantize_inv_quantize(
         pcs_ptr,
         context_ptr,
+#if COEFF_OPT
+        &(((int16_t *)candidate_buffer->residual_ptr->buffer_y)[txb_origin_index]),
+        candidate_buffer->residual_ptr->stride_y,
+#endif
         &(((int32_t *)context_ptr->trans_quant_buffers_ptr->txb_trans_coeff2_nx2_n_ptr
                ->buffer_y)[txb_1d_offset]),
         NOT_USED_VALUE,
@@ -2924,6 +2976,10 @@ void full_loop_r(SuperBlock *sb_ptr, ModeDecisionCandidateBuffer *candidate_buff
             candidate_buffer->candidate_ptr->quantized_dc[1][0] = av1_quantize_inv_quantize(
                 pcs_ptr,
                 context_ptr,
+#if COEFF_OPT
+                chroma_residual_ptr,
+                candidate_buffer->residual_ptr->stride_cb,
+#endif
                 &(((int32_t *)context_ptr->trans_quant_buffers_ptr->txb_trans_coeff2_nx2_n_ptr
                        ->buffer_cb)[txb_1d_offset]),
                 NOT_USED_VALUE,
@@ -3024,6 +3080,10 @@ void full_loop_r(SuperBlock *sb_ptr, ModeDecisionCandidateBuffer *candidate_buff
             candidate_buffer->candidate_ptr->quantized_dc[2][0] = av1_quantize_inv_quantize(
                 pcs_ptr,
                 context_ptr,
+#if COEFF_OPT
+                chroma_residual_ptr,
+                candidate_buffer->residual_ptr->stride_cr,
+#endif
                 &(((int32_t *)context_ptr->trans_quant_buffers_ptr->txb_trans_coeff2_nx2_n_ptr
                        ->buffer_cr)[txb_1d_offset]),
                 NOT_USED_VALUE,

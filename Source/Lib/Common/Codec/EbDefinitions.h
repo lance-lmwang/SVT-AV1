@@ -678,8 +678,9 @@ extern "C" {
 
 #define SHUT_QUANT_FP  0
 #define FAST_RDOQ_MODE 0
-#define SHUT_RDOQ      1
-
+#define SHUT_RDOQ      0
+#define COEFF_OPT      1 // support only: no action
+#define ENABLE_COEFF_OPT           1
 
 #endif
 // END  SVT_02_TEMP /////////////////////////////////////////////////////////

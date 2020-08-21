@@ -10035,6 +10035,10 @@ void tx_type_search(PictureControlSet *pcs_ptr,
 #endif
             pcs_ptr,
             context_ptr,
+#if COEFF_OPT
+            &(((int16_t *)candidate_buffer->residual_ptr->buffer_y)[txb_origin_index]),
+            candidate_buffer->residual_ptr->stride_y,
+#endif
             &(((int32_t *)context_ptr->trans_quant_buffers_ptr->txb_trans_coeff2_nx2_n_ptr
                    ->buffer_y)[context_ptr->txb_1d_offset]),
             NOT_USED_VALUE,
