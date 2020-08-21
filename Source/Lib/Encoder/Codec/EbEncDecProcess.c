@@ -7750,9 +7750,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         if (pd_pass == PD_PASS_0)
             context_ptr->pf_level = 2;
         else if (pd_pass == PD_PASS_1)
-            context_ptr->pf_level = 2;
+            context_ptr->pf_level = 1;
         else
-            context_ptr->pf_level = 2;
+            context_ptr->pf_level = 1;
     }
     else {
         context_ptr->pf_level = 1;
