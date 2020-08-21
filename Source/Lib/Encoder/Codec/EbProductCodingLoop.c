@@ -7540,8 +7540,8 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
 
 
 #if EXIT_PME
-                if (me_mv_x != 32768 && me_mv_y != 32768)
-                    if (ABS(me_mv_x - best_search_mvx) <= 1 && ABS(me_mv_x - best_search_mvx) <= 1)
+                if (me_mv_x != -32768 && me_mv_y != -32768)
+                    if (ABS(me_mv_x - best_search_mvx) <= 1 && ABS(me_mv_y - best_search_mvy) <= 1)
                         continue;
 
 #endif
