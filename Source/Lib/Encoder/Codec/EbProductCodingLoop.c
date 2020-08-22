@@ -7390,7 +7390,8 @@ void predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
                 context_ptr->ref_mv.row = context_ptr->mvp_array[list_idx][ref_idx][0].row;
 
 #if EXIT_PME
-#define PME_TH 25
+#define PME_TO_ME_DIST_TH  5
+#define PME_TO_ME_MV_TH   32
                 // Copy fp ME MV before subpel
                 uint8_t skip_search = 0;
 
@@ -7401,22 +7402,21 @@ void predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
                         pme_to_me_dist_deviation = (best_mvp_distortion - pa_me_distortion) / pa_me_distortion;
                     }
 
-                    if ((ABS(context_ptr->sub_me_mv[list_idx][ref_idx].col - best_mvp_x) <= 32 && ABS(context_ptr->sub_me_mv[list_idx][ref_idx].row - best_mvp_y) <= 32) || 
-                        pme_to_me_dist_deviation >= PME_TH
-                        ){
+                    if ((ABS(context_ptr->sub_me_mv[list_idx][ref_idx].col - best_mvp_x) <= PME_TO_ME_MV_TH && ABS(context_ptr->sub_me_mv[list_idx][ref_idx].row - best_mvp_y) <= PME_TO_ME_MV_TH) ||
+                        pme_to_me_dist_deviation >= PME_TO_ME_DIST_TH
+                        ) {
                         best_search_mvx = context_ptr->sub_me_mv[list_idx][ref_idx].col;
                         best_search_mvy = context_ptr->sub_me_mv[list_idx][ref_idx].row;
-                        best_search_distortion = best_mvp_distortion;
                         skip_search = 1;
                     }
                 }
 
                 if (!skip_search) {
-#endif
+#else
                     // Step 2: perform full pel search around the best MVP
                     best_mvp_x = (best_mvp_x + 4) & ~0x07;
                     best_mvp_y = (best_mvp_y + 4) & ~0x07;
-
+#endif
                     md_full_pel_search(pcs_ptr,
                         context_ptr,
                         input_picture_ptr,
@@ -7446,8 +7446,8 @@ void predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
                         pme_to_me_dist_deviation = (best_mvp_distortion - pa_me_distortion) / pa_me_distortion;
                     }
 
-                    if ((ABS(context_ptr->sub_me_mv[list_idx][ref_idx].col - best_mvp_x) <= 32 && ABS(context_ptr->sub_me_mv[list_idx][ref_idx].row - best_mvp_y) <= 32) ||
-                        pme_to_me_dist_deviation >= PME_TH
+                    if ((ABS(context_ptr->sub_me_mv[list_idx][ref_idx].col - best_search_mvx) <= PME_TO_ME_MV_TH && ABS(context_ptr->sub_me_mv[list_idx][ref_idx].row - best_search_mvy) <= PME_TO_ME_MV_TH) ||
+                        pme_to_me_dist_deviation >= PME_TO_ME_DIST_TH
                         ) {
                         best_search_mvx = context_ptr->sub_me_mv[list_idx][ref_idx].col;
                         best_search_mvy = context_ptr->sub_me_mv[list_idx][ref_idx].row;
