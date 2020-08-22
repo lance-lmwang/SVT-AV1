@@ -5863,14 +5863,28 @@ static const int rd_frame_type_factor[FRAME_UPDATE_TYPES] = { 128, 164, 128,
 /*
  * Set the sse lambda based on the bit_depth, then update based on frame position.
  */
+#if LAMBDA_UPDATE_NON_5L
+int compute_rdmult_sse(PictureControlSet *pcs_ptr, uint8_t q_index, uint8_t bit_depth) {
+#else
 int compute_rdmult_sse(uint8_t q_index, FrameType frame_type, uint8_t temporal_layer_index, uint8_t bit_depth) {
+#endif
+#if LAMBDA_UPDATE_NON_5L
+    FrameType frame_type = pcs_ptr->parent_pcs_ptr->frm_hdr.frame_type;
+    // To set gf_update_type based on current TL vs. the max TL (e.g. for 5L, max TL is 4)
+    uint8_t temporal_layer_index = pcs_ptr->temporal_layer_index;
+    uint8_t max_temporal_layer = pcs_ptr->parent_pcs_ptr->hierarchical_levels;
+#endif
     int64_t rdmult = bit_depth == 8  ? av1_lambda_mode_decision8_bit_sse[q_index] :
                      bit_depth == 10 ? av1lambda_mode_decision10_bit_sse[q_index] :
                                        av1lambda_mode_decision12_bit_sse[q_index];
 
     // Update rdmult based on the frame's position in the miniGOP
     if (frame_type != KEY_FRAME) {
+#if LAMBDA_UPDATE_NON_5L
+        uint8_t gf_update_type = temporal_layer_index == 0 ? ARF_UPDATE : temporal_layer_index < max_temporal_layer ? INTNL_ARF_UPDATE : LF_UPDATE;
+#else
         uint8_t gf_update_type = temporal_layer_index == 0 ? ARF_UPDATE : temporal_layer_index < 4 ? INTNL_ARF_UPDATE : LF_UPDATE;
+#endif
         rdmult = (rdmult * rd_frame_type_factor[gf_update_type]) >> 7;
     }
     return (int)rdmult;
@@ -5908,8 +5922,13 @@ static void sb_setup_lambda(PictureControlSet *pcs_ptr,
     }
 #if USE_GF_UPDATE_FOR_LAMBDA
     uint8_t bit_depth = pcs_ptr->hbd_mode_decision ? 10 : 8;
+#if LAMBDA_UPDATE_NON_5L
+    const int orig_rdmult = compute_rdmult_sse(pcs_ptr, ppcs_ptr->frm_hdr.quantization_params.base_q_idx, bit_depth);
+    const int new_rdmult  = compute_rdmult_sse(pcs_ptr, sb_ptr->qindex, bit_depth);
+#else
     const int orig_rdmult = compute_rdmult_sse(ppcs_ptr->frm_hdr.quantization_params.base_q_idx, ppcs_ptr->frm_hdr.frame_type, pcs_ptr->temporal_layer_index, bit_depth);
     const int new_rdmult  = compute_rdmult_sse(sb_ptr->qindex, ppcs_ptr->frm_hdr.frame_type, pcs_ptr->temporal_layer_index, bit_depth);
+#endif
 #else
     const int orig_rdmult = pcs_ptr->hbd_mode_decision ?
         av1lambda_mode_decision10_bit_sse[ppcs_ptr->frm_hdr.quantization_params.base_q_idx]:

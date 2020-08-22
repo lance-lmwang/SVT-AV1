@@ -715,7 +715,11 @@ const EbLambdaAssignFunc lambda_assignment_function_table[4] = {
 #endif
 #if USE_GF_UPDATE_FOR_LAMBDA
 // Testing showed that updating SAD lambda based on frame info was not helpful; therefore, the SAD lambda generation is not changed.
+#if LAMBDA_UPDATE_NON_5L
+int compute_rdmult_sse(PictureControlSet *pcs_ptr, uint8_t q_index, uint8_t bit_depth);
+#else
 int compute_rdmult_sse(uint8_t q_index, FrameType frame_type, uint8_t temporal_layer_index, uint8_t bit_depth);
+#endif
 #endif
 
 #if USE_GF_UPDATE_FOR_LAMBDA
@@ -727,14 +731,22 @@ void av1_lambda_assign_md(
 #endif
 {
 #if USE_GF_UPDATE_FOR_LAMBDA
+#if LAMBDA_UPDATE_NON_5L
+        context_ptr->full_lambda_md[0] = (uint32_t)compute_rdmult_sse(pcs_ptr, context_ptr->qp_index, 8);
+#else
         context_ptr->full_lambda_md[0] = (uint32_t)compute_rdmult_sse(context_ptr->qp_index, pcs_ptr->parent_pcs_ptr->frm_hdr.frame_type, pcs_ptr->temporal_layer_index, 8);
+#endif
 #else
         context_ptr->full_lambda_md[0] = av1_lambda_mode_decision8_bit_sse[context_ptr->qp_index];
 #endif
         context_ptr->fast_lambda_md[0] = av1_lambda_mode_decision8_bit_sad[context_ptr->qp_index];
 
 #if USE_GF_UPDATE_FOR_LAMBDA
+#if LAMBDA_UPDATE_NON_5L
+        context_ptr->full_lambda_md[1] = (uint32_t)compute_rdmult_sse(pcs_ptr, context_ptr->qp_index, 10);
+#else
         context_ptr->full_lambda_md[1] = (uint32_t)compute_rdmult_sse(context_ptr->qp_index, pcs_ptr->parent_pcs_ptr->frm_hdr.frame_type, pcs_ptr->temporal_layer_index, 10);
+#endif
 #else
         context_ptr->full_lambda_md[1] = av1lambda_mode_decision10_bit_sse[context_ptr->qp_index];
 #endif
@@ -756,14 +768,22 @@ void av1_lambda_assign(uint32_t *fast_lambda, uint32_t *full_lambda, uint8_t bit
 #endif
     if (bit_depth == 8) {
 #if USE_GF_UPDATE_FOR_LAMBDA
+#if LAMBDA_UPDATE_NON_5L
+        *full_lambda = (uint32_t)compute_rdmult_sse(pcs_ptr, (uint8_t)qp_index, bit_depth);
+#else
         *full_lambda = (uint32_t)compute_rdmult_sse((uint8_t)qp_index, pcs_ptr->parent_pcs_ptr->frm_hdr.frame_type, pcs_ptr->temporal_layer_index, bit_depth);
+#endif
 #else
         *full_lambda = av1_lambda_mode_decision8_bit_sse[qp_index];
 #endif
         *fast_lambda = av1_lambda_mode_decision8_bit_sad[qp_index];
     } else if (bit_depth == 10) {
 #if USE_GF_UPDATE_FOR_LAMBDA
+#if LAMBDA_UPDATE_NON_5L
+        *full_lambda = (uint32_t)compute_rdmult_sse(pcs_ptr, (uint8_t)qp_index, bit_depth);
+#else
         *full_lambda = (uint32_t)compute_rdmult_sse((uint8_t)qp_index, pcs_ptr->parent_pcs_ptr->frm_hdr.frame_type, pcs_ptr->temporal_layer_index, bit_depth);
+#endif
 #else
         *full_lambda = av1lambda_mode_decision10_bit_sse[qp_index];
 #endif
@@ -774,7 +794,11 @@ void av1_lambda_assign(uint32_t *fast_lambda, uint32_t *full_lambda, uint8_t bit
         }
     } else if (bit_depth == 12) {
 #if USE_GF_UPDATE_FOR_LAMBDA
+#if LAMBDA_UPDATE_NON_5L
+        *full_lambda = (uint32_t)compute_rdmult_sse(pcs_ptr, (uint8_t)qp_index, bit_depth);
+#else
         *full_lambda = (uint32_t)compute_rdmult_sse((uint8_t)qp_index, pcs_ptr->parent_pcs_ptr->frm_hdr.frame_type, pcs_ptr->temporal_layer_index, bit_depth);
+#endif
 #else
         *full_lambda = av1lambda_mode_decision12_bit_sse[qp_index];
 #endif
