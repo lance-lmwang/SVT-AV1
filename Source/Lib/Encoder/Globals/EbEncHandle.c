@@ -2022,7 +2022,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 #if UNIFY_SC_NSC
 #if JUNE26_ADOPTIONS
 #if SHIFT_PRESETS
-        scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M4) ? 128 : 64;
+        scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode < ENC_M4) ? 128 : 64;
 #else
         scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M5) ? 128 : 64;
 #endif
