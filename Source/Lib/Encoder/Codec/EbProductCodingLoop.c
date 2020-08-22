@@ -7390,10 +7390,20 @@ void predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
                 context_ptr->ref_mv.row = context_ptr->mvp_array[list_idx][ref_idx][0].row;
 
 #if EXIT_PME
+#define PME_TH 25
                 // Copy fp ME MV before subpel
                 uint8_t skip_search = 0;
+
                 if (is_me_data_present(context_ptr, me_results, list_idx, ref_idx)) {
-                    if (ABS(context_ptr->sub_me_mv[list_idx][ref_idx].col - best_mvp_x) <= 128 && ABS(context_ptr->sub_me_mv[list_idx][ref_idx].row - best_mvp_y) <= 128) {
+                    int64_t pme_to_me_dist_deviation = MAX_SIGNED_VALUE;
+
+                    if (pa_me_distortion > 0) {
+                        pme_to_me_dist_deviation = (best_mvp_distortion - pa_me_distortion) / pa_me_distortion;
+                    }
+
+                    if ((ABS(context_ptr->sub_me_mv[list_idx][ref_idx].col - best_mvp_x) <= 32 && ABS(context_ptr->sub_me_mv[list_idx][ref_idx].row - best_mvp_y) <= 32) || 
+                        pme_to_me_dist_deviation >= PME_TH
+                        ){
                         best_search_mvx = context_ptr->sub_me_mv[list_idx][ref_idx].col;
                         best_search_mvy = context_ptr->sub_me_mv[list_idx][ref_idx].row;
                         best_search_distortion = best_mvp_distortion;
@@ -7430,7 +7440,15 @@ void predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
                 uint8_t skip_pme_subpel = 0;
                 if (is_me_data_present(context_ptr, me_results, list_idx, ref_idx)) {
 
-                    if (ABS(context_ptr->sub_me_mv[list_idx][ref_idx].col - best_search_mvx) <= 128 && ABS(context_ptr->sub_me_mv[list_idx][ref_idx].row - best_search_mvy) <= 128) {
+                    int64_t pme_to_me_dist_deviation = MAX_SIGNED_VALUE;
+
+                    if (pa_me_distortion > 0) {
+                        pme_to_me_dist_deviation = (best_mvp_distortion - pa_me_distortion) / pa_me_distortion;
+                    }
+
+                    if ((ABS(context_ptr->sub_me_mv[list_idx][ref_idx].col - best_mvp_x) <= 32 && ABS(context_ptr->sub_me_mv[list_idx][ref_idx].row - best_mvp_y) <= 32) ||
+                        pme_to_me_dist_deviation >= PME_TH
+                        ) {
                         best_search_mvx = context_ptr->sub_me_mv[list_idx][ref_idx].col;
                         best_search_mvy = context_ptr->sub_me_mv[list_idx][ref_idx].row;
                         skip_pme_subpel = 1;
