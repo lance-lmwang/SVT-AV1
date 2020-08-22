@@ -7565,7 +7565,7 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                 uint8_t skip_pme_subpel = 0;
                 if (is_me_data_present(context_ptr, me_results, list_idx, ref_idx)) {
 
-                    if (ABS(context_ptr->fp_me_mv[list_idx][ref_idx].col - context_ptr->fp_pme_mv[list_idx][ref_idx].col) <= 16 && ABS(context_ptr->fp_me_mv[list_idx][ref_idx].row - context_ptr->fp_pme_mv[list_idx][ref_idx].row) <= 16) {
+                    if (ABS(context_ptr->fp_me_mv[list_idx][ref_idx].col - context_ptr->fp_pme_mv[list_idx][ref_idx].col) <= 32 && ABS(context_ptr->fp_me_mv[list_idx][ref_idx].row - context_ptr->fp_pme_mv[list_idx][ref_idx].row) <= 32) {
                         best_search_mvx = context_ptr->sub_me_mv[list_idx][ref_idx].col;
                         best_search_mvy = context_ptr->sub_me_mv[list_idx][ref_idx].row;
                         skip_pme_subpel = 1;
