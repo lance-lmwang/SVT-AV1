@@ -5567,7 +5567,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     }
     else
         context_ptr->predictive_me_level = 0;
-
+#if !EXIT_PME
 #if ADD_SAD_AT_PME_SIGNAL
     // Level                    Settings
     // FALSE                    Use SSD at PME
@@ -5587,7 +5587,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
         context_ptr->use_sad_at_pme = EB_FALSE;
 #endif
-
+#endif
     // Derive md_staging_mode
     //
     // MD_STAGING_MODE_1

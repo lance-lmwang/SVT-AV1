@@ -645,8 +645,10 @@ typedef struct ModeDecisionContext {
     uint8_t              unipred3x3_injection;
     uint8_t              bipred3x3_injection;
     uint8_t              predictive_me_level;
+#if !EXIT_PME
 #if ADD_SAD_AT_PME_SIGNAL
     uint8_t              use_sad_at_pme;
+#endif
 #endif
     uint8_t              interpolation_filter_search_blk_size;
     uint8_t              redundant_blk;
@@ -679,6 +681,10 @@ typedef struct ModeDecisionContext {
 #endif
 
     int16_t              sb_me_mv[BLOCK_MAX_COUNT_SB_128][2][4][2];
+#if EXIT_PME
+    MV                   fp_me_mv[2][4];
+    MV                   sub_me_mv[2][4];
+#endif
 #if UPGRADE_SUBPEL
     int16_t              best_pme_mv[2][4][2];
     int8_t               valid_pme_mv[2][4];
