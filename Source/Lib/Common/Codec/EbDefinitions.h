@@ -687,11 +687,12 @@ extern "C" {
 #define PME_OFF                    0
 
 
-#define REFACTOR_PME               0 // TODO
+#define REFACTOR_PME               1 // TODO
+#if REFACTOR_PME
 #define USE_SAME_MVP               1
 #define USE_FP_DISTORTION          1
 #define EXIT_PME                   1
-
+#endif
 #endif
 // END  SVT_02_TEMP /////////////////////////////////////////////////////////
 
