@@ -6660,7 +6660,11 @@ void svt_init_mv_cost_params(MV_COST_PARAMS *mv_cost_params,
 #endif
     mv_cost_params->ref_mv = ref_mv;
     mv_cost_params->full_ref_mv = get_fullmv_from_mv(ref_mv);
+#if SHUT_MV_COST
+    mv_cost_params->mv_cost_type = MV_COST_NONE;
+#else
     mv_cost_params->mv_cost_type = MV_COST_ENTROPY;
+#endif
 #if FP_MV_COST
     mv_cost_params->error_per_bit = AOMMAX(rdmult >> RD_EPB_SHIFT, 1);
     mv_cost_params->sad_per_bit = hbd_mode_decision ? sad_per_bit_lut_10[base_q_idx] : sad_per_bit16lut_8[base_q_idx];
