@@ -7807,7 +7807,11 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
 
 #if PME_SORT_REF
 #if UPGRADE_SUBPEL
+#if USE_FP_DISTORTION
+                context_ptr->pme_res[list_idx][ref_idx].dist =  best_search_distortion;
+#else
                 context_ptr->pme_res[list_idx][ref_idx].dist = (uint32_t) besterr;
+#endif
 #else
                 context_ptr->pme_res[list_idx][ref_idx].dist = best_search_distortion;
 #endif
