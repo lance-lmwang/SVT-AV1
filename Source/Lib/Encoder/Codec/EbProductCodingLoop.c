@@ -7393,7 +7393,7 @@ void predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
                 // Copy fp ME MV before subpel
                 uint8_t skip_search = 0;
                 if (is_me_data_present(context_ptr, me_results, list_idx, ref_idx)) {
-                    if (ABS(context_ptr->sub_me_mv[list_idx][ref_idx].col - best_mvp_x) <= 32 && ABS(context_ptr->sub_me_mv[list_idx][ref_idx].row - best_mvp_y) <= 32) {
+                    if (ABS(context_ptr->sub_me_mv[list_idx][ref_idx].col - best_mvp_x) <= 128 && ABS(context_ptr->sub_me_mv[list_idx][ref_idx].row - best_mvp_y) <= 128) {
                         best_search_mvx = context_ptr->sub_me_mv[list_idx][ref_idx].col;
                         best_search_mvy = context_ptr->sub_me_mv[list_idx][ref_idx].row;
                         best_search_distortion = best_mvp_distortion;
@@ -7430,7 +7430,7 @@ void predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
                 uint8_t skip_pme_subpel = 0;
                 if (is_me_data_present(context_ptr, me_results, list_idx, ref_idx)) {
 
-                    if (ABS(context_ptr->fp_me_mv[list_idx][ref_idx].col - best_search_mvx) <= 32 && ABS(context_ptr->fp_me_mv[list_idx][ref_idx].row - best_search_mvy) <= 32) {
+                    if (ABS(context_ptr->sub_me_mv[list_idx][ref_idx].col - best_search_mvx) <= 128 && ABS(context_ptr->sub_me_mv[list_idx][ref_idx].row - best_search_mvy) <= 128) {
                         best_search_mvx = context_ptr->sub_me_mv[list_idx][ref_idx].col;
                         best_search_mvy = context_ptr->sub_me_mv[list_idx][ref_idx].row;
                         skip_pme_subpel = 1;
