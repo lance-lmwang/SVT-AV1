@@ -655,7 +655,6 @@ extern "C" {
 #define OPT_0                         1 // bypass distortion_based_modulator() if no nsq
 #define OPT_1                         1 // no T-1 @ PD0 and no recon samples update if context_ptr->skip_intra == 1
 #define OPT_2                         1 // bypass sse_gradian_band init if no nsq
-#define OPT_3                         0 // bypass ref pruning init if no mrp
 #define OPT_4                         1 // bypass variance computation @ PD0; source_variance used only @ PD2 for inter-inter compound reduction and for txs early exit
 #define OPT_5                         1 // shut useless pred depth refinement operations
 #endif
@@ -677,9 +676,9 @@ extern "C" {
 #define USE_GF_UPDATE_FOR_LAMBDA         1 // Scale sse lambda based on where the frame is positioned in the miniGOP (based on TL)
 #define LAMBDA_UPDATE_NON_5L             1 // Update layer-based lambda scaling for non-5L mini-GOPs
 
-#define SHUT_MV_COST                     0
+#define SHUT_MV_COST                     1
 #define EXIT_PME                         1
-
+#define OPT_3                            1 // bypass ref pruning init if no mrp
 
 #endif
 // END  SVT_02_TEMP /////////////////////////////////////////////////////////
