@@ -7216,7 +7216,7 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
 
         // Reset search variable(s)
         uint32_t best_mvp_cost = (int32_t)~0;
-#if !RATE_TO_EARLY_DIST_CHECK
+#if !RATE_TO_EARLY_DIST_CHECK_1
         uint32_t mvp_distortion;
 #endif
         int16_t  best_search_mvx = (int16_t)~0;
@@ -7234,7 +7234,7 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
             // Get the ME MV
             const MeSbResults *me_results =
                 pcs->parent_pcs_ptr->pa_me_data->me_results[ctx->me_sb_addr];
-#if RATE_TO_EARLY_DIST_CHECK
+#if RATE_TO_EARLY_DIST_CHECK_0
             uint32_t me_mv_cost = ~0;
 #else
             uint32_t pa_me_distortion = ~0;//any non zero value
@@ -7260,7 +7260,7 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
                 // Round-up to the closest integer the ME MV
                 me_mv_x = (me_mv_x + 4) & ~0x07;
                 me_mv_y = (me_mv_y + 4) & ~0x07;
-#if RATE_TO_EARLY_DIST_CHECK
+#if RATE_TO_EARLY_DIST_CHECK_0
                 // Set a ref MV (nearest) for the ME MV 
                 ctx->ref_mv.col = ctx->mvp_array[list_idx][ref_idx][0].col;
                 ctx->ref_mv.row = ctx->mvp_array[list_idx][ref_idx][0].row;
@@ -7335,23 +7335,19 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
 #if !EXIT_PME
             if (pa_me_distortion != 0 || ctx->predictive_me_level >= 2) {
 #endif
-#if RATE_TO_EARLY_DIST_CHECK
-                // Set a ref MV (nearest) for the ME MV 
-                ctx->ref_mv.col = ctx->mvp_array[list_idx][ref_idx][0].col;
-                ctx->ref_mv.row = ctx->mvp_array[list_idx][ref_idx][0].row;
-                // Step 1: derive the best MVP
-#else
+
                 // Step 1: derive the best MVP in term of distortion
-#endif
                 int16_t best_mvp_x = 0;
                 int16_t best_mvp_y = 0;
 
                 for (int8_t mvp_index = 0; mvp_index < ctx->mvp_count[list_idx][ref_idx]; mvp_index++) {
 
-#if RATE_TO_EARLY_DIST_CHECK
+#if RATE_TO_EARLY_DIST_CHECK_1
                     // Set a ref MV (MVP under eval) for the MVP under eval
                     ctx->ref_mv.col = ctx->mvp_array[list_idx][ref_idx][mvp_index].col;
                     ctx->ref_mv.row = ctx->mvp_array[list_idx][ref_idx][mvp_index].row;
+                    clip_mv_on_pic_boundary(ctx->blk_origin_x, ctx->blk_origin_y, ctx->blk_geom->bwidth, ctx->blk_geom->bheight,
+                        ref_pic, &ctx->mvp_array[list_idx][ref_idx][mvp_index].col, &ctx->mvp_array[list_idx][ref_idx][mvp_index].row);
                     md_full_pel_search(pcs,
                         ctx,
                         input_picture_ptr,
@@ -7426,8 +7422,8 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
                         }
                     }
 
-                    if (mvp_distortion < best_mvp_distortion) {
-                        best_mvp_distortion = mvp_distortion;
+                    if (mvp_distortion < best_mvp_cost) {
+                        best_mvp_cost = mvp_distortion;
                         best_mvp_x = ctx->mvp_array[list_idx][ref_idx][mvp_index].col;
                         best_mvp_y = ctx->mvp_array[list_idx][ref_idx][mvp_index].row;
 
