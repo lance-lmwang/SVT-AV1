@@ -7234,11 +7234,9 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
             // Get the ME MV
             const MeSbResults *me_results =
                 pcs->parent_pcs_ptr->pa_me_data->me_results[ctx->me_sb_addr];
-#if RATE_TO_EARLY_DIST_CHECK_0
+
             uint32_t me_mv_cost = ~0;
-#else
-            uint32_t pa_me_distortion = ~0;//any non zero value
-#endif
+
             uint8_t me_data_present = is_me_data_present(ctx, me_results, list_idx, ref_idx);
 
             if (me_data_present) {
@@ -7298,7 +7296,7 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
                         hbd_mode_decision ? full_distortion_kernel16_bits
                         : spatial_full_distortion_kernel;
 
-                    pa_me_distortion =
+                    me_mv_cost =
                         (uint32_t)spatial_full_dist_type_fun(input_picture_ptr->buffer_y,
                             input_origin_index,
                             input_picture_ptr->stride_y,
@@ -7312,7 +7310,7 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
                     assert((ctx->blk_geom->bwidth >> 3) < 17);
 
                     if (hbd_mode_decision) {
-                        pa_me_distortion = sad_16b_kernel(
+                        me_mv_cost = sad_16b_kernel(
                             ((uint16_t *)input_picture_ptr->buffer_y) + input_origin_index,
                             input_picture_ptr->stride_y,
                             ((uint16_t *)ref_pic->buffer_y) + ref_origin_index,
@@ -7321,7 +7319,7 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
                             ctx->blk_geom->bwidth);
                     }
                     else {
-                        pa_me_distortion =
+                        me_mv_cost =
                             nxm_sad_kernel_sub_sampled(input_picture_ptr->buffer_y + input_origin_index,
                                 input_picture_ptr->stride_y,
                                 ref_pic->buffer_y + ref_origin_index,
