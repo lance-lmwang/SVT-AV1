@@ -681,6 +681,7 @@ extern "C" {
 #define RATE_TO_EARLY_DIST_CHECK_0       0
 #define RATE_TO_EARLY_DIST_CHECK_1       0
 
+#define FASTEST_CDEF                     1
 #endif
 // END  SVT_02_TEMP /////////////////////////////////////////////////////////
 
