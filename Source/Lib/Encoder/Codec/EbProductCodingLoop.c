@@ -7443,9 +7443,10 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
                             skip_pme_subpel = 1;
                         }
                     }
-#endif
-
+                if (ctx->md_subpel_pme_ctrls.enabled && !skip_pme_subpel) {
+#else
                 if (ctx->md_subpel_pme_ctrls.enabled) {
+#endif
                     best_cost = (uint32_t) md_subpel_search(pcs,
                         ctx,
                         ctx->md_subpel_pme_ctrls,
