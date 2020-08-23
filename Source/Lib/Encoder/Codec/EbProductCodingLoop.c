@@ -7215,9 +7215,10 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
         av1_set_ref_frame(rf, ref_pair);
 
         // Reset search variable(s)
-        uint32_t best_mvp_distortion = (int32_t)~0;
+        uint32_t best_mvp_cost = (int32_t)~0;
+#if !RATE_TO_EARLY_DIST_CHECK
         uint32_t mvp_distortion;
-
+#endif
         int16_t  best_search_mvx = (int16_t)~0;
         int16_t  best_search_mvy = (int16_t)~0;
         uint32_t pme_mv_cost = (int32_t)~0;
@@ -7334,12 +7335,44 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
 #if !EXIT_PME
             if (pa_me_distortion != 0 || ctx->predictive_me_level >= 2) {
 #endif
+#if RATE_TO_EARLY_DIST_CHECK
+                // Set a ref MV (nearest) for the ME MV 
+                ctx->ref_mv.col = ctx->mvp_array[list_idx][ref_idx][0].col;
+                ctx->ref_mv.row = ctx->mvp_array[list_idx][ref_idx][0].row;
+                // Step 1: derive the best MVP
+#else
                 // Step 1: derive the best MVP in term of distortion
+#endif
                 int16_t best_mvp_x = 0;
                 int16_t best_mvp_y = 0;
 
                 for (int8_t mvp_index = 0; mvp_index < ctx->mvp_count[list_idx][ref_idx]; mvp_index++) {
 
+#if RATE_TO_EARLY_DIST_CHECK
+                    // Set a ref MV (MVP under eval) for the MVP under eval
+                    ctx->ref_mv.col = ctx->mvp_array[list_idx][ref_idx][mvp_index].col;
+                    ctx->ref_mv.row = ctx->mvp_array[list_idx][ref_idx][mvp_index].row;
+                    md_full_pel_search(pcs,
+                        ctx,
+                        input_picture_ptr,
+                        input_origin_index,
+                        use_ssd,
+                        list_idx,
+                        ref_idx,
+                        ctx->mvp_array[list_idx][ref_idx][mvp_index].col,
+                        ctx->mvp_array[list_idx][ref_idx][mvp_index].row,
+                        0,
+                        0,
+                        0,
+                        0,
+                        1,
+#if SEARCH_TOP_N
+                        0,
+#endif
+                        &best_mvp_x,
+                        &best_mvp_y,
+                        &best_mvp_cost);
+#else
                     // MVP Distortion
                     EbReferenceObject *ref_obj =
                         pcs->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
@@ -7399,15 +7432,13 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
                         best_mvp_y = ctx->mvp_array[list_idx][ref_idx][mvp_index].row;
 
                     }
+#endif
                 }
 
                 // Set ref MV
                 ctx->ref_mv.col = best_mvp_x;
                 ctx->ref_mv.row = best_mvp_y;
-#if EXIT_PME
-#define PME_TO_ME_DIST_TH  25
-#define PME_TO_ME_MV_TH    32
-#endif
+
 #if 0//EXIT_PME
                 // Copy fp ME MV before subpel
                 uint8_t skip_search = 0;
@@ -7415,9 +7446,7 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
                     if (me_data_present) {
                         int64_t pme_to_me_dist_deviation = MAX_SIGNED_VALUE;
 
-                        if (pa_me_distortion > 0) {
-                            pme_to_me_dist_deviation = (best_mvp_distortion - pa_me_distortion) / pa_me_distortion;
-                        }
+                        int64_t pme_to_me_cost_dev = (((int64_t)MAX(pme_mv_cost, 1) - (int64_t)MAX(me_mv_cost, 1)) * 100) / (int64_t)MAX(me_mv_cost, 1);
 
                         if (
                             //(ABS(ctx->sub_me_mv[list_idx][ref_idx].col - best_mvp_x) <= PME_TO_ME_MV_TH && ABS(ctx->sub_me_mv[list_idx][ref_idx].row - best_mvp_y) <= PME_TO_ME_MV_TH) ||
@@ -7452,6 +7481,8 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
                     &pme_mv_cost);
 
 #if EXIT_PME
+                #define POST_FP_PME_TO_ME_COST_TH  25 
+                #define POST_FP_PME_TO_ME_MV_TH    32
                 // Copy fp ME MV before subpel
                 uint8_t skip_pme_subpel = 0;
                 if (pcs->enc_mode >= ENC_M7)
@@ -7459,8 +7490,8 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
 
                         int64_t pme_to_me_cost_dev = (((int64_t)MAX(pme_mv_cost, 1) - (int64_t)MAX(me_mv_cost, 1)) * 100) / (int64_t)MAX(me_mv_cost, 1);
                         
-                        if ((ABS(ctx->fp_me_mv[list_idx][ref_idx].col - best_search_mvx) <= PME_TO_ME_MV_TH && ABS(ctx->fp_me_mv[list_idx][ref_idx].row - best_search_mvy) <= PME_TO_ME_MV_TH) ||
-                            pme_to_me_cost_dev >= PME_TO_ME_DIST_TH ) {
+                        if ((ABS(ctx->fp_me_mv[list_idx][ref_idx].col - best_search_mvx) <= POST_FP_PME_TO_ME_MV_TH && ABS(ctx->fp_me_mv[list_idx][ref_idx].row - best_search_mvy) <= POST_FP_PME_TO_ME_MV_TH) ||
+                            pme_to_me_cost_dev >= POST_FP_PME_TO_ME_COST_TH ) {
 
                             best_search_mvx = ctx->sub_me_mv[list_idx][ref_idx].col;
                             best_search_mvy = ctx->sub_me_mv[list_idx][ref_idx].row;
