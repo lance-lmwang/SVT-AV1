@@ -7438,8 +7438,8 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
                 }
 
 #if EXIT_PME
-#define POST_FP_PME_TO_ME_COST_TH  25 
-#define POST_FP_PME_TO_ME_MV_TH    32
+#define POST_FP_PME_TO_ME_COST_TH  50 
+#define POST_FP_PME_TO_ME_MV_TH    16
                 // Copy fp ME MV before subpel
                 uint8_t skip_search = 0;
                 if (pcs->enc_mode >= ENC_M7)
