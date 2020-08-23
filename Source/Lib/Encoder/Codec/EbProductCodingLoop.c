@@ -7344,8 +7344,16 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
                     // Set a ref MV (MVP under eval) for the MVP under eval
                     ctx->ref_mv.col = ctx->mvp_array[list_idx][ref_idx][mvp_index].col;
                     ctx->ref_mv.row = ctx->mvp_array[list_idx][ref_idx][mvp_index].row;
+
+                    EbReferenceObject *ref_obj =
+                        pcs->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
+                    EbPictureBufferDesc *ref_pic = hbd_mode_decision
+                        ? ref_obj->reference_picture16bit
+                        : ref_obj->reference_picture;
+
                     clip_mv_on_pic_boundary(ctx->blk_origin_x, ctx->blk_origin_y, ctx->blk_geom->bwidth, ctx->blk_geom->bheight,
                         ref_pic, &ctx->mvp_array[list_idx][ref_idx][mvp_index].col, &ctx->mvp_array[list_idx][ref_idx][mvp_index].row);
+
                     md_full_pel_search(pcs,
                         ctx,
                         input_picture_ptr,
@@ -7429,22 +7437,20 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
 #endif
                 }
 
-                // Set ref MV
-                ctx->ref_mv.col = best_mvp_x;
-                ctx->ref_mv.row = best_mvp_y;
-
-#if 0//EXIT_PME
+#if EXIT_PME
+#define POST_FP_PME_TO_ME_COST_TH  25 
+#define POST_FP_PME_TO_ME_MV_TH    32
                 // Copy fp ME MV before subpel
                 uint8_t skip_search = 0;
                 if (pcs->enc_mode >= ENC_M7)
                     if (me_data_present) {
                         int64_t pme_to_me_dist_deviation = MAX_SIGNED_VALUE;
 
-                        int64_t pme_to_me_cost_dev = (((int64_t)MAX(pme_mv_cost, 1) - (int64_t)MAX(me_mv_cost, 1)) * 100) / (int64_t)MAX(me_mv_cost, 1);
+                        int64_t pme_to_me_cost_dev = (((int64_t)MAX(best_mvp_cost, 1) - (int64_t)MAX(me_mv_cost, 1)) * 100) / (int64_t)MAX(me_mv_cost, 1);
 
                         if (
-                            //(ABS(ctx->sub_me_mv[list_idx][ref_idx].col - best_mvp_x) <= PME_TO_ME_MV_TH && ABS(ctx->sub_me_mv[list_idx][ref_idx].row - best_mvp_y) <= PME_TO_ME_MV_TH) ||
-                            pme_to_me_dist_deviation >= PME_TO_ME_DIST_TH
+                            (ABS(ctx->fp_me_mv[list_idx][ref_idx].col - best_mvp_x) <= POST_FP_PME_TO_ME_MV_TH && ABS(ctx->fp_me_mv[list_idx][ref_idx].row - best_mvp_y) <= POST_FP_PME_TO_ME_MV_TH) ||
+                            pme_to_me_dist_deviation >= POST_FP_PME_TO_ME_COST_TH
                             ) {
                             best_search_mvx = ctx->sub_me_mv[list_idx][ref_idx].col;
                             best_search_mvy = ctx->sub_me_mv[list_idx][ref_idx].row;
@@ -7452,29 +7458,33 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
                         }
                     }
 
-                if (!skip_search) 
+                if (!skip_search) {
 #endif
+                    // Set ref MV
+                    ctx->ref_mv.col = best_mvp_x;
+                    ctx->ref_mv.row = best_mvp_y;
 
-                md_full_pel_search(pcs,
-                    ctx,
-                    input_picture_ptr,
-                    input_origin_index,
-                    use_ssd,
-                    list_idx,
-                    ref_idx,
-                    best_mvp_x,
-                    best_mvp_y,
-                    -(ctx->pred_me_full_pel_search_width >> 1),
-                    +(ctx->pred_me_full_pel_search_width >> 1),
-                    -(ctx->pred_me_full_pel_search_height >> 1),
-                    +(ctx->pred_me_full_pel_search_height >> 1),
-                    1,
-                    0,
-                    &best_search_mvx,
-                    &best_search_mvy,
-                    &pme_mv_cost);
+                    md_full_pel_search(pcs,
+                        ctx,
+                        input_picture_ptr,
+                        input_origin_index,
+                        use_ssd,
+                        list_idx,
+                        ref_idx,
+                        best_mvp_x,
+                        best_mvp_y,
+                        -(ctx->pred_me_full_pel_search_width >> 1),
+                        +(ctx->pred_me_full_pel_search_width >> 1),
+                        -(ctx->pred_me_full_pel_search_height >> 1),
+                        +(ctx->pred_me_full_pel_search_height >> 1),
+                        1,
+                        0,
+                        &best_search_mvx,
+                        &best_search_mvy,
+                        &pme_mv_cost);
 
 #if EXIT_PME
+                }
                 #define POST_FP_PME_TO_ME_COST_TH  25 
                 #define POST_FP_PME_TO_ME_MV_TH    32
                 // Copy fp ME MV before subpel
