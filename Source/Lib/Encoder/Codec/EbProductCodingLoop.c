@@ -7405,8 +7405,8 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
                 ctx->ref_mv.col = best_mvp_x;
                 ctx->ref_mv.row = best_mvp_y;
 #if EXIT_PME
-#define PME_TO_ME_DIST_TH  5
-#define PME_TO_ME_MV_TH   32
+#define PME_TO_ME_DIST_TH  25
+#define PME_TO_ME_MV_TH    32
 #endif
 #if 0//EXIT_PME
                 // Copy fp ME MV before subpel
@@ -7457,12 +7457,8 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
                 if (pcs->enc_mode >= ENC_M7)
                     if (me_data_present) {
 
-                        int64_t pme_to_me_cost_dev = MAX_SIGNED_VALUE;
-
-                        if (me_mv_cost > 0) {
-                            pme_to_me_cost_dev = (((int64_t) pme_mv_cost - (int64_t) me_mv_cost) * 100) / (int64_t) me_mv_cost;
-                        }
-
+                        int64_t pme_to_me_cost_dev = (((int64_t)MAX(pme_mv_cost, 1) - (int64_t)MAX(me_mv_cost, 1)) * 100) / (int64_t)MAX(me_mv_cost, 1);
+                        
                         if ((ABS(ctx->fp_me_mv[list_idx][ref_idx].col - best_search_mvx) <= PME_TO_ME_MV_TH && ABS(ctx->fp_me_mv[list_idx][ref_idx].row - best_search_mvy) <= PME_TO_ME_MV_TH) ||
                             pme_to_me_cost_dev >= PME_TO_ME_DIST_TH ) {
 
