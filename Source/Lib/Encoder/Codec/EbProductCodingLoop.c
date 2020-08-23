@@ -7374,10 +7374,30 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
                 // Set ref MV
                 ctx->ref_mv.col = best_mvp_x;
                 ctx->ref_mv.row = best_mvp_y;
+#if EXIT_PME
+#define PME_TO_ME_DIST_TH  5
+#define PME_TO_ME_MV_TH   32
+                // Copy fp ME MV before subpel
+                uint8_t skip_search = 0;
+                if (pcs->enc_mode >= ENC_M7)
+                    if (me_data_present) {
+                        int64_t pme_to_me_dist_deviation = MAX_SIGNED_VALUE;
 
-                // Step 2: perform full pel search around the best MVP
-                best_mvp_x = (best_mvp_x + 4) & ~0x07;
-                best_mvp_y = (best_mvp_y + 4) & ~0x07;
+                        if (pa_me_distortion > 0) {
+                            pme_to_me_dist_deviation = (best_mvp_distortion - pa_me_distortion) / pa_me_distortion;
+                        }
+
+                        if ((ABS(ctx->sub_me_mv[list_idx][ref_idx].col - best_mvp_x) <= PME_TO_ME_MV_TH && ABS(ctx->sub_me_mv[list_idx][ref_idx].row - best_mvp_y) <= PME_TO_ME_MV_TH) ||
+                            pme_to_me_dist_deviation >= PME_TO_ME_DIST_TH
+                            ) {
+                            best_search_mvx = ctx->sub_me_mv[list_idx][ref_idx].col;
+                            best_search_mvy = ctx->sub_me_mv[list_idx][ref_idx].row;
+                            skip_search = 1;
+                        }
+                    }
+
+                if (!skip_search) 
+#endif
 
                 md_full_pel_search(pcs,
                     ctx,
@@ -7397,6 +7417,28 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
                     &best_search_mvx,
                     &best_search_mvy,
                     &best_cost);
+
+#if EXIT_PME
+                // Copy fp ME MV before subpel
+                uint8_t skip_pme_subpel = 0;
+                if (pcs->enc_mode >= ENC_M7)
+                    if (me_data_present) {
+
+                        int64_t pme_to_me_dist_deviation = MAX_SIGNED_VALUE;
+
+                        if (pa_me_distortion > 0) {
+                            pme_to_me_dist_deviation = (best_mvp_distortion - pa_me_distortion) / pa_me_distortion;
+                        }
+
+                        if ((ABS(ctx->sub_me_mv[list_idx][ref_idx].col - best_search_mvx) <= PME_TO_ME_MV_TH && ABS(ctx->sub_me_mv[list_idx][ref_idx].row - best_search_mvy) <= PME_TO_ME_MV_TH) ||
+                            pme_to_me_dist_deviation >= PME_TO_ME_DIST_TH
+                            ) {
+                            best_search_mvx = ctx->sub_me_mv[list_idx][ref_idx].col;
+                            best_search_mvy = ctx->sub_me_mv[list_idx][ref_idx].row;
+                            skip_pme_subpel = 1;
+                        }
+                    }
+#endif
 
                 if (ctx->md_subpel_pme_ctrls.enabled) {
                     best_cost = (uint32_t) md_subpel_search(pcs,
