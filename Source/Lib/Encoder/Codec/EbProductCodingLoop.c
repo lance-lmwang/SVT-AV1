@@ -7331,9 +7331,7 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
                 }
 #endif
             }
-#if EXIT_PME
-            if (ctx->predictive_me_level >= 2) {
-#else
+#if !EXIT_PME
             if (pa_me_distortion != 0 || ctx->predictive_me_level >= 2) {
 #endif
                 // Step 1: derive the best MVP in term of distortion
@@ -7462,7 +7460,7 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
                         int64_t pme_to_me_cost_dev = MAX_SIGNED_VALUE;
 
                         if (me_mv_cost > 0) {
-                            pme_to_me_cost_dev = (pme_mv_cost - me_mv_cost) / me_mv_cost;
+                            pme_to_me_cost_dev = (((int64_t) pme_mv_cost - (int64_t) me_mv_cost) * 100) / (int64_t) me_mv_cost;
                         }
 
                         if ((ABS(ctx->fp_me_mv[list_idx][ref_idx].col - best_search_mvx) <= PME_TO_ME_MV_TH && ABS(ctx->fp_me_mv[list_idx][ref_idx].row - best_search_mvy) <= PME_TO_ME_MV_TH) ||
@@ -7496,8 +7494,9 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
                 ctx->pme_res[list_idx][ref_idx].dist = pme_mv_cost;
             }
         }
+#if !EXIT_PME
     }
-
+#endif
     uint32_t num_of_cand_to_sort = MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH;
     RefResults *res_p = ctx->pme_res[0];
     for (uint32_t i = 0; i < num_of_cand_to_sort - 1; ++i) {
