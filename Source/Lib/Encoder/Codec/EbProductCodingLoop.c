@@ -7438,19 +7438,18 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
                 }
 
 #if EXIT_PME
-#define POST_FP_PME_TO_ME_COST_TH  50 
-#define POST_FP_PME_TO_ME_MV_TH    16
+#define POST_FP_PME_TO_ME_COST_TH  25 
+#define POST_FP_PME_TO_ME_MV_TH    32
                 // Copy fp ME MV before subpel
                 uint8_t skip_search = 0;
                 if (pcs->enc_mode >= ENC_M7)
                     if (me_data_present) {
-                        int64_t pme_to_me_dist_deviation = MAX_SIGNED_VALUE;
 
                         int64_t pme_to_me_cost_dev = (((int64_t)MAX(best_mvp_cost, 1) - (int64_t)MAX(me_mv_cost, 1)) * 100) / (int64_t)MAX(me_mv_cost, 1);
 
                         if (
                             (ABS(ctx->fp_me_mv[list_idx][ref_idx].col - best_mvp_x) <= POST_FP_PME_TO_ME_MV_TH && ABS(ctx->fp_me_mv[list_idx][ref_idx].row - best_mvp_y) <= POST_FP_PME_TO_ME_MV_TH) ||
-                            pme_to_me_dist_deviation >= POST_FP_PME_TO_ME_COST_TH
+                            pme_to_me_cost_dev >= POST_FP_PME_TO_ME_COST_TH
                             ) {
                             best_search_mvx = ctx->sub_me_mv[list_idx][ref_idx].col;
                             best_search_mvy = ctx->sub_me_mv[list_idx][ref_idx].row;
