@@ -7220,7 +7220,7 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
 
         int16_t  best_search_mvx = (int16_t)~0;
         int16_t  best_search_mvy = (int16_t)~0;
-        uint32_t best_cost = (int32_t)~0;
+        uint32_t pme_mv_cost = (int32_t)~0;
 
         if (rf[1] == NONE_FRAME) {
 
@@ -7451,7 +7451,7 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
                     0,
                     &best_search_mvx,
                     &best_search_mvy,
-                    &best_cost);
+                    &pme_mv_cost);
 
 #if EXIT_PME
                 // Copy fp ME MV before subpel
@@ -7459,17 +7459,15 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
                 if (pcs->enc_mode >= ENC_M7)
                     if (me_data_present) {
 
-                        int64_t pme_to_me_dist_deviation = MAX_SIGNED_VALUE;
+                        int64_t pme_to_me_cost_dev = MAX_SIGNED_VALUE;
 
                         if (me_mv_cost > 0) {
-                            pme_to_me_dist_deviation = (best_mvp_distortion - me_mv_cost) / me_mv_cost;
+                            pme_to_me_cost_dev = (pme_mv_cost - me_mv_cost) / me_mv_cost;
                         }
 
-                        if ((ABS(ctx->fp_me_mv[list_idx][ref_idx].col - best_search_mvx) <= PME_TO_ME_MV_TH && ABS(ctx->fp_me_mv[list_idx][ref_idx].row - best_search_mvy) <= PME_TO_ME_MV_TH) 
-                            
-                            //||
-                            //pme_to_me_dist_deviation >= PME_TO_ME_DIST_TH
-                            ) {
+                        if ((ABS(ctx->fp_me_mv[list_idx][ref_idx].col - best_search_mvx) <= PME_TO_ME_MV_TH && ABS(ctx->fp_me_mv[list_idx][ref_idx].row - best_search_mvy) <= PME_TO_ME_MV_TH) ||
+                            pme_to_me_cost_dev >= PME_TO_ME_DIST_TH ) {
+
                             best_search_mvx = ctx->sub_me_mv[list_idx][ref_idx].col;
                             best_search_mvy = ctx->sub_me_mv[list_idx][ref_idx].row;
                             skip_pme_subpel = 1;
@@ -7479,7 +7477,7 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
 #else
                 if (ctx->md_subpel_pme_ctrls.enabled) {
 #endif
-                    best_cost = (uint32_t) md_subpel_search(pcs,
+                    pme_mv_cost = (uint32_t) md_subpel_search(pcs,
                         ctx,
                         ctx->md_subpel_pme_ctrls,
                         pcs->parent_pcs_ptr->enhanced_picture_ptr, // 10BIT not supported
@@ -7495,7 +7493,7 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
                 ctx->best_pme_mv[list_idx][ref_idx][0] = best_search_mvx;
                 ctx->best_pme_mv[list_idx][ref_idx][1] = best_search_mvy;
                 ctx->valid_pme_mv[list_idx][ref_idx] = 1;
-                ctx->pme_res[list_idx][ref_idx].dist = best_cost;
+                ctx->pme_res[list_idx][ref_idx].dist = pme_mv_cost;
             }
         }
     }
