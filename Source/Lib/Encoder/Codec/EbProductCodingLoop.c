@@ -7233,8 +7233,11 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
             // Get the ME MV
             const MeSbResults *me_results =
                 pcs->parent_pcs_ptr->pa_me_data->me_results[ctx->me_sb_addr];
-
+#if RATE_TO_EARLY_DIST_CHECK
+            uint32_t me_mv_cost = ~0;
+#else
             uint32_t pa_me_distortion = ~0;//any non zero value
+#endif
             uint8_t me_data_present = is_me_data_present(ctx, me_results, list_idx, ref_idx);
 
             if (me_data_present) {
@@ -7256,6 +7259,31 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
                 // Round-up to the closest integer the ME MV
                 me_mv_x = (me_mv_x + 4) & ~0x07;
                 me_mv_y = (me_mv_y + 4) & ~0x07;
+#if RATE_TO_EARLY_DIST_CHECK
+                // Set a ref MV (nearest) for the ME MV 
+                ctx->ref_mv.col = ctx->mvp_array[list_idx][ref_idx][0].col;
+                ctx->ref_mv.row = ctx->mvp_array[list_idx][ref_idx][0].row;
+                md_full_pel_search(pcs,
+                    ctx,
+                    input_picture_ptr,
+                    input_origin_index,
+                    use_ssd,
+                    list_idx,
+                    ref_idx,
+                    me_mv_x,
+                    me_mv_y,
+                    0,
+                    0,
+                    0,
+                    0,
+                    1,
+#if SEARCH_TOP_N
+                    0,
+#endif
+                    &me_mv_x,
+                    &me_mv_y,
+                    &me_mv_cost);
+#else
                 EbReferenceObject *ref_obj = pcs->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
                 EbPictureBufferDesc *ref_pic =
                     hbd_mode_decision ? ref_obj->reference_picture16bit : ref_obj->reference_picture;
@@ -7301,9 +7329,13 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
                                 ctx->blk_geom->bwidth);
                     }
                 }
+#endif
             }
+#if EXIT_PME
+            if (ctx->predictive_me_level >= 2) {
+#else
             if (pa_me_distortion != 0 || ctx->predictive_me_level >= 2) {
-
+#endif
                 // Step 1: derive the best MVP in term of distortion
                 int16_t best_mvp_x = 0;
                 int16_t best_mvp_y = 0;
@@ -7429,8 +7461,8 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
 
                         int64_t pme_to_me_dist_deviation = MAX_SIGNED_VALUE;
 
-                        if (pa_me_distortion > 0) {
-                            pme_to_me_dist_deviation = (best_mvp_distortion - pa_me_distortion) / pa_me_distortion;
+                        if (me_mv_cost > 0) {
+                            pme_to_me_dist_deviation = (best_mvp_distortion - me_mv_cost) / me_mv_cost;
                         }
 
                         if ((ABS(ctx->fp_me_mv[list_idx][ref_idx].col - best_search_mvx) <= PME_TO_ME_MV_TH && ABS(ctx->fp_me_mv[list_idx][ref_idx].row - best_search_mvy) <= PME_TO_ME_MV_TH) 

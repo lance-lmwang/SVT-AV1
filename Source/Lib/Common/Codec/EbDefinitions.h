@@ -678,7 +678,7 @@ extern "C" {
 
 #define EXIT_PME                         1
 #define OPT_3                            1 // bypass ref pruning init if no mrp
-#define REFACTOR_DIST_CHECK              1 // reafcor
+#define RATE_TO_EARLY_DIST_CHECK         1
 
 #endif
 // END  SVT_02_TEMP /////////////////////////////////////////////////////////
