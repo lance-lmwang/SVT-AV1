@@ -7378,7 +7378,7 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
 #define PME_TO_ME_DIST_TH  5
 #define PME_TO_ME_MV_TH   32
 #endif
-#if EXIT_PME
+#if 0//EXIT_PME
                 // Copy fp ME MV before subpel
                 uint8_t skip_search = 0;
                 if (pcs->enc_mode >= ENC_M7)
@@ -7433,8 +7433,10 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
                             pme_to_me_dist_deviation = (best_mvp_distortion - pa_me_distortion) / pa_me_distortion;
                         }
 
-                        if ((ABS(ctx->sub_me_mv[list_idx][ref_idx].col - best_search_mvx) <= PME_TO_ME_MV_TH && ABS(ctx->sub_me_mv[list_idx][ref_idx].row - best_search_mvy) <= PME_TO_ME_MV_TH) ||
-                            pme_to_me_dist_deviation >= PME_TO_ME_DIST_TH
+                        if ((ABS(ctx->fp_me_mv[list_idx][ref_idx].col - best_search_mvx) <= PME_TO_ME_MV_TH && ABS(ctx->fp_me_mv[list_idx][ref_idx].row - best_search_mvy) <= PME_TO_ME_MV_TH) 
+                            
+                            //||
+                            //pme_to_me_dist_deviation >= PME_TO_ME_DIST_TH
                             ) {
                             best_search_mvx = ctx->sub_me_mv[list_idx][ref_idx].col;
                             best_search_mvy = ctx->sub_me_mv[list_idx][ref_idx].row;
