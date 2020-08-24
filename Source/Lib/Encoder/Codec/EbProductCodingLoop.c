@@ -7177,6 +7177,14 @@ void build_single_ref_mvp_array(PictureControlSet *pcs, ModeDecisionContext *ctx
             uint8_t list_idx = get_list_idx(rf[0]);
             uint8_t ref_idx = get_ref_frame_idx(rf[0]);
 
+#if OPT_9
+            if (ctx->shut_fast_rate) {
+                ctx->mvp_array[list_idx][ref_idx][0].col = 0;
+                ctx->mvp_array[list_idx][ref_idx][0].row = 0;
+                ctx->mvp_count[list_idx][ref_idx] = 1;
+                continue;
+            }
+#endif
             int8_t mvp_count = 0;
 
             //NEAREST
@@ -14731,7 +14739,11 @@ void md_encode_block(PictureControlSet *pcs_ptr,
                                     pcs_ptr->parent_pcs_ptr->tot_ref_frame_types,
                                     pcs_ptr);
     } else {
+#if OPT_9
+        init_xd(pcs_ptr, context_ptr);
+#else
         mvp_bypass_init(pcs_ptr, context_ptr);
+#endif
     }
 #if ADAPTIVE_ME_SEARCH
     // Read MVPs (rounded-up to the closest integer) for use in md_sq_motion_search() and/or predictive_me_search() and/or perform_md_reference_pruning()
