@@ -368,6 +368,15 @@ typedef struct MdSqMotionSearchCtrls {
 }MdSqMotionSearchCtrls;
 #endif
 
+#if EXIT_PME
+typedef struct MdPmeCtrls {
+    uint8_t enabled;                    // 0: PME search @ MD OFF; 1: PME search @ MD ON
+    uint8_t use_ssd;                    // 0: search using SAD; 1: search using SSD
+    uint8_t full_pel_search_width;      // Full Pel search area width
+    uint8_t full_pel_search_height;     // Full Pel search area height
+}MdPmeCtrls;
+#endif
+
 #if PERFORM_SUB_PEL_MD
 #if UPGRADE_SUBPEL
 typedef struct MdSubPelSearchCtrls {
@@ -644,8 +653,8 @@ typedef struct ModeDecisionContext {
     uint8_t              warped_motion_injection;
     uint8_t              unipred3x3_injection;
     uint8_t              bipred3x3_injection;
+#if !EXIT_PME    
     uint8_t              predictive_me_level;
-#if !EXIT_PME
 #if ADD_SAD_AT_PME_SIGNAL
     uint8_t              use_sad_at_pme;
 #endif
@@ -851,6 +860,10 @@ typedef struct ModeDecisionContext {
 #if UPGRADE_SUBPEL
     uint8_t md_subpel_me_level;
     MdSubPelSearchCtrls md_subpel_me_ctrls;
+#if EXIT_PME
+    uint8_t md_pme_level;
+    MdPmeCtrls md_pme_ctrls;
+#endif
     uint8_t md_subpel_pme_level;
     MdSubPelSearchCtrls md_subpel_pme_ctrls;
 #else

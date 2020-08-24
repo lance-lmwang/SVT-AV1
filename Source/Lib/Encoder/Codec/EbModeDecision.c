@@ -6246,7 +6246,11 @@ void inject_inter_candidates(PictureControlSet *pcs_ptr, ModeDecisionContext *co
 #if !SWITCH_MODE_BASED_ON_SQ_COEFF
     }
 #endif
+#if EXIT_PME
+    if (context_ptr->md_pme_ctrls.enabled)
+#else
     if (context_ptr->predictive_me_level)
+#endif
         inject_predictive_me_candidates(
             context_ptr, pcs_ptr, is_compound_enabled, allow_bipred, &cand_total_cnt);
     // update the total number of candidates injected

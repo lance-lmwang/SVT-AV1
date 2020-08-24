@@ -1845,6 +1845,38 @@ void set_block_based_depth_reduction_controls(ModeDecisionContext *mdctxt, uint8
     }
 }
 #endif
+#if EXIT_PME
+void md_pme_search_controls(ModeDecisionContext *mdctxt, uint8_t md_pme_level) {
+
+    MdPmeCtrls *md_pme_ctrls = &mdctxt->md_pme_ctrls;
+
+    switch (md_pme_level)
+    {
+    case 0:
+        md_pme_ctrls->enabled = 0;
+        break;
+
+    case 1:
+        md_pme_ctrls->enabled = 1;
+        md_pme_ctrls->use_ssd = 1;
+        md_pme_ctrls->full_pel_search_width = 31;
+        md_pme_ctrls->full_pel_search_height = 31;
+        break;
+
+    case 2:
+        md_pme_ctrls->enabled = 1;
+        md_pme_ctrls->use_ssd = 1;
+        md_pme_ctrls->full_pel_search_width = 15;
+        md_pme_ctrls->full_pel_search_height = 15;
+        break;
+
+    default:
+        assert(0);
+        break;
+    }
+}
+#endif
+
 #if ADD_MD_NSQ_SEARCH
 void md_nsq_motion_search_controls(ModeDecisionContext *mdctxt, uint8_t md_nsq_mv_search_level) {
 
@@ -5374,6 +5406,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else
             context_ptr->inter_compound_mode = sequence_control_set_ptr->static_config.compound_level;
 #endif
+#if !EXIT_PME
 #if UPGRADE_SUBPEL
     // Level                Settings
     // 0                    Level 0: OFF
@@ -5567,7 +5600,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     }
     else
         context_ptr->predictive_me_level = 0;
-#if !EXIT_PME
+
 #if ADD_SAD_AT_PME_SIGNAL
     // Level                    Settings
     // FALSE                    Use SSD at PME
@@ -7807,6 +7840,18 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 
     md_nsq_motion_search_controls(context_ptr, context_ptr->md_nsq_mv_search_level);
 #endif
+
+#if EXIT_PME
+    if (pd_pass == PD_PASS_0)
+        context_ptr->md_pme_level = 0;
+    else if (pd_pass == PD_PASS_1)
+        context_ptr->md_pme_level = 0;
+    else
+        context_ptr->md_pme_level = 1;
+
+    md_pme_search_controls(context_ptr, context_ptr->md_pme_level);
+#endif
+
 #if PERFORM_SUB_PEL_MD
 #if UPGRADE_SUBPEL
     if (pd_pass == PD_PASS_0)

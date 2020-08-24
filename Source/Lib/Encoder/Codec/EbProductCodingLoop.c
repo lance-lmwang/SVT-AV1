@@ -384,7 +384,7 @@ void mode_decision_update_neighbor_arrays(PictureControlSet *  pcs_ptr,
                                    NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
     // Update the refFrame Type Neighbor Array
-#if 0//OPT_6
+#if OPT_6
     if (!context_ptr->shut_fast_rate)
 #endif
     neighbor_array_unit_mode_write(context_ptr->ref_frame_type_neighbor_array,
@@ -7227,7 +7227,6 @@ EbBool is_valid_unipred_ref(struct ModeDecisionContext *context_ptr, uint8_t int
 #if EXIT_PME
 void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPictureBufferDesc *input_picture_ptr) {
 
-    // Init valid_pme_mv
     memset(ctx->valid_pme_mv, 0, MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH);
 
     EbBool use_ssd = EB_TRUE;
@@ -7260,7 +7259,7 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
             uint8_t          ref_idx = get_ref_frame_idx(rf[0]);
 
             if (!is_valid_unipred_ref(ctx, PRED_ME_GROUP, list_idx, ref_idx)) continue;
-            if (ref_idx > 1 && ctx->predictive_me_level == 1) continue;
+            if (ref_idx > 1 && pcs->enc_mode >= ENC_M3) continue;
             if (ref_idx > ctx->md_max_ref_count - 1) continue;
             // Get the ME MV
             const MeSbResults *me_results =
@@ -14633,7 +14632,11 @@ void md_encode_block(PictureControlSet *pcs_ptr,
     // Read MVPs (rounded-up to the closest integer) for use in md_sq_motion_search() and/or predictive_me_search() and/or perform_md_reference_pruning()
     if (pcs_ptr->slice_type != I_SLICE &&
 #if UPGRADE_SUBPEL
+#if EXIT_PME
+        (context_ptr->md_sq_me_ctrls.enabled || context_ptr->md_pme_ctrls.enabled || context_ptr->ref_pruning_ctrls.inter_to_inter_pruning_enabled || context_ptr->ref_pruning_ctrls.intra_to_inter_pruning_enabled || context_ptr->md_subpel_me_ctrls.enabled || context_ptr->md_subpel_pme_ctrls.enabled))
+#else
         (context_ptr->md_sq_me_ctrls.enabled || context_ptr->predictive_me_level || context_ptr->ref_pruning_ctrls.inter_to_inter_pruning_enabled || context_ptr->ref_pruning_ctrls.intra_to_inter_pruning_enabled || context_ptr->md_subpel_me_ctrls.enabled || context_ptr->md_subpel_pme_ctrls.enabled))
+#endif
 #else
        (context_ptr->md_sq_me_ctrls.enabled || context_ptr->predictive_me_level || context_ptr->ref_pruning_ctrls.inter_to_inter_pruning_enabled || context_ptr->ref_pruning_ctrls.intra_to_inter_pruning_enabled))
 #endif
@@ -14674,7 +14677,11 @@ void md_encode_block(PictureControlSet *pcs_ptr,
 #endif
     // Perform ME search around the best MVP
 #if UPGRADE_SUBPEL
+#if EXIT_PME
+    if (context_ptr->md_pme_ctrls.enabled)
+#else
     if (context_ptr->predictive_me_level)
+#endif
         predictive_me_search(
             pcs_ptr, context_ptr, input_picture_ptr);
 #else
