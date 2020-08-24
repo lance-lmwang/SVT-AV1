@@ -1165,7 +1165,7 @@ void mvp_bypass_init(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
     xd->mi_stride        = pcs_ptr->mi_stride;
     const int32_t offset = mi_row * xd->mi_stride + mi_col;
     xd->mi               = pcs_ptr->mi_grid_base + offset;
-
+#if !OPT_9
     xd->mi[0]->mbmi.block_mi.partition = from_shape_to_part[context_ptr->blk_geom->shape];
 
     // Set to 0 the fields which would have been set by setup_ref_mv_list()
@@ -1190,6 +1190,7 @@ void mvp_bypass_init(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
 #endif
     memset(context_ptr->blk_ptr->inter_mode_ctx, 0, sizeof(int16_t) * MODE_CTX_REF_FRAMES);
     memset(xd->ref_mv_count, 0, sizeof(int8_t) * MODE_CTX_REF_FRAMES);
+#endif
 }
 
 void generate_av1_mvp_table(TileInfo *tile, ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,

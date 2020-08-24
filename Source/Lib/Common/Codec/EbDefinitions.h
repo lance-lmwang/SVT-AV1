@@ -689,6 +689,7 @@ extern "C" {
 #define OPT_6                            1
 #define OPT_7                            1 // ref_best_cost_sq_table init if  context_ptr->prune_ref_frame_for_rec_partitions only 
 #define OPT_8                            1 // fast cost init post fast cand derivation
+#define OPT_9                            1 // bypass mvp init
 
 #define FASTEST_CDEF                     0
 #endif
