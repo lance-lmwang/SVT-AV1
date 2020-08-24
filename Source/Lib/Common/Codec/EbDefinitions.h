@@ -685,7 +685,7 @@ extern "C" {
 #define RATE_TO_EARLY_DIST_CHECK_1       0
 #endif
 
-#define OPT_3                            0 // bypass ref pruning init if no mrp
+#define OPT_3                            1 // bypass ref pruning init if no mrp
 #define OPT_6                            1
 
 #define FASTEST_CDEF                     0
