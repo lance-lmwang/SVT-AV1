@@ -7653,6 +7653,10 @@ EbErrorType generate_md_stage_0_cand(
     }
 #endif
 
+#if OPT_8
+    for (uint32_t index = 0; index < MIN(cand_total_cnt, MAX_NFL_BUFF); ++index)
+        context_ptr->fast_cost_array[index] = MAX_CU_COST;
+#endif
 
     return EB_ErrorNone;
 }

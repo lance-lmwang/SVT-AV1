@@ -1271,8 +1271,10 @@ void product_coding_loop_init_fast_loop(ModeDecisionContext *context_ptr,
                                    mode_type_neighbor_array,
                                    leaf_depth_neighbor_array,
                                    leaf_partition_neighbor_array);
+#if !OPT_8
     for (uint32_t index = 0; index < MAX_NFL_BUFF; ++index)
         context_ptr->fast_cost_array[index] = MAX_CU_COST;
+#endif
     return;
 }
 
@@ -14638,7 +14640,9 @@ void md_encode_block(PictureControlSet *pcs_ptr,
         pcs_ptr,
         context_ptr);
 #endif
-
+#if OPT_7
+    if (context_ptr->prune_ref_frame_for_rec_partitions)
+#endif
     for (uint8_t ref_idx = 0; ref_idx < MAX_REF_TYPE_CAND; ref_idx++)
         context_ptr->ref_best_cost_sq_table[ref_idx] = MAX_CU_COST;
 
