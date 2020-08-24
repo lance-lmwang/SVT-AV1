@@ -6936,8 +6936,8 @@ void* picture_decision_kernel(void *input_ptr)
 #endif
                                     else {
 #if APR25_7PM_ADOPTIONS
-                                        pcs_ptr->ref_list0_count_try = pcs_ptr->temporal_layer_index == 0 ? MIN(pcs_ptr->ref_list0_count, 2) : MIN(pcs_ptr->ref_list0_count, 1);
-                                        pcs_ptr->ref_list1_count_try = pcs_ptr->temporal_layer_index == 0 ? MIN(pcs_ptr->ref_list1_count, 2) : MIN(pcs_ptr->ref_list1_count, 1);
+                                        pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 1);
+                                        pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 1);
 #else
                                         pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 1);
                                         pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 1);
