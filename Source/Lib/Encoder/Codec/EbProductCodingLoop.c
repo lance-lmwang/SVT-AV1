@@ -1508,7 +1508,11 @@ uint32_t nics_scale_factor[11/*levels*/][2/*num/denum*/] =
     {2,8},    // level7
     {3,16},   // level8
     {1,8},    // level9
+#if FASTEST_NIC_SCALING
+    {4,16}    // level10
+#else
     {1,16}    // level10
+#endif
 };
 #else
 uint32_t nics_scale_factor[10/*levels*/][2/*num/denum*/] =
