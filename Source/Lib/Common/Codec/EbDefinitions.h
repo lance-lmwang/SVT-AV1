@@ -676,8 +676,7 @@ extern "C" {
 #define USE_GF_UPDATE_FOR_LAMBDA         1 // Scale sse lambda based on where the frame is positioned in the miniGOP (based on TL)
 #define LAMBDA_UPDATE_NON_5L             1 // Update layer-based lambda scaling for non-5L mini-GOPs
 
-#define EXIT_PME                         1
-#define OPT_3                            1 // bypass ref pruning init if no mrp
+#define EXIT_PME                         0
 #if EXIT_PME
 #define RATE_TO_EARLY_DIST_CHECK_0       1
 #define RATE_TO_EARLY_DIST_CHECK_1       1
@@ -685,6 +684,9 @@ extern "C" {
 #define RATE_TO_EARLY_DIST_CHECK_0       0
 #define RATE_TO_EARLY_DIST_CHECK_1       0
 #endif
+
+#define OPT_3                            0 // bypass ref pruning init if no mrp
+#define OPT_6                            1
 
 #define FASTEST_CDEF                     0
 #endif
