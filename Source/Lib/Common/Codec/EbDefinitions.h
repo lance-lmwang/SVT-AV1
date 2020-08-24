@@ -676,7 +676,7 @@ extern "C" {
 #define USE_GF_UPDATE_FOR_LAMBDA         1 // Scale sse lambda based on where the frame is positioned in the miniGOP (based on TL)
 #define LAMBDA_UPDATE_NON_5L             1 // Update layer-based lambda scaling for non-5L mini-GOPs
 
-#define EXIT_PME                         1
+#define EXIT_PME                         0
 #if EXIT_PME
 #define RATE_TO_EARLY_DIST_CHECK_0       1
 #define RATE_TO_EARLY_DIST_CHECK_1       1
@@ -691,9 +691,10 @@ extern "C" {
 #define OPT_8                            0 // fast cost init post fast cand derivation
 #define OPT_9                            0 // bypass mvp init
 
+#define FASTEST_HME                      1
 #define FASTEST_NIC_SCALING              0
-
 #define FASTEST_CDEF                     0
+
 #endif
 // END  SVT_02_TEMP /////////////////////////////////////////////////////////
 
