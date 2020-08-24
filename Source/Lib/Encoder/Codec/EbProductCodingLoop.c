@@ -242,7 +242,7 @@ void mode_decision_update_neighbor_arrays(PictureControlSet *  pcs_ptr,
                                        bheight,
                                        NEIGHBOR_ARRAY_UNIT_FULL_MASK);
         // Intra Luma Mode Update
-#if 0//OPT_6
+#if OPT_6
         if (!context_ptr->shut_fast_rate)
 #endif
         neighbor_array_unit_mode_write(context_ptr->intra_luma_mode_neighbor_array,
