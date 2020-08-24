@@ -685,10 +685,10 @@ extern "C" {
 #define RATE_TO_EARLY_DIST_CHECK_1       0
 #endif
 
-#define OPT_3                            0 // bypass ref pruning init if no mrp
-#define OPT_6                            0
-#define OPT_7                            0 // ref_best_cost_sq_table init if  context_ptr->prune_ref_frame_for_rec_partitions only 
-#define OPT_8                            0 // fast cost init post fast cand derivation
+#define OPT_3                            1 // bypass ref pruning init if no mrp
+#define OPT_6                            1
+#define OPT_7                            1 // ref_best_cost_sq_table init if  context_ptr->prune_ref_frame_for_rec_partitions only 
+#define OPT_8                            1 // fast cost init post fast cand derivation
 #define OPT_9                            1 // bypass mvp init
 
 #define FASTEST_HME                      0
