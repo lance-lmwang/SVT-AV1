@@ -7464,7 +7464,7 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
                 }
 
 #if EXIT_PME
-#define PRE_FP_PME_TO_ME_COST_TH  50 
+#define PRE_FP_PME_TO_ME_COST_TH  75 
 #define PRE_FP_PME_TO_ME_MV_TH    16 // 32
                 // Copy fp ME MV before subpel
                 uint8_t skip_search = 0;
