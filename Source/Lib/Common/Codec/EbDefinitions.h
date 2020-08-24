@@ -677,14 +677,7 @@ extern "C" {
 #define LAMBDA_UPDATE_NON_5L             1 // Update layer-based lambda scaling for non-5L mini-GOPs
 
 #define EXIT_PME                         1
-#if EXIT_PME
-#define RATE_TO_EARLY_DIST_CHECK_0       1
-#define RATE_TO_EARLY_DIST_CHECK_1       1
-#else
-#define RATE_TO_EARLY_DIST_CHECK_0       0
-#define RATE_TO_EARLY_DIST_CHECK_1       0
-#endif
-//
+
 #define OPT_3                            1 // bypass ref pruning init if no mrp
 #define OPT_6                            1
 #define OPT_7                            1 // ref_best_cost_sq_table init if  context_ptr->prune_ref_frame_for_rec_partitions only 

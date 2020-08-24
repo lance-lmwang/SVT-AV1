@@ -682,8 +682,8 @@ typedef struct ModeDecisionContext {
 
     int16_t              sb_me_mv[BLOCK_MAX_COUNT_SB_128][2][4][2];
 #if EXIT_PME
-    MV                   fp_me_mv[2][4];
-    MV                   sub_me_mv[2][4];
+    MV                   fp_me_mv[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+    MV                   sub_me_mv[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
 #endif
 #if UPGRADE_SUBPEL
     int16_t              best_pme_mv[2][4][2];
