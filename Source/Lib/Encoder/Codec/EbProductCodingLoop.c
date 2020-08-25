@@ -304,7 +304,7 @@ void mode_decision_update_neighbor_arrays(PictureControlSet *  pcs_ptr,
                                        bwheight_uv,
                                        NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
     }
-#if 0//OPT_6
+#if OPT_6
     if (!context_ptr->shut_fast_rate)
 #endif
     neighbor_array_unit_mode_write(context_ptr->skip_flag_neighbor_array,
@@ -1847,8 +1847,13 @@ void set_inter_inter_distortion_based_reference_pruning_controls(
         ref_pruning_ctrls->best_refs[BI_3x3_GROUP]              = 2;
         ref_pruning_ctrls->best_refs[NRST_NEW_NEAR_GROUP]       = 0;
         ref_pruning_ctrls->best_refs[WARP_GROUP]                = 7;
+#if EXIT_PME // todo
+        ref_pruning_ctrls->best_refs[NRST_NEAR_GROUP]           = 4;
+        ref_pruning_ctrls->best_refs[PRED_ME_GROUP]             = 4;
+#else
         ref_pruning_ctrls->best_refs[NRST_NEAR_GROUP]           = 2;
         ref_pruning_ctrls->best_refs[PRED_ME_GROUP]             = 2;
+#endif
         ref_pruning_ctrls->best_refs[GLOBAL_GROUP]              = 7;
 
         ref_pruning_ctrls->closest_refs[PA_ME_GROUP]            = 1;
@@ -13141,8 +13146,15 @@ EbErrorType signal_derivation_block(
 #endif
 #endif
             context_ptr->inter_inter_distortion_based_reference_pruning = 1;
+#if EXIT_PME // todo
+    else if (enc_mode <= ENC_M2)
+            context_ptr->inter_inter_distortion_based_reference_pruning = 4;
+    else
+            context_ptr->inter_inter_distortion_based_reference_pruning = 5;
+#else
         else
             context_ptr->inter_inter_distortion_based_reference_pruning = 4;
+#endif
 #else
        else if (enc_mode <= ENC_M0)
             context_ptr->inter_inter_distortion_based_reference_pruning = 0;
