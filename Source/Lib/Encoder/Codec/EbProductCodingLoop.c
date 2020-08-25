@@ -7229,7 +7229,6 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
 
     memset(ctx->valid_pme_mv, 0, MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH);
 
-    EbBool use_ssd = EB_TRUE;
     uint8_t hbd_mode_decision = ctx->hbd_mode_decision == EB_DUAL_BIT_MD
         ? EB_8_BIT_MD
         : ctx->hbd_mode_decision;
@@ -7296,7 +7295,7 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
                     ctx,
                     input_picture_ptr,
                     input_origin_index,
-                    use_ssd,
+                    ctx->md_pme_ctrls.use_ssd,
                     list_idx,
                     ref_idx,
                     me_mv_x,
@@ -7337,7 +7336,7 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
                     ctx,
                     input_picture_ptr,
                     input_origin_index,
-                    use_ssd,
+                    ctx->md_pme_ctrls.use_ssd,
                     list_idx,
                     ref_idx,
                     ctx->mvp_array[list_idx][ref_idx][mvp_index].col,
@@ -7386,15 +7385,15 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
                     ctx,
                     input_picture_ptr,
                     input_origin_index,
-                    use_ssd,
+                    ctx->md_pme_ctrls.use_ssd,
                     list_idx,
                     ref_idx,
                     best_mvp_x,
                     best_mvp_y,
-                    -(ctx->pred_me_full_pel_search_width >> 1),
-                    +(ctx->pred_me_full_pel_search_width >> 1),
-                    -(ctx->pred_me_full_pel_search_height >> 1),
-                    +(ctx->pred_me_full_pel_search_height >> 1),
+                    -(ctx->md_pme_ctrls.full_pel_search_width >> 1),
+                    +(ctx->md_pme_ctrls.full_pel_search_width >> 1),
+                    -(ctx->md_pme_ctrls.full_pel_search_height >> 1),
+                    +(ctx->md_pme_ctrls.full_pel_search_height >> 1),
                     1,
                     0,
                     &best_search_mvx,

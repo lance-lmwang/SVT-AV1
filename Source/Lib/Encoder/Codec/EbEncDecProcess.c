@@ -1859,15 +1859,15 @@ void md_pme_search_controls(ModeDecisionContext *mdctxt, uint8_t md_pme_level) {
     case 1:
         md_pme_ctrls->enabled = 1;
         md_pme_ctrls->use_ssd = 1;
-        md_pme_ctrls->full_pel_search_width = 31;
-        md_pme_ctrls->full_pel_search_height = 31;
+        md_pme_ctrls->full_pel_search_width = 15;
+        md_pme_ctrls->full_pel_search_height = 15;
         break;
 
     case 2:
         md_pme_ctrls->enabled = 1;
         md_pme_ctrls->use_ssd = 1;
-        md_pme_ctrls->full_pel_search_width = 15;
-        md_pme_ctrls->full_pel_search_height = 15;
+        md_pme_ctrls->full_pel_search_width = 7;
+        md_pme_ctrls->full_pel_search_height = 5;
         break;
 
     default:
@@ -7140,6 +7140,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #if UNIFY_LEVELS
     }
 #endif
+#if !EXIT_PME
     // Set pred ME full search area
 #if UNIFY_SC_NSC
     if (pd_pass == PD_PASS_0) {
@@ -7237,7 +7238,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         }
     }
 #endif
-
+#endif
 #if !INTER_COMP_REDESIGN
     // comp_similar_mode
     // 0: OFF
@@ -7847,7 +7848,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else if (pd_pass == PD_PASS_1)
         context_ptr->md_pme_level = 0;
     else
-        context_ptr->md_pme_level = 1;
+        if(enc_mode <= ENC_M2)
+            context_ptr->md_pme_level = 1;
+        else
+            context_ptr->md_pme_level = 2;
 
     md_pme_search_controls(context_ptr, context_ptr->md_pme_level);
 #endif

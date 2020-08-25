@@ -883,9 +883,10 @@ typedef struct ModeDecisionContext {
 #if !SHUT_FAST_RATE_PD0
     EbBool       md_skip_mvp_generation;
 #endif
+#if !EXIT_PME
     int16_t      pred_me_full_pel_search_width;
     int16_t      pred_me_full_pel_search_height;
-
+#endif
 #if PME_SORT_REF
     RefResults    pme_res[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
 #endif
