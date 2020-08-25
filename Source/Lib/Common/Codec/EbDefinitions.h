@@ -678,13 +678,14 @@ extern "C" {
 
 #define EXIT_PME                         1
 #define EXIT_PME_BIS                     1 // 
-
+#if LOSSLESS_OPT
 #define OPT_3                            1 // bypass ref pruning init if no mrp
 #define OPT_6                            1 // Bypass useless neighbor update if no fast rate.
 #define OPT_7                            1 // ref_best_cost_sq_table init if  context_ptr->prune_ref_frame_for_rec_partitions only 
 #define OPT_8                            1 // fast cost init post fast cand derivation
 #define OPT_9                            1 // bypass mvp init
-
+#define OPT_10                           1 // 
+#endif
 #define FASTEST_HME                      1 // (16,64) instead of (32,128)
 
 #endif

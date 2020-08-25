@@ -10909,8 +10909,8 @@ uint8_t is_parent_to_current_deviation_small(SequenceControlSet *scs_ptr,
             (int64_t)current_depth_cost;
 #else
         parent_to_current_deviation =
-            (int64_t)(((int64_t)context_ptr->md_local_blk_unit[parent_depth_idx_mds].default_cost - (int64_t)(context_ptr->md_local_blk_unit[blk_geom->sqi_mds].default_cost * 4)) * 100) /
-            (int64_t)(context_ptr->md_local_blk_unit[blk_geom->sqi_mds].default_cost * 4);
+            (int64_t)(((int64_t)MAX(context_ptr->md_local_blk_unit[parent_depth_idx_mds].default_cost,1) - (int64_t)MAX((context_ptr->md_local_blk_unit[blk_geom->sqi_mds].default_cost * 4), 1)) * 100) /
+            (int64_t)MAX((context_ptr->md_local_blk_unit[blk_geom->sqi_mds].default_cost * 4),1);
 #endif
     }
 
@@ -10953,8 +10953,8 @@ uint8_t is_child_to_current_deviation_small(SequenceControlSet *scs_ptr,
     if (child_cnt) {
         child_cost = (child_cost / child_cnt) * 4;
         child_to_current_deviation =
-            (int64_t)(((int64_t)child_cost - (int64_t)context_ptr->md_local_blk_unit[blk_geom->sqi_mds].default_cost) * 100) /
-            (int64_t)(context_ptr->md_local_blk_unit[blk_geom->sqi_mds].default_cost);
+            (int64_t)(((int64_t)MAX(child_cost,1) - (int64_t)MAX(context_ptr->md_local_blk_unit[blk_geom->sqi_mds].default_cost,1)) * 100) /
+            (int64_t)(MAX(context_ptr->md_local_blk_unit[blk_geom->sqi_mds].default_cost,1));
     }
 
 

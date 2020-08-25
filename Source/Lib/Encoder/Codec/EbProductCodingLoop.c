@@ -16731,20 +16731,25 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
                     sb_origin_x,
                     sb_origin_y);
             }
+
 #if BLOCK_REDUCTION_ALGORITHM_1 || BLOCK_REDUCTION_ALGORITHM_2
+#if !OPT_10
             // To call derive_shape_default_cost() before sq_weight() to take advantage of the default cost derivation(s)
             derive_shape_default_cost(context_ptr);
-
+#endif
             // Here d1 is already performed but not d2
             if (context_ptr->depth_reduction_ctrls.enabled &&
                 context_ptr->md_blk_arr_nsq[blk_geom->sqi_mds].split_flag == EB_TRUE &&  // could be further splitted
                 context_ptr->md_local_blk_unit[blk_geom->sqi_mds].avail_blk_flag) { // valid block
-
+#if OPT_10
+                derive_shape_default_cost(context_ptr);
+#endif
                 block_based_depth_reduction(
                     scs_ptr,
                     context_ptr);
             }
 #endif
+
         } else if (d1_first_block)
             d1_first_block = 0;
         blk_index++;
