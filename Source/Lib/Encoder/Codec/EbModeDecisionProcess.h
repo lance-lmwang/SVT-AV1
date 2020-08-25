@@ -374,6 +374,10 @@ typedef struct MdPmeCtrls {
     uint8_t use_ssd;                    // 0: search using SAD; 1: search using SSD
     uint8_t full_pel_search_width;      // Full Pel search area width
     uint8_t full_pel_search_height;     // Full Pel search area height
+    int pre_fp_pme_to_me_cost_th;   // If pre_fp_pme_to_me_cost higher than pre_fp_pme_to_me_cost_th then PME_MV = ME_MV and exit (decrease towards a faster level)
+    int pre_fp_pme_to_me_mv_th;     // If pre_fp_pme_to_me_mv smaller than pre_fp_pme_to_me_mv_th then PME_MV = ME_MV and exit (increase towards a faster level)
+    int post_fp_pme_to_me_cost_th;  // If post_fp_pme_to_me_cost higher than post_fp_pme_to_me_cost_th then PME_MV = ME_MV and exit (decrease towards a faster level)
+    int post_fp_pme_to_me_mv_th;    // If post_fp_pme_to_me_mv smaller than post_fp_pme_to_me_mv_th then PME_MV = ME_MV and exit (increase towards a faster level)
 }MdPmeCtrls;
 #endif
 

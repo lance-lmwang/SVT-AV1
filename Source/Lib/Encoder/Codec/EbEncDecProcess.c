@@ -1861,6 +1861,10 @@ void md_pme_search_controls(ModeDecisionContext *mdctxt, uint8_t md_pme_level) {
         md_pme_ctrls->use_ssd = 1;
         md_pme_ctrls->full_pel_search_width = 15;
         md_pme_ctrls->full_pel_search_height = 15;
+        md_pme_ctrls->pre_fp_pme_to_me_cost_th = MAX_SIGNED_VALUE;
+        md_pme_ctrls->pre_fp_pme_to_me_mv_th = MIN_SIGNED_VALUE;
+        md_pme_ctrls->post_fp_pme_to_me_cost_th = MAX_SIGNED_VALUE;
+        md_pme_ctrls->post_fp_pme_to_me_mv_th = MIN_SIGNED_VALUE;
         break;
 
     case 2:
@@ -1868,6 +1872,21 @@ void md_pme_search_controls(ModeDecisionContext *mdctxt, uint8_t md_pme_level) {
         md_pme_ctrls->use_ssd = 1;
         md_pme_ctrls->full_pel_search_width = 7;
         md_pme_ctrls->full_pel_search_height = 5;
+        md_pme_ctrls->pre_fp_pme_to_me_cost_th = MAX_SIGNED_VALUE;
+        md_pme_ctrls->pre_fp_pme_to_me_mv_th = MIN_SIGNED_VALUE;
+        md_pme_ctrls->post_fp_pme_to_me_cost_th = MAX_SIGNED_VALUE;
+        md_pme_ctrls->post_fp_pme_to_me_mv_th = MIN_SIGNED_VALUE;
+        break;
+
+    case 3:
+        md_pme_ctrls->enabled = 1;
+        md_pme_ctrls->use_ssd = 1;
+        md_pme_ctrls->full_pel_search_width = 7;
+        md_pme_ctrls->full_pel_search_height = 5;
+        md_pme_ctrls->pre_fp_pme_to_me_cost_th = 100;
+        md_pme_ctrls->pre_fp_pme_to_me_mv_th = 16;
+        md_pme_ctrls->post_fp_pme_to_me_cost_th = 25;
+        md_pme_ctrls->post_fp_pme_to_me_mv_th = 32;
         break;
 
     default:
@@ -7850,9 +7869,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
         if(enc_mode <= ENC_M2)
             context_ptr->md_pme_level = 1;
-        else
+        else if (enc_mode <= ENC_M6)
             context_ptr->md_pme_level = 2;
-
+        else
+            context_ptr->md_pme_level = 3;
     md_pme_search_controls(context_ptr, context_ptr->md_pme_level);
 #endif
 

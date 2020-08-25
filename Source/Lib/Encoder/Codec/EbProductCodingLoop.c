@@ -7360,28 +7360,22 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
 
             }
 
-#if EXIT_PME
-#define PRE_FP_PME_TO_ME_COST_TH  100 
-#define PRE_FP_PME_TO_ME_MV_TH    16 // 32
-            // Copy fp ME MV before subpel
             uint8_t skip_search = 0;
-            if (pcs->enc_mode >= ENC_M7)
-                if (me_data_present) {
+            if (me_data_present) {
 
-                    int64_t pme_to_me_cost_dev = (((int64_t)MAX(best_mvp_cost, 1) - (int64_t)MAX(me_mv_cost, 1)) * 100) / (int64_t)MAX(me_mv_cost, 1);
+                int64_t pme_to_me_cost_dev = (((int64_t)MAX(best_mvp_cost, 1) - (int64_t)MAX(me_mv_cost, 1)) * 100) / (int64_t)MAX(me_mv_cost, 1);
 
-                    if (
-                        (ABS(ctx->fp_me_mv[list_idx][ref_idx].col - best_mvp_x) <= PRE_FP_PME_TO_ME_MV_TH && ABS(ctx->fp_me_mv[list_idx][ref_idx].row - best_mvp_y) <= PRE_FP_PME_TO_ME_MV_TH) ||
-                        pme_to_me_cost_dev >= PRE_FP_PME_TO_ME_COST_TH
-                        ) {
-                        best_search_mvx = ctx->sub_me_mv[list_idx][ref_idx].col;
-                        best_search_mvy = ctx->sub_me_mv[list_idx][ref_idx].row;
-                        skip_search = 1;
-                    }
+                if (
+                    (ABS(ctx->fp_me_mv[list_idx][ref_idx].col - best_mvp_x) <= ctx->md_pme_ctrls.pre_fp_pme_to_me_mv_th && ABS(ctx->fp_me_mv[list_idx][ref_idx].row - best_mvp_y) <= ctx->md_pme_ctrls.pre_fp_pme_to_me_mv_th) ||
+                    pme_to_me_cost_dev >= ctx->md_pme_ctrls.pre_fp_pme_to_me_cost_th
+                    ) {
+                    best_search_mvx = ctx->sub_me_mv[list_idx][ref_idx].col;
+                    best_search_mvy = ctx->sub_me_mv[list_idx][ref_idx].row;
+                    skip_search = 1;
                 }
+            }
 
             if (!skip_search) {
-#endif
                 // Set ref MV
                 ctx->ref_mv.col = best_mvp_x;
                 ctx->ref_mv.row = best_mvp_y;
@@ -7404,30 +7398,23 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
                     &best_search_mvx,
                     &best_search_mvy,
                     &pme_mv_cost);
-
-#if EXIT_PME
             }
-            #define POST_FP_PME_TO_ME_COST_TH  25 
-            #define POST_FP_PME_TO_ME_MV_TH     32
-            // Copy fp ME MV before subpel
-            uint8_t skip_pme_subpel = 0;
-            if (pcs->enc_mode >= ENC_M7)
-                if (me_data_present) {
 
-                    int64_t pme_to_me_cost_dev = (((int64_t)MAX(pme_mv_cost, 1) - (int64_t)MAX(me_mv_cost, 1)) * 100) / (int64_t)MAX(me_mv_cost, 1);
-                        
-                    if ((ABS(ctx->fp_me_mv[list_idx][ref_idx].col - best_search_mvx) <= POST_FP_PME_TO_ME_MV_TH && ABS(ctx->fp_me_mv[list_idx][ref_idx].row - best_search_mvy) <= POST_FP_PME_TO_ME_MV_TH) ||
-                        pme_to_me_cost_dev >= POST_FP_PME_TO_ME_COST_TH ) {
+            uint8_t skip_subpel_search = 0;
+            if (me_data_present) {
 
-                        best_search_mvx = ctx->sub_me_mv[list_idx][ref_idx].col;
-                        best_search_mvy = ctx->sub_me_mv[list_idx][ref_idx].row;
-                        skip_pme_subpel = 1;
-                    }
+                int64_t pme_to_me_cost_dev = (((int64_t)MAX(pme_mv_cost, 1) - (int64_t)MAX(me_mv_cost, 1)) * 100) / (int64_t)MAX(me_mv_cost, 1);
+
+                if ((ABS(ctx->fp_me_mv[list_idx][ref_idx].col - best_search_mvx) <= ctx->md_pme_ctrls.post_fp_pme_to_me_mv_th && ABS(ctx->fp_me_mv[list_idx][ref_idx].row - best_search_mvy) <= ctx->md_pme_ctrls.post_fp_pme_to_me_mv_th) ||
+                    pme_to_me_cost_dev >= ctx->md_pme_ctrls.post_fp_pme_to_me_cost_th) {
+
+                    best_search_mvx = ctx->sub_me_mv[list_idx][ref_idx].col;
+                    best_search_mvy = ctx->sub_me_mv[list_idx][ref_idx].row;
+                    skip_subpel_search = 1;
                 }
-            if (ctx->md_subpel_pme_ctrls.enabled && !skip_pme_subpel) {
-#else
-            if (ctx->md_subpel_pme_ctrls.enabled) {
-#endif
+            }
+
+            if (ctx->md_subpel_pme_ctrls.enabled && !skip_subpel_search) {
                 pme_mv_cost = (uint32_t) md_subpel_search(pcs,
                     ctx,
                     ctx->md_subpel_pme_ctrls,
