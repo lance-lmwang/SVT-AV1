@@ -7466,15 +7466,8 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->nic_scaling_level = 6;
         else if (enc_mode <= ENC_M3)
             context_ptr->nic_scaling_level = 8;
-#if FASTEST_NIC_SCALING
-        else if (enc_mode <= ENC_M6)
-            context_ptr->nic_scaling_level = 9;
-        else 
-            context_ptr->nic_scaling_level = 10;
-#else
         else
             context_ptr->nic_scaling_level = 9;
-#endif
     }
 #else
     if (pcs_ptr->enc_mode <= ENC_MR)

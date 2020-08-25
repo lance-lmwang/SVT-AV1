@@ -2122,11 +2122,7 @@ EbErrorType signal_derivation_multi_processes_oq(
                     pcs_ptr->cdef_level = 1;
                 else
 #if M5_I_CDEF
-#if FASTEST_CDEF
-                    pcs_ptr->cdef_level = 5;
-#else
                     pcs_ptr->cdef_level = pcs_ptr->slice_type == I_SLICE ? 1 : 4;
-#endif
 #else
                     pcs_ptr->cdef_filter_mode = 2;
 #endif

@@ -804,7 +804,7 @@ void md_update_all_neighbour_arrays(PictureControlSet *pcs_ptr, ModeDecisionCont
     mode_decision_update_neighbor_arrays(
         pcs_ptr, context_ptr, last_blk_index_mds, pcs_ptr->intra_md_open_loop_flag, EB_FALSE);
 #endif
-#if 0//OPT_6
+#if OPT_6
     if(!context_ptr->shut_fast_rate)
 #endif
     update_mi_map(context_ptr,
@@ -1508,11 +1508,7 @@ uint32_t nics_scale_factor[11/*levels*/][2/*num/denum*/] =
     {2,8},    // level7
     {3,16},   // level8
     {1,8},    // level9
-#if FASTEST_NIC_SCALING
-    {3,32}    // level10
-#else
     {1,16}    // level10
-#endif
 };
 #else
 uint32_t nics_scale_factor[10/*levels*/][2/*num/denum*/] =
@@ -7230,7 +7226,7 @@ void build_single_ref_mvp_array(PictureControlSet *pcs, ModeDecisionContext *ctx
 EbBool is_valid_unipred_ref(struct ModeDecisionContext *context_ptr, uint8_t inter_cand_group, uint8_t list_idx, uint8_t ref_idx);
 #endif
 #if EXIT_PME
-void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPictureBufferDesc *input_picture_ptr) {
+void pme_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPictureBufferDesc *input_picture_ptr) {
 
     memset(ctx->valid_pme_mv, 0, MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH);
 
@@ -7256,6 +7252,7 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
         int16_t  best_search_mvx = (int16_t)~0;
         int16_t  best_search_mvy = (int16_t)~0;
         uint32_t pme_mv_cost = (int32_t)~0;
+        uint32_t me_mv_cost = (int32_t)~0;
 
         if (rf[1] == NONE_FRAME) {
 
@@ -7268,8 +7265,6 @@ void predictive_me_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPi
             // Get the ME MV
             const MeSbResults *me_results =
                 pcs->parent_pcs_ptr->pa_me_data->me_results[ctx->me_sb_addr];
-
-            uint32_t me_mv_cost = ~0;
 
             uint8_t me_data_present = is_me_data_present(ctx, me_results, list_idx, ref_idx);
 
@@ -14627,7 +14622,7 @@ void md_encode_block(PictureControlSet *pcs_ptr,
 #endif
     }
 #if ADAPTIVE_ME_SEARCH
-    // Read MVPs (rounded-up to the closest integer) for use in md_sq_motion_search() and/or predictive_me_search() and/or perform_md_reference_pruning()
+    // Read MVPs (rounded-up to the closest integer) for use in md_sq_motion_search() and/or pme_search() and/or perform_md_reference_pruning()
     if (pcs_ptr->slice_type != I_SLICE &&
 #if UPGRADE_SUBPEL
 #if EXIT_PME
@@ -14677,11 +14672,13 @@ void md_encode_block(PictureControlSet *pcs_ptr,
 #if UPGRADE_SUBPEL
 #if EXIT_PME
     if (context_ptr->md_pme_ctrls.enabled)
+        pme_search(
+            pcs_ptr, context_ptr, input_picture_ptr);
 #else
     if (context_ptr->predictive_me_level)
-#endif
         predictive_me_search(
             pcs_ptr, context_ptr, input_picture_ptr);
+#endif
 #else
     if (context_ptr->predictive_me_level)
         predictive_me_search(
