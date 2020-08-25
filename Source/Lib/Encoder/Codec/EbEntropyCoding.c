@@ -3307,7 +3307,11 @@ static void write_tile_info(const PictureParentControlSet *const pcs_ptr,
         // tile id used for cdf update
         eb_aom_wb_write_literal(
             wb,
+#if FRAME_END_CDF_UPDATE_CLI
+            pcs_ptr->frame_end_cdf_update_level
+#else
             pcs_ptr->frame_end_cdf_update_mode
+#endif
                 ? pcs_ptr->av1_cm->tiles_info.tile_rows * pcs_ptr->av1_cm->tiles_info.tile_cols - 1
                 : 0,
             pcs_ptr->av1_cm->log2_tile_cols + pcs_ptr->av1_cm->log2_tile_rows);

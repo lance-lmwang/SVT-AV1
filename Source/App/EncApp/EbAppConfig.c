@@ -91,7 +91,11 @@
 #define PRUNE_UNIPRED_ME_TOKEN "-prune-unipred-me"
 #define PRUNE_REF_REC_PART_TOKEN "-prune-ref-rec-part"
 #define NSQ_TABLE_TOKEN "-nsq-table-use"
+#if 1 // FRAME_END_CDF_UPDATE_CLI
+#define FRAME_END_CDF_UPDATE_TOKEN "-frame-end-cdf-update-level"
+#else
 #define FRAME_END_CDF_UPDATE_TOKEN "-framend-cdf-upd-mode"
+#endif
 #define LOCAL_WARPED_ENABLE_TOKEN "-local-warp"
 #define GLOBAL_MOTION_ENABLE_TOKEN "-global-motion"
 #if 1 // OBMC_CLI
@@ -232,7 +236,11 @@
 #define PRUNE_UNIPRED_ME_NEW_TOKEN "--enable-prune-unipred-me"
 #define PRUNE_REF_REC_PART_NEW_TOKEN "--enable-prune-ref-rec-part"
 #define NSQ_TABLE_NEW_TOKEN "--enable-nsq-table-use"
+#if 1 // FRAME_END_CDF_UPDATE_CLI
+#define FRAME_END_CDF_UPDATE_NEW_TOKEN "--frame-end-cdf-update-level"
+#else
 #define FRAME_END_CDF_UPDATE_NEW_TOKEN "--enable-framend-cdf-upd-mode"
+#endif
 #define LOCAL_WARPED_ENABLE_NEW_TOKEN "--enable-local-warp"
 #define GLOBAL_MOTION_ENABLE_NEW_TOKEN "--enable-global-motion"
 #if 1 // RDOQ_CLI
@@ -1079,7 +1087,11 @@ ConfigEntry config_entry_specific[] = {
       set_nsq_table_flag},
      {SINGLE_INPUT,
       FRAME_END_CDF_UPDATE_NEW_TOKEN,
+#if 1 // FRAME_END_CDF_UPDATE_CLI
+      "Enable frame end cdf update level (0: OFF, 1: ON, -1: DEFAULT)",
+#else
       "Enable frame end cdf update mode (0: OFF, 1: ON, -1: DEFAULT)",
+#endif
       set_frame_end_cdf_update_flag},
 
      // CHROMA

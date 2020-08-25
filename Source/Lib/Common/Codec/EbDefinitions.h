@@ -676,6 +676,8 @@ extern "C" {
 
 #define USE_GF_UPDATE_FOR_LAMBDA         1 // Scale sse lambda based on where the frame is positioned in the miniGOP (based on TL)
 #define LAMBDA_UPDATE_NON_5L             1 // Update layer-based lambda scaling for non-5L mini-GOPs
+
+#define FRAME_END_CDF_UPDATE_CLI        1 // Update naming for Frame End CDF Update CLI
 #endif
 // END  SVT_02_TEMP /////////////////////////////////////////////////////////
 

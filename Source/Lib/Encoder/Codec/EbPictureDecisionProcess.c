@@ -2866,6 +2866,17 @@ EbErrorType signal_derivation_multi_processes_oq(
         scs_ptr->static_config.compound_level;
 
 #endif
+
+#if FRAME_END_CDF_UPDATE_CLI
+    // Set frame end cdf update level      Settings
+    // 0                                  OFF
+    // 1                                  ON
+    if (scs_ptr->static_config.frame_end_cdf_update == DEFAULT)
+        pcs_ptr->frame_end_cdf_update_level = 1;
+    else
+        pcs_ptr->frame_end_cdf_update_level =
+        scs_ptr->static_config.frame_end_cdf_update;
+#else
     // Set frame end cdf update mode      Settings
     // 0                                  OFF
     // 1                                  ON
@@ -2874,6 +2885,8 @@ EbErrorType signal_derivation_multi_processes_oq(
     else
         pcs_ptr->frame_end_cdf_update_mode =
         scs_ptr->static_config.frame_end_cdf_update;
+#endif
+
 #if !SHUT_ME_CAND_SORTING
     if (scs_ptr->static_config.prune_unipred_me == DEFAULT)
 #if MAR4_M6_ADOPTIONS

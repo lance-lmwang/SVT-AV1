@@ -755,7 +755,11 @@ typedef struct PictureParentControlSet {
     uint8_t            txs_in_inter_classes;
 #endif
 #endif
+#if FRAME_END_CDF_UPDATE_CLI
+    uint8_t            frame_end_cdf_update_level; // mm-signal: 0: OFF, 1:ON
+#else
     uint8_t            frame_end_cdf_update_mode; // mm-signal: 0: OFF, 1:ON
+#endif
     //**********************************************************************************************************//
     Av1RpsNode av1_ref_signal;
     EbBool     has_show_existing;

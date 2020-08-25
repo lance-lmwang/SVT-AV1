@@ -888,7 +888,11 @@ void *picture_manager_kernel(void *input_ptr) {
                                           entry_pcs_ptr->temporal_layer_index == 0 &&
                                           !reference_entry_ptr->feedback_arrived))
                                             ? EB_FALSE
+#if FRAME_END_CDF_UPDATE_CLI
+                                            : (entry_pcs_ptr->frame_end_cdf_update_level &&
+#else
                                             : (entry_pcs_ptr->frame_end_cdf_update_mode &&
+#endif
                                                !reference_entry_ptr->frame_context_updated)
                                                   ? EB_FALSE
                                                   : (reference_entry_ptr->reference_available)
@@ -963,7 +967,11 @@ void *picture_manager_kernel(void *input_ptr) {
                                                   entry_pcs_ptr->temporal_layer_index == 0 &&
                                                   !reference_entry_ptr->feedback_arrived))
                                                     ? EB_FALSE
+#if FRAME_END_CDF_UPDATE_CLI
+                                                    : (entry_pcs_ptr->frame_end_cdf_update_level &&
+#else
                                                     : (entry_pcs_ptr->frame_end_cdf_update_mode &&
+#endif
                                                        !reference_entry_ptr->frame_context_updated)
                                                           ? EB_FALSE
                                                           : (reference_entry_ptr
@@ -1329,7 +1337,11 @@ void *picture_manager_kernel(void *input_ptr) {
                                         encode_context_ptr
                                             ->reference_picture_queue[reference_queue_index];
 #endif
+#if FRAME_END_CDF_UPDATE_CLI
+                                    if (entry_pcs_ptr->frame_end_cdf_update_level) {
+#else
                                     if (entry_pcs_ptr->frame_end_cdf_update_mode) {
+#endif
                                         child_pcs_ptr->ref_frame_context[svt_get_ref_frame_type(
                                                                              REF_LIST_0, ref_idx) -
                                                                          LAST_FRAME] =
@@ -1436,7 +1448,11 @@ void *picture_manager_kernel(void *input_ptr) {
                                         encode_context_ptr
                                             ->reference_picture_queue[reference_queue_index];
 #endif
+#if FRAME_END_CDF_UPDATE_CLI
+                                    if (entry_pcs_ptr->frame_end_cdf_update_level) {
+#else
                                     if (entry_pcs_ptr->frame_end_cdf_update_mode) {
+#endif
                                         child_pcs_ptr->ref_frame_context[svt_get_ref_frame_type(
                                                                              REF_LIST_1, ref_idx) -
                                                                          LAST_FRAME] =
@@ -1518,7 +1534,11 @@ void *picture_manager_kernel(void *input_ptr) {
                             (entry_pcs_ptr->ref_list1_count > 0)
                                 ? B_SLICE
                                 : (entry_pcs_ptr->ref_list0_count > 0) ? P_SLICE : I_SLICE;
+#if FRAME_END_CDF_UPDATE_CLI
+                        if (entry_pcs_ptr->frame_end_cdf_update_level) {
+#else
                         if (entry_pcs_ptr->frame_end_cdf_update_mode) {
+#endif
                             if (entry_pcs_ptr->slice_type != I_SLICE)
                                 child_pcs_ptr->parent_pcs_ptr->frm_hdr.primary_ref_frame =
                                     ref_index;

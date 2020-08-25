@@ -12635,7 +12635,11 @@ void *enc_dec_kernel(void *input_ptr) {
                         ->film_grain_params = pcs_ptr->parent_pcs_ptr->frm_hdr.film_grain_params;
                 }
             }
+#if FRAME_END_CDF_UPDATE_CLI
+            if (pcs_ptr->parent_pcs_ptr->frame_end_cdf_update_level &&
+#else
             if (pcs_ptr->parent_pcs_ptr->frame_end_cdf_update_mode &&
+#endif
                 pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE &&
                 pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr)
                 for (int frame = LAST_FRAME; frame <= ALTREF_FRAME; ++frame)
