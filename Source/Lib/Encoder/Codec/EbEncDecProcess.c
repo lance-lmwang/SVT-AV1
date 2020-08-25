@@ -7858,7 +7858,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     if (pd_pass == PD_PASS_0)
         context_ptr->md_pme_level = 0;
     else if (pd_pass == PD_PASS_1)
-        context_ptr->md_pme_level = 0;
+        context_ptr->md_pme_level = 3;
     else
         if(enc_mode <= ENC_M2)
             context_ptr->md_pme_level = 1;
