@@ -1117,7 +1117,11 @@ IntMv gm_get_motion_vector_enc(const EbWarpedMotionParams *gm, int32_t allow_hp,
     if (is_integer) { integer_mv_precision(&res.as_mv); }
     return res;
 }
+#if OPT_9
+void init_xd(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr) {
+#else
 void mvp_bypass_init(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr) {
+#endif
     TileInfo *tile = &context_ptr->sb_ptr->tile_info;
 
     int32_t       mi_row = context_ptr->blk_origin_y >> MI_SIZE_LOG2;
@@ -1167,7 +1171,7 @@ void mvp_bypass_init(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
     xd->mi               = pcs_ptr->mi_grid_base + offset;
 
     xd->mi[0]->mbmi.block_mi.partition = from_shape_to_part[context_ptr->blk_geom->shape];
-
+#if !OPT_9
     // Set to 0 the fields which would have been set by setup_ref_mv_list()
     memset(xd->ref_mv_count, 0, sizeof(uint8_t) * MODE_CTX_REF_FRAMES);
 #if MEM_OPT_MV_STACK
@@ -1177,6 +1181,7 @@ void mvp_bypass_init(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
 #endif
            0,
            sizeof(CandidateMv) * MODE_CTX_REF_FRAMES * MAX_REF_MV_STACK_SIZE);
+
 #if CLEAN_UP_SB_DATA_0
     memset(
         context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].ref_mvs,
@@ -1188,8 +1193,10 @@ void mvp_bypass_init(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
         0,
         sizeof(context_ptr->blk_ptr->ref_mvs[0][0]) * MODE_CTX_REF_FRAMES * MAX_MV_REF_CANDIDATES);
 #endif
+
     memset(context_ptr->blk_ptr->inter_mode_ctx, 0, sizeof(int16_t) * MODE_CTX_REF_FRAMES);
     memset(xd->ref_mv_count, 0, sizeof(int8_t) * MODE_CTX_REF_FRAMES);
+#endif
 }
 
 void generate_av1_mvp_table(TileInfo *tile, ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,

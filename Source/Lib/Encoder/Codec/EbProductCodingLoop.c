@@ -231,6 +231,9 @@ void mode_decision_update_neighbor_arrays(PictureControlSet *  pcs_ptr,
                                        NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
         // Mode Type Update
+#if OPT_6
+        if (!context_ptr->shut_fast_rate)
+#endif
         neighbor_array_unit_mode_write(context_ptr->mode_type_neighbor_array,
                                        &mode_type,
                                        origin_x,
@@ -239,6 +242,9 @@ void mode_decision_update_neighbor_arrays(PictureControlSet *  pcs_ptr,
                                        bheight,
                                        NEIGHBOR_ARRAY_UNIT_FULL_MASK);
         // Intra Luma Mode Update
+#if OPT_6
+        if (!context_ptr->shut_fast_rate)
+#endif
         neighbor_array_unit_mode_write(context_ptr->intra_luma_mode_neighbor_array,
                                        &intra_luma_mode, //(uint8_t*)luma_mode,
                                        origin_x,
@@ -285,6 +291,9 @@ void mode_decision_update_neighbor_arrays(PictureControlSet *  pcs_ptr,
     }
 
     // Hsan: chroma mode rate estimation is kept even for chroma blind
+#if OPT_6
+    if (!context_ptr->shut_fast_rate)
+#endif
     if (context_ptr->blk_geom->has_uv) {
         // Intra Chroma Mode Update
         neighbor_array_unit_mode_write(context_ptr->intra_chroma_mode_neighbor_array,
@@ -295,7 +304,9 @@ void mode_decision_update_neighbor_arrays(PictureControlSet *  pcs_ptr,
                                        bwheight_uv,
                                        NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
     }
-
+#if OPT_6
+    if (!context_ptr->shut_fast_rate)
+#endif
     neighbor_array_unit_mode_write(context_ptr->skip_flag_neighbor_array,
                                    &skip_flag,
                                    origin_x,
@@ -361,6 +372,9 @@ void mode_decision_update_neighbor_arrays(PictureControlSet *  pcs_ptr,
                                    NEIGHBOR_ARRAY_UNIT_LEFT_MASK);
 
     // Update the Inter Pred Type Neighbor Array
+#if OPT_6
+    if (!context_ptr->shut_fast_rate)
+#endif
     neighbor_array_unit_mode_write(context_ptr->inter_pred_dir_neighbor_array,
                                    &inter_pred_direction_index,
                                    origin_x,
@@ -370,6 +384,9 @@ void mode_decision_update_neighbor_arrays(PictureControlSet *  pcs_ptr,
                                    NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
     // Update the refFrame Type Neighbor Array
+#if OPT_6
+    if (!context_ptr->shut_fast_rate)
+#endif
     neighbor_array_unit_mode_write(context_ptr->ref_frame_type_neighbor_array,
                                    &ref_frame_type,
                                    origin_x,
@@ -1251,8 +1268,10 @@ void product_coding_loop_init_fast_loop(ModeDecisionContext *context_ptr,
                                    mode_type_neighbor_array,
                                    leaf_depth_neighbor_array,
                                    leaf_partition_neighbor_array);
+#if !OPT_8
     for (uint32_t index = 0; index < MAX_NFL_BUFF; ++index)
         context_ptr->fast_cost_array[index] = MAX_CU_COST;
+#endif
     return;
 }
 
@@ -6402,9 +6421,19 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
 #endif
 #if PERFORM_SUB_PEL_MD
 #if UPGRADE_SUBPEL
+#if EXIT_PME
+                context_ptr->post_subpel_me_mv_cost[list_idx][ref_idx] = (int32_t)~0;
+#endif
                 if (context_ptr->md_subpel_me_ctrls.enabled) {
 #if FP_MV_COST
+#if EXIT_PME
+                    // Copy ME MV before subpel
+                    context_ptr->fp_me_mv[list_idx][ref_idx].col = me_mv_x;
+                    context_ptr->fp_me_mv[list_idx][ref_idx].row = me_mv_y;
+                    context_ptr->post_subpel_me_mv_cost[list_idx][ref_idx] = (uint32_t) md_subpel_search(pcs_ptr,
+#else
                     md_subpel_search(pcs_ptr,
+#endif
                         context_ptr,
                         context_ptr->md_subpel_me_ctrls,
                         pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr, // 10BIT not supported
@@ -6412,6 +6441,11 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                         ref_idx,
                         &me_mv_x,
                         &me_mv_y);
+#if EXIT_PME
+                    // Copy ME MV after subpel
+                    context_ptr->sub_me_mv[list_idx][ref_idx].col = me_mv_x;
+                    context_ptr->sub_me_mv[list_idx][ref_idx].row = me_mv_y;
+#endif
 #else
                     md_subpel_search(pcs_ptr,
                         context_ptr,
@@ -7141,6 +7175,14 @@ void build_single_ref_mvp_array(PictureControlSet *pcs, ModeDecisionContext *ctx
             uint8_t list_idx = get_list_idx(rf[0]);
             uint8_t ref_idx = get_ref_frame_idx(rf[0]);
 
+#if OPT_9
+            if (ctx->shut_fast_rate) {
+                ctx->mvp_array[list_idx][ref_idx][0].col = 0;
+                ctx->mvp_array[list_idx][ref_idx][0].row = 0;
+                ctx->mvp_count[list_idx][ref_idx] = 1;
+                continue;
+            }
+#endif
             int8_t mvp_count = 0;
 
             //NEAREST
@@ -7180,6 +7222,232 @@ void build_single_ref_mvp_array(PictureControlSet *pcs, ModeDecisionContext *ctx
 #if PRUNING_PER_INTER_TYPE
 EbBool is_valid_unipred_ref(struct ModeDecisionContext *context_ptr, uint8_t inter_cand_group, uint8_t list_idx, uint8_t ref_idx);
 #endif
+#if UNIFY_PME_SIGNALS
+void pme_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPictureBufferDesc *input_picture_ptr) {
+
+    memset(ctx->valid_pme_mv, 0, MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH);
+
+    uint8_t hbd_mode_decision = ctx->hbd_mode_decision == EB_DUAL_BIT_MD
+        ? EB_8_BIT_MD
+        : ctx->hbd_mode_decision;
+
+    input_picture_ptr = hbd_mode_decision ? pcs->input_frame16bit
+        : pcs->parent_pcs_ptr->enhanced_picture_ptr;
+
+    uint32_t input_origin_index =
+        (ctx->blk_origin_y + input_picture_ptr->origin_y) * input_picture_ptr->stride_y +
+        (ctx->blk_origin_x + input_picture_ptr->origin_x);
+
+    for (uint32_t ref_it = 0; ref_it < pcs->parent_pcs_ptr->tot_ref_frame_types; ++ref_it) {
+
+        MvReferenceFrame ref_pair = pcs->parent_pcs_ptr->ref_frame_type_arr[ref_it];
+        MvReferenceFrame rf[2];
+        av1_set_ref_frame(rf, ref_pair);
+
+        // Reset search variable(s)
+        uint32_t best_mvp_cost = (int32_t)~0;
+        int16_t  best_search_mvx = (int16_t)~0;
+        int16_t  best_search_mvy = (int16_t)~0;
+        uint32_t pme_mv_cost = (int32_t)~0;
+        uint32_t me_mv_cost = (int32_t)~0;
+        uint32_t post_subpel_pme_mv_cost = (int32_t)~0;
+
+        if (rf[1] == NONE_FRAME) {
+
+            uint8_t          list_idx = get_list_idx(rf[0]);
+            uint8_t          ref_idx = get_ref_frame_idx(rf[0]);
+
+            if (!is_valid_unipred_ref(ctx, PRED_ME_GROUP, list_idx, ref_idx)) continue;
+
+            if (ref_idx > ctx->md_max_ref_count - 1) continue;
+            // Get the ME MV
+            const MeSbResults *me_results =
+                pcs->parent_pcs_ptr->pa_me_data->me_results[ctx->me_sb_addr];
+
+            uint8_t me_data_present = is_me_data_present(ctx, me_results, list_idx, ref_idx);
+
+            if (me_data_present) {
+
+                int16_t me_mv_x;
+                int16_t me_mv_y;
+                if (list_idx == 0) {
+                    me_mv_x = ctx
+                        ->sb_me_mv[ctx->blk_geom->blkidx_mds][REF_LIST_0][ref_idx][0];
+                    me_mv_y = ctx
+                        ->sb_me_mv[ctx->blk_geom->blkidx_mds][REF_LIST_0][ref_idx][1];
+                }
+                else {
+                    me_mv_x = ctx
+                        ->sb_me_mv[ctx->blk_geom->blkidx_mds][REF_LIST_1][ref_idx][0];
+                    me_mv_y = ctx
+                        ->sb_me_mv[ctx->blk_geom->blkidx_mds][REF_LIST_1][ref_idx][1];
+                }
+                // Round-up to the closest integer the ME MV
+                me_mv_x = (me_mv_x + 4) & ~0x07;
+                me_mv_y = (me_mv_y + 4) & ~0x07;
+
+                // Set a ref MV (nearest) for the ME MV 
+                ctx->ref_mv.col = ctx->mvp_array[list_idx][ref_idx][0].col;
+                ctx->ref_mv.row = ctx->mvp_array[list_idx][ref_idx][0].row;
+                md_full_pel_search(pcs,
+                    ctx,
+                    input_picture_ptr,
+                    input_origin_index,
+                    ctx->md_pme_ctrls.use_ssd,
+                    list_idx,
+                    ref_idx,
+                    me_mv_x,
+                    me_mv_y,
+                    0,
+                    0,
+                    0,
+                    0,
+                    1,
+#if SEARCH_TOP_N
+                    0,
+#endif
+                    &me_mv_x,
+                    &me_mv_y,
+                    &me_mv_cost);
+            }
+
+            // Step 1: derive the best MVP in term of distortion
+            int16_t best_mvp_x = 0;
+            int16_t best_mvp_y = 0;
+
+            for (int8_t mvp_index = 0; mvp_index < ctx->mvp_count[list_idx][ref_idx]; mvp_index++) {
+
+                // Set a ref MV (MVP under eval) for the MVP under eval
+                ctx->ref_mv.col = ctx->mvp_array[list_idx][ref_idx][mvp_index].col;
+                ctx->ref_mv.row = ctx->mvp_array[list_idx][ref_idx][mvp_index].row;
+
+                EbReferenceObject *ref_obj =
+                    pcs->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
+                EbPictureBufferDesc *ref_pic = hbd_mode_decision
+                    ? ref_obj->reference_picture16bit
+                    : ref_obj->reference_picture;
+
+                clip_mv_on_pic_boundary(ctx->blk_origin_x, ctx->blk_origin_y, ctx->blk_geom->bwidth, ctx->blk_geom->bheight,
+                    ref_pic, &ctx->mvp_array[list_idx][ref_idx][mvp_index].col, &ctx->mvp_array[list_idx][ref_idx][mvp_index].row);
+
+                md_full_pel_search(pcs,
+                    ctx,
+                    input_picture_ptr,
+                    input_origin_index,
+                    ctx->md_pme_ctrls.use_ssd,
+                    list_idx,
+                    ref_idx,
+                    ctx->mvp_array[list_idx][ref_idx][mvp_index].col,
+                    ctx->mvp_array[list_idx][ref_idx][mvp_index].row,
+                    0,
+                    0,
+                    0,
+                    0,
+                    1,
+#if SEARCH_TOP_N
+                    0,
+#endif
+                    &best_mvp_x,
+                    &best_mvp_y,
+                    &best_mvp_cost);
+
+            }
+
+            uint8_t skip_search = 0;
+#if EXIT_PME
+            if (me_data_present) {
+
+                int64_t pme_to_me_cost_dev = (((int64_t)MAX(best_mvp_cost, 1) - (int64_t)MAX(me_mv_cost, 1)) * 100) / (int64_t)MAX(me_mv_cost, 1);
+
+                if ((ABS(ctx->fp_me_mv[list_idx][ref_idx].col - best_mvp_x) <= ctx->md_pme_ctrls.pre_fp_pme_to_me_mv_th && ABS(ctx->fp_me_mv[list_idx][ref_idx].row - best_mvp_y) <= ctx->md_pme_ctrls.pre_fp_pme_to_me_mv_th) ||
+                    pme_to_me_cost_dev >= ctx->md_pme_ctrls.pre_fp_pme_to_me_cost_th
+                    ) {
+                    best_search_mvx = ctx->sub_me_mv[list_idx][ref_idx].col;
+                    best_search_mvy = ctx->sub_me_mv[list_idx][ref_idx].row;
+                    skip_search = 1;
+                }
+            }
+#endif
+            if (!skip_search) {
+                // Set ref MV
+                ctx->ref_mv.col = best_mvp_x;
+                ctx->ref_mv.row = best_mvp_y;
+
+                md_full_pel_search(pcs,
+                    ctx,
+                    input_picture_ptr,
+                    input_origin_index,
+                    ctx->md_pme_ctrls.use_ssd,
+                    list_idx,
+                    ref_idx,
+                    best_mvp_x,
+                    best_mvp_y,
+                    -(ctx->md_pme_ctrls.full_pel_search_width >> 1),
+                    +(ctx->md_pme_ctrls.full_pel_search_width >> 1),
+                    -(ctx->md_pme_ctrls.full_pel_search_height >> 1),
+                    +(ctx->md_pme_ctrls.full_pel_search_height >> 1),
+                    1,
+                    0,
+                    &best_search_mvx,
+                    &best_search_mvy,
+                    &pme_mv_cost);
+            }
+
+            uint8_t skip_subpel_search = 0;
+#if EXIT_PME
+            if (me_data_present) {
+
+                int64_t pme_to_me_cost_dev = (((int64_t)MAX(pme_mv_cost, 1) - (int64_t)MAX(me_mv_cost, 1)) * 100) / (int64_t)MAX(me_mv_cost, 1);
+
+                if ((ABS(ctx->fp_me_mv[list_idx][ref_idx].col - best_search_mvx) <= ctx->md_pme_ctrls.post_fp_pme_to_me_mv_th && ABS(ctx->fp_me_mv[list_idx][ref_idx].row - best_search_mvy) <= ctx->md_pme_ctrls.post_fp_pme_to_me_mv_th) ||
+                    pme_to_me_cost_dev >= ctx->md_pme_ctrls.post_fp_pme_to_me_cost_th) {
+
+                    best_search_mvx = ctx->sub_me_mv[list_idx][ref_idx].col;
+                    best_search_mvy = ctx->sub_me_mv[list_idx][ref_idx].row;
+                    skip_subpel_search = 1;
+                }
+            }
+#endif
+            if (ctx->md_subpel_pme_ctrls.enabled && !skip_subpel_search) {
+                post_subpel_pme_mv_cost = (uint32_t) md_subpel_search(pcs,
+                    ctx,
+                    ctx->md_subpel_pme_ctrls,
+                    pcs->parent_pcs_ptr->enhanced_picture_ptr, // 10BIT not supported
+                    list_idx,
+                    ref_idx,
+                    &best_search_mvx,
+                    &best_search_mvy);
+            }
+
+            //check if final MV is within AV1 limits
+            check_mv_validity(best_search_mvx, best_search_mvy, 0);
+
+            ctx->best_pme_mv[list_idx][ref_idx][0] = best_search_mvx;
+            ctx->best_pme_mv[list_idx][ref_idx][1] = best_search_mvy;
+            ctx->valid_pme_mv[list_idx][ref_idx] = 1;
+#if EXIT_PME
+            ctx->pme_res[list_idx][ref_idx].dist = (skip_search || skip_subpel_search) ? 
+                ctx->post_subpel_me_mv_cost[list_idx][ref_idx] :
+                post_subpel_pme_mv_cost;
+#else
+            ctx->pme_res[list_idx][ref_idx].dist = pme_mv_cost;
+#endif
+        }
+    }
+
+    uint32_t num_of_cand_to_sort = MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH;
+    RefResults *res_p = ctx->pme_res[0];
+    for (uint32_t i = 0; i < num_of_cand_to_sort - 1; ++i) {
+        for (uint32_t j = i + 1; j < num_of_cand_to_sort; ++j) {
+            if (res_p[j].dist < res_p[i].dist) {
+                RefResults temp = res_p[i];
+                res_p[i] = res_p[j];
+                res_p[j] = temp;
+            }
+        }
+    }
+}
+#else
 #if UPGRADE_SUBPEL
 void predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
     EbPictureBufferDesc *input_picture_ptr) {
@@ -7805,6 +8073,7 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
 #endif
 
 }
+#endif
 void av1_cost_calc_cfl(PictureControlSet *pcs_ptr, ModeDecisionCandidateBuffer *candidate_buffer,
                        SuperBlock *sb_ptr, ModeDecisionContext *context_ptr,
                        uint32_t component_mask, EbPictureBufferDesc *input_picture_ptr,
@@ -14257,7 +14526,9 @@ void md_encode_block(PictureControlSet *pcs_ptr,
         pcs_ptr,
         context_ptr);
 #endif
-
+#if OPT_7
+    if (context_ptr->prune_ref_frame_for_rec_partitions)
+#endif
     for (uint8_t ref_idx = 0; ref_idx < MAX_REF_TYPE_CAND; ref_idx++)
         context_ptr->ref_best_cost_sq_table[ref_idx] = MAX_CU_COST;
 
@@ -14342,13 +14613,21 @@ void md_encode_block(PictureControlSet *pcs_ptr,
                                     pcs_ptr->parent_pcs_ptr->tot_ref_frame_types,
                                     pcs_ptr);
     } else {
+#if OPT_9
+        init_xd(pcs_ptr, context_ptr);
+#else
         mvp_bypass_init(pcs_ptr, context_ptr);
+#endif
     }
 #if ADAPTIVE_ME_SEARCH
-    // Read MVPs (rounded-up to the closest integer) for use in md_sq_motion_search() and/or predictive_me_search() and/or perform_md_reference_pruning()
+    // Read MVPs (rounded-up to the closest integer) for use in md_sq_motion_search() and/or pme_search() and/or perform_md_reference_pruning()
     if (pcs_ptr->slice_type != I_SLICE &&
 #if UPGRADE_SUBPEL
+#if UNIFY_PME_SIGNALS
+        (context_ptr->md_sq_me_ctrls.enabled || context_ptr->md_pme_ctrls.enabled || context_ptr->ref_pruning_ctrls.inter_to_inter_pruning_enabled || context_ptr->ref_pruning_ctrls.intra_to_inter_pruning_enabled || context_ptr->md_subpel_me_ctrls.enabled || context_ptr->md_subpel_pme_ctrls.enabled))
+#else
         (context_ptr->md_sq_me_ctrls.enabled || context_ptr->predictive_me_level || context_ptr->ref_pruning_ctrls.inter_to_inter_pruning_enabled || context_ptr->ref_pruning_ctrls.intra_to_inter_pruning_enabled || context_ptr->md_subpel_me_ctrls.enabled || context_ptr->md_subpel_pme_ctrls.enabled))
+#endif
 #else
        (context_ptr->md_sq_me_ctrls.enabled || context_ptr->predictive_me_level || context_ptr->ref_pruning_ctrls.inter_to_inter_pruning_enabled || context_ptr->ref_pruning_ctrls.intra_to_inter_pruning_enabled))
 #endif
@@ -14389,9 +14668,15 @@ void md_encode_block(PictureControlSet *pcs_ptr,
 #endif
     // Perform ME search around the best MVP
 #if UPGRADE_SUBPEL
+#if UNIFY_PME_SIGNALS
+    if (context_ptr->md_pme_ctrls.enabled)
+        pme_search(
+            pcs_ptr, context_ptr, input_picture_ptr);
+#else
     if (context_ptr->predictive_me_level)
         predictive_me_search(
             pcs_ptr, context_ptr, input_picture_ptr);
+#endif
 #else
     if (context_ptr->predictive_me_level)
         predictive_me_search(
@@ -16454,20 +16739,25 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
                     sb_origin_x,
                     sb_origin_y);
             }
+
 #if BLOCK_REDUCTION_ALGORITHM_1 || BLOCK_REDUCTION_ALGORITHM_2
+#if !OPT_10
             // To call derive_shape_default_cost() before sq_weight() to take advantage of the default cost derivation(s)
             derive_shape_default_cost(context_ptr);
-
+#endif
             // Here d1 is already performed but not d2
             if (context_ptr->depth_reduction_ctrls.enabled &&
                 context_ptr->md_blk_arr_nsq[blk_geom->sqi_mds].split_flag == EB_TRUE &&  // could be further splitted
                 context_ptr->md_local_blk_unit[blk_geom->sqi_mds].avail_blk_flag) { // valid block
-
+#if OPT_10
+                derive_shape_default_cost(context_ptr);
+#endif
                 block_based_depth_reduction(
                     scs_ptr,
                     context_ptr);
             }
 #endif
+
         } else if (d1_first_block)
             d1_first_block = 0;
         blk_index++;

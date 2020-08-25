@@ -368,6 +368,19 @@ typedef struct MdSqMotionSearchCtrls {
 }MdSqMotionSearchCtrls;
 #endif
 
+#if UNIFY_PME_SIGNALS
+typedef struct MdPmeCtrls {
+    uint8_t enabled;                    // 0: PME search @ MD OFF; 1: PME search @ MD ON
+    uint8_t use_ssd;                    // 0: search using SAD; 1: search using SSD
+    uint8_t full_pel_search_width;      // Full Pel search area width
+    uint8_t full_pel_search_height;     // Full Pel search area height
+    int pre_fp_pme_to_me_cost_th;   // If pre_fp_pme_to_me_cost higher than pre_fp_pme_to_me_cost_th then PME_MV = ME_MV and exit (decrease towards a faster level)
+    int pre_fp_pme_to_me_mv_th;     // If pre_fp_pme_to_me_mv smaller than pre_fp_pme_to_me_mv_th then PME_MV = ME_MV and exit (increase towards a faster level)
+    int post_fp_pme_to_me_cost_th;  // If post_fp_pme_to_me_cost higher than post_fp_pme_to_me_cost_th then PME_MV = ME_MV and exit (decrease towards a faster level)
+    int post_fp_pme_to_me_mv_th;    // If post_fp_pme_to_me_mv smaller than post_fp_pme_to_me_mv_th then PME_MV = ME_MV and exit (increase towards a faster level)
+}MdPmeCtrls;
+#endif
+
 #if PERFORM_SUB_PEL_MD
 #if UPGRADE_SUBPEL
 typedef struct MdSubPelSearchCtrls {
@@ -644,9 +657,11 @@ typedef struct ModeDecisionContext {
     uint8_t              warped_motion_injection;
     uint8_t              unipred3x3_injection;
     uint8_t              bipred3x3_injection;
+#if !UNIFY_PME_SIGNALS    
     uint8_t              predictive_me_level;
 #if ADD_SAD_AT_PME_SIGNAL
     uint8_t              use_sad_at_pme;
+#endif
 #endif
     uint8_t              interpolation_filter_search_blk_size;
     uint8_t              redundant_blk;
@@ -679,6 +694,11 @@ typedef struct ModeDecisionContext {
 #endif
 
     int16_t              sb_me_mv[BLOCK_MAX_COUNT_SB_128][2][4][2];
+#if EXIT_PME
+    MV                   fp_me_mv[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+    MV                   sub_me_mv[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+    uint32_t             post_subpel_me_mv_cost[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+#endif
 #if UPGRADE_SUBPEL
     int16_t              best_pme_mv[2][4][2];
     int8_t               valid_pme_mv[2][4];
@@ -845,6 +865,10 @@ typedef struct ModeDecisionContext {
 #if UPGRADE_SUBPEL
     uint8_t md_subpel_me_level;
     MdSubPelSearchCtrls md_subpel_me_ctrls;
+#if UNIFY_PME_SIGNALS
+    uint8_t md_pme_level;
+    MdPmeCtrls md_pme_ctrls;
+#endif
     uint8_t md_subpel_pme_level;
     MdSubPelSearchCtrls md_subpel_pme_ctrls;
 #else
@@ -864,9 +888,10 @@ typedef struct ModeDecisionContext {
 #if !SHUT_FAST_RATE_PD0
     EbBool       md_skip_mvp_generation;
 #endif
+#if !UNIFY_PME_SIGNALS
     int16_t      pred_me_full_pel_search_width;
     int16_t      pred_me_full_pel_search_height;
-
+#endif
 #if PME_SORT_REF
     RefResults    pme_res[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
 #endif

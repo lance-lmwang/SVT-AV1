@@ -6246,7 +6246,11 @@ void inject_inter_candidates(PictureControlSet *pcs_ptr, ModeDecisionContext *co
 #if !SWITCH_MODE_BASED_ON_SQ_COEFF
     }
 #endif
+#if UNIFY_PME_SIGNALS
+    if (context_ptr->md_pme_ctrls.enabled)
+#else
     if (context_ptr->predictive_me_level)
+#endif
         inject_predictive_me_candidates(
             context_ptr, pcs_ptr, is_compound_enabled, allow_bipred, &cand_total_cnt);
     // update the total number of candidates injected
@@ -7653,6 +7657,10 @@ EbErrorType generate_md_stage_0_cand(
     }
 #endif
 
+#if OPT_8
+    for (uint32_t index = 0; index < MIN(cand_total_cnt, MAX_NFL_BUFF); ++index)
+        context_ptr->fast_cost_array[index] = MAX_CU_COST;
+#endif
 
     return EB_ErrorNone;
 }

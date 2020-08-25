@@ -1845,6 +1845,57 @@ void set_block_based_depth_reduction_controls(ModeDecisionContext *mdctxt, uint8
     }
 }
 #endif
+#if UNIFY_PME_SIGNALS
+void md_pme_search_controls(ModeDecisionContext *mdctxt, uint8_t md_pme_level) {
+
+    MdPmeCtrls *md_pme_ctrls = &mdctxt->md_pme_ctrls;
+
+    switch (md_pme_level)
+    {
+    case 0:
+        md_pme_ctrls->enabled = 0;
+        break;
+
+    case 1:
+        md_pme_ctrls->enabled = 1;
+        md_pme_ctrls->use_ssd = 1;
+        md_pme_ctrls->full_pel_search_width = 15;
+        md_pme_ctrls->full_pel_search_height = 15;
+        md_pme_ctrls->pre_fp_pme_to_me_cost_th = MAX_SIGNED_VALUE;
+        md_pme_ctrls->pre_fp_pme_to_me_mv_th = MIN_SIGNED_VALUE;
+        md_pme_ctrls->post_fp_pme_to_me_cost_th = MAX_SIGNED_VALUE;
+        md_pme_ctrls->post_fp_pme_to_me_mv_th = MIN_SIGNED_VALUE;
+        break;
+
+    case 2:
+        md_pme_ctrls->enabled = 1;
+        md_pme_ctrls->use_ssd = 1;
+        md_pme_ctrls->full_pel_search_width = 7;
+        md_pme_ctrls->full_pel_search_height = 5;
+        md_pme_ctrls->pre_fp_pme_to_me_cost_th = MAX_SIGNED_VALUE;
+        md_pme_ctrls->pre_fp_pme_to_me_mv_th = MIN_SIGNED_VALUE;
+        md_pme_ctrls->post_fp_pme_to_me_cost_th = MAX_SIGNED_VALUE;
+        md_pme_ctrls->post_fp_pme_to_me_mv_th = MIN_SIGNED_VALUE;
+        break;
+
+    case 3:
+        md_pme_ctrls->enabled = 1;
+        md_pme_ctrls->use_ssd = 1;
+        md_pme_ctrls->full_pel_search_width = 7;
+        md_pme_ctrls->full_pel_search_height = 5;
+        md_pme_ctrls->pre_fp_pme_to_me_cost_th = 100;
+        md_pme_ctrls->pre_fp_pme_to_me_mv_th = 16;
+        md_pme_ctrls->post_fp_pme_to_me_cost_th = 25;
+        md_pme_ctrls->post_fp_pme_to_me_mv_th = 32;
+        break;
+
+    default:
+        assert(0);
+        break;
+    }
+}
+#endif
+
 #if ADD_MD_NSQ_SEARCH
 void md_nsq_motion_search_controls(ModeDecisionContext *mdctxt, uint8_t md_nsq_mv_search_level) {
 
@@ -5374,6 +5425,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else
             context_ptr->inter_compound_mode = sequence_control_set_ptr->static_config.compound_level;
 #endif
+#if !UNIFY_PME_SIGNALS
 #if UPGRADE_SUBPEL
     // Level                Settings
     // 0                    Level 0: OFF
@@ -5587,7 +5639,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
         context_ptr->use_sad_at_pme = EB_FALSE;
 #endif
-
+#endif
     // Derive md_staging_mode
     //
     // MD_STAGING_MODE_1
@@ -7107,6 +7159,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #if UNIFY_LEVELS
     }
 #endif
+#if !UNIFY_PME_SIGNALS
     // Set pred ME full search area
 #if UNIFY_SC_NSC
     if (pd_pass == PD_PASS_0) {
@@ -7204,7 +7257,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         }
     }
 #endif
-
+#endif
 #if !INTER_COMP_REDESIGN
     // comp_similar_mode
     // 0: OFF
@@ -7800,6 +7853,22 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 
     md_nsq_motion_search_controls(context_ptr, context_ptr->md_nsq_mv_search_level);
 #endif
+
+#if UNIFY_PME_SIGNALS
+    if (pd_pass == PD_PASS_0)
+        context_ptr->md_pme_level = 0;
+    else if (pd_pass == PD_PASS_1)
+        context_ptr->md_pme_level = 3;
+    else
+        if(enc_mode <= ENC_M2)
+            context_ptr->md_pme_level = 1;
+        else if (enc_mode <= ENC_M6)
+            context_ptr->md_pme_level = 2;
+        else
+            context_ptr->md_pme_level = 3;
+    md_pme_search_controls(context_ptr, context_ptr->md_pme_level);
+#endif
+
 #if PERFORM_SUB_PEL_MD
 #if UPGRADE_SUBPEL
     if (pd_pass == PD_PASS_0)
@@ -10840,8 +10909,8 @@ uint8_t is_parent_to_current_deviation_small(SequenceControlSet *scs_ptr,
             (int64_t)current_depth_cost;
 #else
         parent_to_current_deviation =
-            (int64_t)(((int64_t)context_ptr->md_local_blk_unit[parent_depth_idx_mds].default_cost - (int64_t)(context_ptr->md_local_blk_unit[blk_geom->sqi_mds].default_cost * 4)) * 100) /
-            (int64_t)(context_ptr->md_local_blk_unit[blk_geom->sqi_mds].default_cost * 4);
+            (int64_t)(((int64_t)MAX(context_ptr->md_local_blk_unit[parent_depth_idx_mds].default_cost,1) - (int64_t)MAX((context_ptr->md_local_blk_unit[blk_geom->sqi_mds].default_cost * 4), 1)) * 100) /
+            (int64_t)MAX((context_ptr->md_local_blk_unit[blk_geom->sqi_mds].default_cost * 4),1);
 #endif
     }
 
@@ -10884,8 +10953,8 @@ uint8_t is_child_to_current_deviation_small(SequenceControlSet *scs_ptr,
     if (child_cnt) {
         child_cost = (child_cost / child_cnt) * 4;
         child_to_current_deviation =
-            (int64_t)(((int64_t)child_cost - (int64_t)context_ptr->md_local_blk_unit[blk_geom->sqi_mds].default_cost) * 100) /
-            (int64_t)(context_ptr->md_local_blk_unit[blk_geom->sqi_mds].default_cost);
+            (int64_t)(((int64_t)MAX(child_cost,1) - (int64_t)MAX(context_ptr->md_local_blk_unit[blk_geom->sqi_mds].default_cost,1)) * 100) /
+            (int64_t)(MAX(context_ptr->md_local_blk_unit[blk_geom->sqi_mds].default_cost,1));
     }
 
 
