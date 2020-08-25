@@ -6246,7 +6246,7 @@ void inject_inter_candidates(PictureControlSet *pcs_ptr, ModeDecisionContext *co
 #if !SWITCH_MODE_BASED_ON_SQ_COEFF
     }
 #endif
-#if EXIT_PME
+#if UNIFY_PME_SIGNALS
     if (context_ptr->md_pme_ctrls.enabled)
 #else
     if (context_ptr->predictive_me_level)

@@ -804,7 +804,7 @@ void md_update_all_neighbour_arrays(PictureControlSet *pcs_ptr, ModeDecisionCont
     mode_decision_update_neighbor_arrays(
         pcs_ptr, context_ptr, last_blk_index_mds, pcs_ptr->intra_md_open_loop_flag, EB_FALSE);
 #endif
-#if OPT_6
+#if 0//OPT_6
     if(!context_ptr->shut_fast_rate)
 #endif
     update_mi_map(context_ptr,
@@ -6440,7 +6440,7 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                         &me_mv_x,
                         &me_mv_y);
 #if EXIT_PME
-                    // Copy sub ME MV before subpel
+                    // Copy ME MV after subpel
                     context_ptr->sub_me_mv[list_idx][ref_idx].col = me_mv_x;
                     context_ptr->sub_me_mv[list_idx][ref_idx].row = me_mv_y;
 #endif
@@ -7220,7 +7220,7 @@ void build_single_ref_mvp_array(PictureControlSet *pcs, ModeDecisionContext *ctx
 #if PRUNING_PER_INTER_TYPE
 EbBool is_valid_unipred_ref(struct ModeDecisionContext *context_ptr, uint8_t inter_cand_group, uint8_t list_idx, uint8_t ref_idx);
 #endif
-#if EXIT_PME
+#if UNIFY_PME_SIGNALS
 void pme_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPictureBufferDesc *input_picture_ptr) {
 
     memset(ctx->valid_pme_mv, 0, MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH);
@@ -7255,9 +7255,7 @@ void pme_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPictureBuffe
             uint8_t          ref_idx = get_ref_frame_idx(rf[0]);
 
             if (!is_valid_unipred_ref(ctx, PRED_ME_GROUP, list_idx, ref_idx)) continue;
-#if !EXIT_PME_BIS
-            if (ref_idx > 1 && pcs->enc_mode >= ENC_M3) continue;
-#endif
+
             if (ref_idx > ctx->md_max_ref_count - 1) continue;
             // Get the ME MV
             const MeSbResults *me_results =
@@ -14615,7 +14613,7 @@ void md_encode_block(PictureControlSet *pcs_ptr,
     // Read MVPs (rounded-up to the closest integer) for use in md_sq_motion_search() and/or pme_search() and/or perform_md_reference_pruning()
     if (pcs_ptr->slice_type != I_SLICE &&
 #if UPGRADE_SUBPEL
-#if EXIT_PME
+#if UNIFY_PME_SIGNALS
         (context_ptr->md_sq_me_ctrls.enabled || context_ptr->md_pme_ctrls.enabled || context_ptr->ref_pruning_ctrls.inter_to_inter_pruning_enabled || context_ptr->ref_pruning_ctrls.intra_to_inter_pruning_enabled || context_ptr->md_subpel_me_ctrls.enabled || context_ptr->md_subpel_pme_ctrls.enabled))
 #else
         (context_ptr->md_sq_me_ctrls.enabled || context_ptr->predictive_me_level || context_ptr->ref_pruning_ctrls.inter_to_inter_pruning_enabled || context_ptr->ref_pruning_ctrls.intra_to_inter_pruning_enabled || context_ptr->md_subpel_me_ctrls.enabled || context_ptr->md_subpel_pme_ctrls.enabled))
@@ -14660,7 +14658,7 @@ void md_encode_block(PictureControlSet *pcs_ptr,
 #endif
     // Perform ME search around the best MVP
 #if UPGRADE_SUBPEL
-#if EXIT_PME
+#if UNIFY_PME_SIGNALS
     if (context_ptr->md_pme_ctrls.enabled)
         pme_search(
             pcs_ptr, context_ptr, input_picture_ptr);

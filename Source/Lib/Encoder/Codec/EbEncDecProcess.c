@@ -1845,7 +1845,7 @@ void set_block_based_depth_reduction_controls(ModeDecisionContext *mdctxt, uint8
     }
 }
 #endif
-#if EXIT_PME
+#if UNIFY_PME_SIGNALS
 void md_pme_search_controls(ModeDecisionContext *mdctxt, uint8_t md_pme_level) {
 
     MdPmeCtrls *md_pme_ctrls = &mdctxt->md_pme_ctrls;
@@ -5425,7 +5425,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else
             context_ptr->inter_compound_mode = sequence_control_set_ptr->static_config.compound_level;
 #endif
-#if !EXIT_PME
+#if !UNIFY_PME_SIGNALS
 #if UPGRADE_SUBPEL
     // Level                Settings
     // 0                    Level 0: OFF
@@ -7159,7 +7159,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #if UNIFY_LEVELS
     }
 #endif
-#if !EXIT_PME
+#if !UNIFY_PME_SIGNALS
     // Set pred ME full search area
 #if UNIFY_SC_NSC
     if (pd_pass == PD_PASS_0) {
@@ -7854,7 +7854,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     md_nsq_motion_search_controls(context_ptr, context_ptr->md_nsq_mv_search_level);
 #endif
 
-#if EXIT_PME
+#if UNIFY_PME_SIGNALS
     if (pd_pass == PD_PASS_0)
         context_ptr->md_pme_level = 0;
     else if (pd_pass == PD_PASS_1)
