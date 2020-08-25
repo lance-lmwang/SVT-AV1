@@ -1843,9 +1843,9 @@ void set_inter_inter_distortion_based_reference_pruning_controls(
         ref_pruning_ctrls->best_refs[BI_3x3_GROUP]              = 2;
         ref_pruning_ctrls->best_refs[NRST_NEW_NEAR_GROUP]       = 0;
         ref_pruning_ctrls->best_refs[WARP_GROUP]                = 7;
-#if EXIT_PME // todo
-        ref_pruning_ctrls->best_refs[NRST_NEAR_GROUP]           = 4;
-        ref_pruning_ctrls->best_refs[PRED_ME_GROUP]             = 4;
+#if EXIT_PME_BIS
+        ref_pruning_ctrls->best_refs[NRST_NEAR_GROUP]           = 0;
+        ref_pruning_ctrls->best_refs[PRED_ME_GROUP]             = 0;
 #else
         ref_pruning_ctrls->best_refs[NRST_NEAR_GROUP]           = 2;
         ref_pruning_ctrls->best_refs[PRED_ME_GROUP]             = 2;
@@ -7260,7 +7260,9 @@ void pme_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPictureBuffe
             uint8_t          ref_idx = get_ref_frame_idx(rf[0]);
 
             if (!is_valid_unipred_ref(ctx, PRED_ME_GROUP, list_idx, ref_idx)) continue;
+#if !EXIT_PME_BIS
             if (ref_idx > 1 && pcs->enc_mode >= ENC_M3) continue;
+#endif
             if (ref_idx > ctx->md_max_ref_count - 1) continue;
             // Get the ME MV
             const MeSbResults *me_results =
@@ -13128,7 +13130,7 @@ EbErrorType signal_derivation_block(
 #endif
 #endif
             context_ptr->inter_inter_distortion_based_reference_pruning = 1;
-#if EXIT_PME // todo
+#if EXIT_PME_BIS
     else if (enc_mode <= ENC_M2)
             context_ptr->inter_inter_distortion_based_reference_pruning = 4;
     else

@@ -677,6 +677,7 @@ extern "C" {
 #define LAMBDA_UPDATE_NON_5L             1 // Update layer-based lambda scaling for non-5L mini-GOPs
 
 #define EXIT_PME                         1
+#define EXIT_PME_BIS                     1
 
 #define OPT_3                            1 // bypass ref pruning init if no mrp
 #define OPT_6                            1 // Bypass useless neighbor update if no fast rate.
