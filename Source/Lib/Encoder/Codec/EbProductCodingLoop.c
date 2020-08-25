@@ -1844,8 +1844,8 @@ void set_inter_inter_distortion_based_reference_pruning_controls(
         ref_pruning_ctrls->best_refs[NRST_NEW_NEAR_GROUP]       = 0;
         ref_pruning_ctrls->best_refs[WARP_GROUP]                = 7;
 #if EXIT_PME_BIS
-        ref_pruning_ctrls->best_refs[NRST_NEAR_GROUP]           = 0;
-        ref_pruning_ctrls->best_refs[PRED_ME_GROUP]             = 0;
+        ref_pruning_ctrls->best_refs[NRST_NEAR_GROUP]           = 2;
+        ref_pruning_ctrls->best_refs[PRED_ME_GROUP]             = 2;
 #else
         ref_pruning_ctrls->best_refs[NRST_NEAR_GROUP]           = 2;
         ref_pruning_ctrls->best_refs[PRED_ME_GROUP]             = 2;
