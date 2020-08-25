@@ -804,9 +804,6 @@ void md_update_all_neighbour_arrays(PictureControlSet *pcs_ptr, ModeDecisionCont
     mode_decision_update_neighbor_arrays(
         pcs_ptr, context_ptr, last_blk_index_mds, pcs_ptr->intra_md_open_loop_flag, EB_FALSE);
 #endif
-#if 0//OPT_6
-    if(!context_ptr->shut_fast_rate)
-#endif
     update_mi_map(context_ptr,
                   context_ptr->blk_ptr,
                   context_ptr->blk_origin_x,
