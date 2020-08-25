@@ -372,7 +372,7 @@ void mode_decision_update_neighbor_arrays(PictureControlSet *  pcs_ptr,
                                    NEIGHBOR_ARRAY_UNIT_LEFT_MASK);
 
     // Update the Inter Pred Type Neighbor Array
-#if 0//OPT_6
+#if OPT_6
     if (!context_ptr->shut_fast_rate)
 #endif
     neighbor_array_unit_mode_write(context_ptr->inter_pred_dir_neighbor_array,
