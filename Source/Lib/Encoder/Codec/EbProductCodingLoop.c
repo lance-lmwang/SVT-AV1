@@ -6421,14 +6421,19 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
 #endif
 #if PERFORM_SUB_PEL_MD
 #if UPGRADE_SUBPEL
+#if EXIT_PME
+                context_ptr->post_subpel_me_mv_cost[list_idx][ref_idx] = (int32_t)~0;
+#endif
                 if (context_ptr->md_subpel_me_ctrls.enabled) {
 #if FP_MV_COST
 #if EXIT_PME
                     // Copy ME MV before subpel
                     context_ptr->fp_me_mv[list_idx][ref_idx].col = me_mv_x;
                     context_ptr->fp_me_mv[list_idx][ref_idx].row = me_mv_y;
-#endif
+                    context_ptr->post_subpel_me_mv_cost[list_idx][ref_idx] = (uint32_t) md_subpel_search(pcs_ptr,
+#else
                     md_subpel_search(pcs_ptr,
+#endif
                         context_ptr,
                         context_ptr->md_subpel_me_ctrls,
                         pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr, // 10BIT not supported
@@ -7245,6 +7250,7 @@ void pme_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPictureBuffe
         int16_t  best_search_mvy = (int16_t)~0;
         uint32_t pme_mv_cost = (int32_t)~0;
         uint32_t me_mv_cost = (int32_t)~0;
+        uint32_t post_subpel_pme_mv_cost = (int32_t)~0;
 
         if (rf[1] == NONE_FRAME) {
 
@@ -7348,12 +7354,12 @@ void pme_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPictureBuffe
             }
 
             uint8_t skip_search = 0;
+#if EXIT_PME
             if (me_data_present) {
 
                 int64_t pme_to_me_cost_dev = (((int64_t)MAX(best_mvp_cost, 1) - (int64_t)MAX(me_mv_cost, 1)) * 100) / (int64_t)MAX(me_mv_cost, 1);
 
-                if (
-                    (ABS(ctx->fp_me_mv[list_idx][ref_idx].col - best_mvp_x) <= ctx->md_pme_ctrls.pre_fp_pme_to_me_mv_th && ABS(ctx->fp_me_mv[list_idx][ref_idx].row - best_mvp_y) <= ctx->md_pme_ctrls.pre_fp_pme_to_me_mv_th) ||
+                if ((ABS(ctx->fp_me_mv[list_idx][ref_idx].col - best_mvp_x) <= ctx->md_pme_ctrls.pre_fp_pme_to_me_mv_th && ABS(ctx->fp_me_mv[list_idx][ref_idx].row - best_mvp_y) <= ctx->md_pme_ctrls.pre_fp_pme_to_me_mv_th) ||
                     pme_to_me_cost_dev >= ctx->md_pme_ctrls.pre_fp_pme_to_me_cost_th
                     ) {
                     best_search_mvx = ctx->sub_me_mv[list_idx][ref_idx].col;
@@ -7361,7 +7367,7 @@ void pme_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPictureBuffe
                     skip_search = 1;
                 }
             }
-
+#endif
             if (!skip_search) {
                 // Set ref MV
                 ctx->ref_mv.col = best_mvp_x;
@@ -7388,6 +7394,7 @@ void pme_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPictureBuffe
             }
 
             uint8_t skip_subpel_search = 0;
+#if EXIT_PME
             if (me_data_present) {
 
                 int64_t pme_to_me_cost_dev = (((int64_t)MAX(pme_mv_cost, 1) - (int64_t)MAX(me_mv_cost, 1)) * 100) / (int64_t)MAX(me_mv_cost, 1);
@@ -7400,9 +7407,9 @@ void pme_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPictureBuffe
                     skip_subpel_search = 1;
                 }
             }
-
+#endif
             if (ctx->md_subpel_pme_ctrls.enabled && !skip_subpel_search) {
-                pme_mv_cost = (uint32_t) md_subpel_search(pcs,
+                post_subpel_pme_mv_cost = (uint32_t) md_subpel_search(pcs,
                     ctx,
                     ctx->md_subpel_pme_ctrls,
                     pcs->parent_pcs_ptr->enhanced_picture_ptr, // 10BIT not supported
@@ -7418,7 +7425,13 @@ void pme_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPictureBuffe
             ctx->best_pme_mv[list_idx][ref_idx][0] = best_search_mvx;
             ctx->best_pme_mv[list_idx][ref_idx][1] = best_search_mvy;
             ctx->valid_pme_mv[list_idx][ref_idx] = 1;
+#if EXIT_PME
+            ctx->pme_res[list_idx][ref_idx].dist = (skip_search || skip_subpel_search) ? 
+                ctx->post_subpel_me_mv_cost[list_idx][ref_idx] :
+                post_subpel_pme_mv_cost;
+#else
             ctx->pme_res[list_idx][ref_idx].dist = pme_mv_cost;
+#endif
         }
     }
 

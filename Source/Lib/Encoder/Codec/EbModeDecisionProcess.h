@@ -697,6 +697,7 @@ typedef struct ModeDecisionContext {
 #if EXIT_PME
     MV                   fp_me_mv[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     MV                   sub_me_mv[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+    uint32_t             post_subpel_me_mv_cost[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
 #endif
 #if UPGRADE_SUBPEL
     int16_t              best_pme_mv[2][4][2];
