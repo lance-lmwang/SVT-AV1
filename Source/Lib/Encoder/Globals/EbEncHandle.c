@@ -2477,7 +2477,7 @@ void copy_api_from_app(
     else
         scs_ptr->static_config.look_ahead_distance = cap_look_ahead_distance(&scs_ptr->static_config);
 #if TPL_LA
-    scs_ptr->static_config.enable_tpl_la = ((EbSvtAv1EncConfiguration*)config_struct)->enable_tpl_la;
+    scs_ptr->static_config.enable_tpl_la = ((EbSvtAv1EncConfiguration*)config_struct)->rate_control_mode ? 0 : ((EbSvtAv1EncConfiguration*)config_struct)->enable_tpl_la;
     scs_ptr->static_config.frames_to_be_encoded = ((EbSvtAv1EncConfiguration*)config_struct)->frames_to_be_encoded;
     if (scs_ptr->static_config.enable_tpl_la && scs_ptr->static_config.look_ahead_distance > (uint32_t)0) {
 #if LAD_MEM_RED
