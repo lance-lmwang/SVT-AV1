@@ -9920,7 +9920,11 @@ void generate_statistics_nsq(
                         uint8_t sq_size_idx = 7 - (uint8_t)eb_log2f((uint8_t)blk_geom->sq_size);
                         uint64_t band_width = (sq_size_idx == 0) ? 100 : (sq_size_idx == 1) ? 50 : 20;
                         uint8_t part_idx = part_to_shape[context_ptr->md_blk_arr_nsq[blk_index].part];
+#if OPT_2
+                        uint8_t sse_g_band = (!context_ptr->md_disallow_nsq && context_ptr->md_local_blk_unit[blk_geom->sqi_mds].avail_blk_flag) ?
+#else
                         uint8_t sse_g_band = context_ptr->md_local_blk_unit[blk_geom->sqi_mds].avail_blk_flag ?
+#endif
                             context_ptr->md_local_blk_unit[blk_geom->sqi_mds].sse_gradian_band[part_idx] : 1;
                         const uint32_t count_non_zero_coeffs = context_ptr->md_local_blk_unit[blk_index].count_non_zero_coeffs;
                         const uint32_t total_samples = (blk_geom->bwidth*blk_geom->bheight);

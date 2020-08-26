@@ -764,7 +764,7 @@ void init_sq_nsq_block(SequenceControlSet *scs_ptr, ModeDecisionContext *context
         context_ptr->md_local_blk_unit[blk_idx].above_neighbor_partition = INVALID_NEIGHBOR_DATA;
 #if SSE_BASED_SPLITTING
 #if OPT_2
-        if (context_ptr->md_disallow_nsq == EB_FALSE)
+        if (!context_ptr->md_disallow_nsq)
 #endif
         for (uint8_t shape_idx = 0; shape_idx < NUMBER_OF_SHAPES; shape_idx++)
             context_ptr->md_local_blk_unit[blk_idx].sse_gradian_band[shape_idx] = 1;
