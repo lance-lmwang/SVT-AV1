@@ -294,10 +294,14 @@ void* set_me_hme_params_oq(
             }
 #endif
 #if NEW_M0_M1_ME_NICS
+#if AUG25_ADOPTS
+    else if (pcs_ptr->enc_mode <= ENC_M0) {
+#else
 #if PRESET_SHIFITNG
     else if (pcs_ptr->enc_mode <= ENC_M1) {
 #else
     else if (pcs_ptr->enc_mode <= ENC_M2) {
+#endif
 #endif
     me_context_ptr->search_area_width = me_context_ptr->search_area_height = 64;
 #if JUNE23_ADOPTIONS
@@ -342,7 +346,11 @@ void* set_me_hme_params_oq(
 #endif
 #if M8_HME_ME
 #if JUNE23_ADOPTIONS
+#if AUG25_ADOPTS
+    else if (pcs_ptr->enc_mode <= ENC_M1) {
+#else
     else if (pcs_ptr->enc_mode <= ENC_M2) {
+#endif
         me_context_ptr->search_area_width = me_context_ptr->search_area_height = 64;
         me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 192;
     }
@@ -505,7 +513,11 @@ void* set_me_hme_params_oq(
 #if MAY19_ADOPTIONS
 #if JUNE23_ADOPTIONS
 #if SHIFT_PRESETS
+#if AUG25_ADOPTS
+        if (pcs_ptr->enc_mode <= ENC_M2) {
+#else
         if (pcs_ptr->enc_mode <= ENC_M3) {
+#endif
 #else
         if (pcs_ptr->enc_mode <= ENC_M4) {
 #endif
@@ -676,10 +688,14 @@ void* set_me_hme_params_oq(
 #if M2_COMBO_1
         me_context_ptr->hme_decimation = pcs_ptr->enc_mode <= ENC_M1 ? ONE_DECIMATION_HME : TWO_DECIMATION_HME;
 #else
+#if AUG25_ADOPTS
+        me_context_ptr->hme_decimation = pcs_ptr->enc_mode <= ENC_M0 ? ONE_DECIMATION_HME : TWO_DECIMATION_HME;
+#else
 #if PRESET_SHIFITNG
         me_context_ptr->hme_decimation = pcs_ptr->enc_mode <= ENC_M1 ? ONE_DECIMATION_HME : TWO_DECIMATION_HME;
 #else
         me_context_ptr->hme_decimation = pcs_ptr->enc_mode <= ENC_M2 ? ONE_DECIMATION_HME : TWO_DECIMATION_HME;
+#endif
 #endif
 #endif
 #else
