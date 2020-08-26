@@ -690,7 +690,8 @@ extern "C" {
 
 #define AUG25_ADOPTS                     1 // M1, M2, and M3 adoptions
 
-#define EVALUATE_MDS2                    1
+#define CUT_MDS3_NIC_BY_HALF             1 
+#define EVALUATE_MDS2                    0
 #endif
 // END  SVT_02_TEMP /////////////////////////////////////////////////////////
 

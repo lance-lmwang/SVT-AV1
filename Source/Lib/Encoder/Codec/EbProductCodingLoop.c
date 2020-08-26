@@ -2557,6 +2557,20 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
                 }
                 else {
 #endif
+#if CUT_MDS3_NIC_BY_HALF
+                    context_ptr->md_stage_2_count[CAND_CLASS_0] =
+                        (pcs_ptr->slice_type == I_SLICE) ? 16 :
+                        (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 8 : 4;
+                    context_ptr->md_stage_2_count[CAND_CLASS_1] =
+                        (pcs_ptr->slice_type == I_SLICE) ? 0 :
+                        (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 8 : 4;
+                    context_ptr->md_stage_2_count[CAND_CLASS_2] =
+                        (pcs_ptr->slice_type == I_SLICE) ? 0 :
+                        (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 8 : 4;
+                    context_ptr->md_stage_2_count[CAND_CLASS_3] =
+                        (pcs_ptr->slice_type == I_SLICE) ? 4 :
+                        (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 2 : 1;
+#else
                     context_ptr->md_stage_2_count[CAND_CLASS_0] =
                         (pcs_ptr->slice_type == I_SLICE) ? 32 :
                         (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 16 : 8;
@@ -2569,7 +2583,7 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
                     context_ptr->md_stage_2_count[CAND_CLASS_3] =
                         (pcs_ptr->slice_type == I_SLICE) ? 8 :
                         (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 4 : 2;
-
+#endif
 
 #if EVALUATE_MDS2
                     context_ptr->md_stage_3_count[CAND_CLASS_0] =
@@ -14730,10 +14744,7 @@ void md_encode_block(PictureControlSet *pcs_ptr,
     context_ptr->md_stage_3_total_count = 0;
     uint64_t best_md_stage_cost = (uint64_t)~0;
     context_ptr->md_stage = MD_STAGE_0;
-#if 0//EVALUATE_MDS2
-    if (context_ptr->pd_pass == PD_PASS_2)
-        printf("");
-#endif
+
     for (cand_class_it = CAND_CLASS_0; cand_class_it < CAND_CLASS_TOTAL; cand_class_it++) {
         //number of next level candidates could not exceed number of curr level candidates
         context_ptr->md_stage_1_count[cand_class_it] =
