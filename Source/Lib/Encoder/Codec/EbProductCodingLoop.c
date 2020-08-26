@@ -12307,7 +12307,14 @@ void md_stage_2(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
 #endif
         context_ptr->md_staging_tx_size_mode = 0;
 #if EVALUATE_MDS2
+#if MDS2_FULL_TXT_TYPE
+        context_ptr->md_staging_tx_search = 
+            (candidate_ptr->cand_class == CAND_CLASS_0 || candidate_ptr->cand_class == CAND_CLASS_3)
+            ? 2
+            : 1;
+#else
         context_ptr->md_staging_tx_search = 0;
+#endif
 #else
         context_ptr->md_staging_tx_search =
             (candidate_ptr->cand_class == CAND_CLASS_0 ||
