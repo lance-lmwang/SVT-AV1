@@ -531,6 +531,7 @@ extern "C" {
 #define FIRST_PASS_SETUP     1
 #define FASTER_FIRST_PASS    1
 #define FIX_TPL              1  // fixed tpl poc128 error
+#define FPFOPT_NO_EP         1  //bypass EncDec for 1st pass
 #endif
 #endif
 

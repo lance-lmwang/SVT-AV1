@@ -1304,6 +1304,24 @@ extern void first_pass_md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionC
                                              j * recon_ptr->stride_cr];
                 }
             }
+
+#if FPFOPT_NO_EP 
+            if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) {
+                EbPictureBufferDesc *ref_pic = ((EbReferenceObject *)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture;
+                uint8_t *src_ptr = recon_ptr->buffer_y + rec_luma_offset;
+                uint8_t *dst_ptr =
+                    ref_pic->buffer_y + ref_pic->origin_x + context_ptr->blk_origin_x +
+                    (ref_pic->origin_y + context_ptr->blk_origin_y) * ref_pic->stride_y;
+                for (j = 0; j < context_ptr->blk_geom->bheight; j++)
+                    eb_memcpy(dst_ptr + j * ref_pic->stride_y,
+                        src_ptr + j * recon_ptr->stride_y,
+                        context_ptr->blk_geom->bwidth * sizeof(uint8_t));
+            }
+
+#endif
+
+
+
         } else {
             uint16_t sz = sizeof(uint16_t);
             memcpy(
