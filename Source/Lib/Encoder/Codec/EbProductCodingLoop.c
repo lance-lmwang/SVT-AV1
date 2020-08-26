@@ -12319,7 +12319,11 @@ void md_stage_2(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
                 ? 2
                 : 1;
 #endif
+#if MDS2_FULL_RDOQ_TYPE
+        context_ptr->md_staging_skip_rdoq = EB_TRUE;
+#else
         context_ptr->md_staging_skip_rdoq                 = EB_FALSE;
+#endif
         context_ptr->md_staging_skip_full_chroma          = EB_TRUE;
 #if REFACTOR_SIGNALS
 #if IFS_PUSH_BACK_STAGE_3
