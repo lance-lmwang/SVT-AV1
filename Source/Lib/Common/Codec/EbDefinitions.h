@@ -689,6 +689,7 @@ extern "C" {
 #define FASTEST_HME                      1 // (16,64) instead of (32,128) for M7 only
 
 #define AUG25_ADOPTS                     1 // M1, M2, and M3 adoptions
+#define AUG27_ADOPTS                     1 // M4-M7 adoptions
 #endif
 // END  SVT_02_TEMP /////////////////////////////////////////////////////////
 

@@ -7426,7 +7426,7 @@ void pme_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPictureBuffe
             ctx->best_pme_mv[list_idx][ref_idx][1] = best_search_mvy;
             ctx->valid_pme_mv[list_idx][ref_idx] = 1;
 #if EXIT_PME
-            ctx->pme_res[list_idx][ref_idx].dist = (skip_search || skip_subpel_search) ? 
+            ctx->pme_res[list_idx][ref_idx].dist = (skip_search || skip_subpel_search) ?
                 ctx->post_subpel_me_mv_cost[list_idx][ref_idx] :
                 post_subpel_pme_mv_cost;
 #else

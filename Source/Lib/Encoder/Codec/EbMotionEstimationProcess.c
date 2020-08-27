@@ -570,7 +570,11 @@ void* set_me_hme_params_oq(
         }
 #endif
 #if SHIFT_PRESETS
+#if AUG27_ADOPTS
+        else {
+#else
         else if (pcs_ptr->enc_mode <= ENC_M5) {
+#endif
 #else
         else if (pcs_ptr->enc_mode <= ENC_M6) {
 #endif
@@ -606,6 +610,7 @@ void* set_me_hme_params_oq(
 #endif
 #endif
 #if FASTEST_HME
+#if !AUG27_ADOPTS
         else if (pcs_ptr->enc_mode <= ENC_M6) {
             me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = 32;
             me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 128;
@@ -614,6 +619,7 @@ void* set_me_hme_params_oq(
             me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = 16;
             me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 64;
         }
+#endif
 #else
         else {
             me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = 32;
@@ -1381,7 +1387,11 @@ void* tf_set_me_hme_params_oq(
 #if APR22_ADOPTIONS
 #if FAST_M8_V1
 #if SHIFT_PRESETS
+#if AUG27_ADOPTS
+    if (pcs_ptr->enc_mode <= ENC_M4) {
+#else
     if (pcs_ptr->enc_mode <= ENC_M5) {
+#endif
 #else
     if (pcs_ptr->enc_mode <= ENC_M7) {
 #endif
