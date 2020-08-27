@@ -696,7 +696,7 @@ extern "C" {
 #if EVALUATE_MDS2
 #define MDS2_TXT  1
 #define MDS2_TXS  1
-#define MDS2_RDOQ 1
+#define MDS2_RDOQ 0
 #endif
 
 #endif
