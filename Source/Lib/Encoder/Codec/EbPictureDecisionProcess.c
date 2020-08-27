@@ -6905,7 +6905,7 @@ void* picture_decision_kernel(void *input_ptr)
 #if MRP_ADOPTIONS
 #if JUNE17_ADOPTIONS
 #if SYNCH_MRP
-                                    if (pcs_ptr->enc_mode <= ENC_M6) {
+                                    if (pcs_ptr->enc_mode < ENC_M4) {
 #else
                                     if (pcs_ptr->enc_mode <= ENC_M5) {
 #endif
@@ -6955,8 +6955,8 @@ void* picture_decision_kernel(void *input_ptr)
 #endif
                                     else {
 #if APR25_7PM_ADOPTIONS
-                                        pcs_ptr->ref_list0_count_try = pcs_ptr->is_used_as_reference_flag ? MIN(pcs_ptr->ref_list0_count, 2) : MIN(pcs_ptr->ref_list0_count, 1);
-                                        pcs_ptr->ref_list1_count_try = pcs_ptr->is_used_as_reference_flag ? MIN(pcs_ptr->ref_list1_count, 2) : MIN(pcs_ptr->ref_list1_count, 1);
+                                        pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 1);
+                                        pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 1);
 #else
                                         pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 1);
                                         pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 1);
