@@ -11307,7 +11307,11 @@ void perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_buffer,
             // Y Prediction
 
             if (!is_inter) {
+#if MDS2_FULL_TXS_TYPE //--
+                if (context_ptr->tx_depth || (context_ptr->md_staging_mode == MD_STAGING_MODE_2 && context_ptr->md_stage == MD_STAGE_3))
+#else
                 if (context_ptr->tx_depth)
+#endif
                     av1_intra_luma_prediction(context_ptr, pcs_ptr, tx_candidate_buffer);
 
                 // Y Residual
@@ -12562,6 +12566,10 @@ void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
         context_ptr->md_staging_skip_chroma_pred = EB_FALSE;
 #else
         context_ptr->md_staging_skip_inter_chroma_pred = EB_FALSE;
+#endif
+
+#if MDS2_FULL_TXS_TYPE 
+        candidate_buffer->candidate_ptr->tx_depth = 0;
 #endif
 #if MR_MODE && !REMOVE_MR_MACRO
         context_ptr->md_staging_tx_size_mode = EB_TRUE;
