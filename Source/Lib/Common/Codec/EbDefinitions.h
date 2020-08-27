@@ -691,13 +691,17 @@ extern "C" {
 #define AUG25_ADOPTS                     1 // M1, M2, and M3 adoptions
 
 #define CUT_MDS3_NIC_BY_HALF             0 
-#define EVALUATE_MDS2                    1
+
+
+#define EVALUATE_MDS2 1
 
 #if EVALUATE_MDS2
 #define MDS2_TXT  0
-#define MDS2_TXS  1
-#define MDS2_RDOQ 1
+#define MDS2_TXS  0
+#define MDS2_RDOQ 0
 #endif
+
+#define MDS2_CLASS_0_ONLY 1
 
 #endif
 // END  SVT_02_TEMP /////////////////////////////////////////////////////////

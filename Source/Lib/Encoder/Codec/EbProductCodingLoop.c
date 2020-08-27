@@ -2193,7 +2193,16 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
         memset(context_ptr->bypass_md_stage_1, EB_TRUE, CAND_CLASS_TOTAL);
 
     if (context_ptr->md_staging_mode == MD_STAGING_MODE_2)
+#if MDS2_CLASS_0_ONLY 
+    {
+        context_ptr->bypass_md_stage_2[CAND_CLASS_0] = EB_FALSE;
+        context_ptr->bypass_md_stage_2[CAND_CLASS_1] = EB_TRUE;
+        context_ptr->bypass_md_stage_2[CAND_CLASS_2] = EB_TRUE;
+        context_ptr->bypass_md_stage_2[CAND_CLASS_3] = EB_TRUE;
+    }
+#else
         memset(context_ptr->bypass_md_stage_2, EB_FALSE, CAND_CLASS_TOTAL);
+#endif
     else
         memset(context_ptr->bypass_md_stage_2, EB_TRUE, CAND_CLASS_TOTAL);
 
