@@ -8619,7 +8619,196 @@ void check_best_indepedant_cfl(PictureControlSet *pcs_ptr, EbPictureBufferDesc *
 #endif
     }
 }
+#if FPFOPT_INTRA
+EbErrorType av1_first_pass_intra_luma_prediction(EbPictureBufferDesc *src, uint32_t src_luma_origin_index,ModeDecisionContext *        md_context_ptr,
+                                      PictureControlSet *          pcs_ptr,
+                                      ModeDecisionCandidateBuffer *candidate_buffer_ptr) {
+    EbErrorType return_error = EB_ErrorNone;
+    uint8_t     is_inter     = 0; // set to 0 b/c this is an intra path
 
+    uint16_t txb_origin_x = md_context_ptr->blk_origin_x +
+        md_context_ptr->blk_geom
+            ->tx_org_x[is_inter][md_context_ptr->tx_depth][md_context_ptr->txb_itr] -
+        md_context_ptr->blk_geom->origin_x;
+    uint16_t txb_origin_y = md_context_ptr->blk_origin_y +
+        md_context_ptr->blk_geom
+            ->tx_org_y[is_inter][md_context_ptr->tx_depth][md_context_ptr->txb_itr] -
+        md_context_ptr->blk_geom->origin_y;
+    uint8_t tx_width =
+        md_context_ptr->blk_geom->tx_width[md_context_ptr->tx_depth][md_context_ptr->txb_itr];
+    uint8_t tx_height =
+        md_context_ptr->blk_geom->tx_height[md_context_ptr->tx_depth][md_context_ptr->txb_itr];
+
+    uint32_t mode_type_left_neighbor_index = get_neighbor_array_unit_left_index(
+        md_context_ptr->mode_type_neighbor_array, txb_origin_y);
+    uint32_t mode_type_top_neighbor_index = get_neighbor_array_unit_top_index(
+        md_context_ptr->mode_type_neighbor_array, txb_origin_x);
+    uint32_t intra_luma_mode_left_neighbor_index = get_neighbor_array_unit_left_index(
+        md_context_ptr->intra_luma_mode_neighbor_array, txb_origin_y);
+    uint32_t intra_luma_mode_top_neighbor_index = get_neighbor_array_unit_top_index(
+        md_context_ptr->intra_luma_mode_neighbor_array, txb_origin_x);
+
+    md_context_ptr->intra_luma_left_mode = (uint32_t)(
+        (md_context_ptr->mode_type_neighbor_array->left_array[mode_type_left_neighbor_index] !=
+         INTRA_MODE)
+            ? DC_PRED /*EB_INTRA_DC*/
+            : (uint32_t)md_context_ptr->intra_luma_mode_neighbor_array
+                  ->left_array[intra_luma_mode_left_neighbor_index]);
+
+    md_context_ptr->intra_luma_top_mode = (uint32_t)(
+        (md_context_ptr->mode_type_neighbor_array->top_array[mode_type_top_neighbor_index] !=
+         INTRA_MODE)
+            ? DC_PRED /*EB_INTRA_DC*/
+            : (uint32_t)md_context_ptr->intra_luma_mode_neighbor_array->top_array
+                  [intra_luma_mode_top_neighbor_index]); //   use DC. This seems like we could use a SB-width
+
+    TxSize tx_size =
+        md_context_ptr->blk_geom->txsize[md_context_ptr->tx_depth][md_context_ptr->txb_itr];
+    PredictionMode mode;
+    if (!md_context_ptr->hbd_mode_decision) {
+        uint8_t top_neigh_array[64 * 2 + 1];
+        uint8_t left_neigh_array[64 * 2 + 1];
+  
+
+        if (txb_origin_y != 0)
+            eb_memcpy(top_neigh_array + 1,
+                    src->buffer_y + src_luma_origin_index - src->stride_y,
+                   //md_context_ptr->tx_search_luma_recon_neighbor_array->top_array + txb_origin_x,
+                   tx_width * 2);
+        if (txb_origin_x != 0)
+            pic_copy_kernel_8bit(&(src->buffer_y[src_luma_origin_index-1]),
+                                 src->stride_y,
+                                 &(left_neigh_array[1]),
+                                 1,
+                                 1,
+                                 tx_height*2);
+
+            //eb_memcpy(left_neigh_array + 1,
+            //       md_context_ptr->tx_search_luma_recon_neighbor_array->left_array + txb_origin_y,
+            //       tx_height * 2);
+        if (txb_origin_y != 0 && txb_origin_x != 0)
+            top_neigh_array[0] = left_neigh_array[0] =src->buffer_y[src_luma_origin_index-1 - src->stride_y];
+                //md_context_ptr->tx_search_luma_recon_neighbor_array
+                //    ->top_left_array[MAX_PICTURE_HEIGHT_SIZE + txb_origin_x - txb_origin_y];
+
+        mode = candidate_buffer_ptr->candidate_ptr->pred_mode;
+        eb_av1_predict_intra_block(
+            &md_context_ptr->sb_ptr->tile_info,
+            !ED_STAGE,
+            md_context_ptr->blk_geom,
+            pcs_ptr->parent_pcs_ptr->av1_cm, //const Av1Common *cm,
+            md_context_ptr->blk_geom->bwidth,
+            md_context_ptr->blk_geom->bheight,
+            tx_size,
+            mode, //PredictionMode mode,
+            candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_Y],
+#if MEM_OPT_PALETTE
+            candidate_buffer_ptr->candidate_ptr->palette_info ?
+                (candidate_buffer_ptr->candidate_ptr->palette_info->pmi.palette_size[0] > 0) : 0,
+            candidate_buffer_ptr->candidate_ptr->palette_info, //ATB MD
+#else
+            candidate_buffer_ptr->candidate_ptr->palette_info.pmi.palette_size[0] > 0,
+            &candidate_buffer_ptr->candidate_ptr->palette_info, //ATB MD
+#endif
+            candidate_buffer_ptr->candidate_ptr->filter_intra_mode,
+            top_neigh_array + 1,
+            left_neigh_array + 1,
+            candidate_buffer_ptr->prediction_ptr, //uint8_t *dst,
+            (md_context_ptr->blk_geom
+                 ->tx_org_x[is_inter][md_context_ptr->tx_depth][md_context_ptr->txb_itr] -
+             md_context_ptr->blk_geom->origin_x) >>
+                2,
+            (md_context_ptr->blk_geom
+                 ->tx_org_y[is_inter][md_context_ptr->tx_depth][md_context_ptr->txb_itr] -
+             md_context_ptr->blk_geom->origin_y) >>
+                2,
+            PLANE_TYPE_Y, //int32_t plane,
+            md_context_ptr->blk_geom->bsize,
+            md_context_ptr->blk_origin_x,
+            md_context_ptr->blk_origin_y,
+            md_context_ptr->blk_origin_x,
+            md_context_ptr->blk_origin_y,
+            md_context_ptr->blk_geom
+                ->tx_org_x[is_inter][md_context_ptr->tx_depth]
+                          [md_context_ptr->txb_itr], //uint32_t cuOrgX used only for prediction Ptr
+            md_context_ptr->blk_geom
+                ->tx_org_y[is_inter][md_context_ptr->tx_depth]
+                          [md_context_ptr->txb_itr], //uint32_t cuOrgY used only for prediction Ptr
+            pcs_ptr->mi_grid_base,
+            &((SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr)->seq_header);
+    } else {
+        uint16_t top_neigh_array[64 * 2 + 1];
+        uint16_t left_neigh_array[64 * 2 + 1];
+
+        if (txb_origin_y != 0)
+            eb_memcpy(
+                top_neigh_array + 1,
+                (uint16_t *)(md_context_ptr->tx_search_luma_recon_neighbor_array16bit->top_array) +
+                    txb_origin_x,
+                sizeof(uint16_t) * tx_width * 2);
+        if (txb_origin_x != 0)
+            eb_memcpy(
+                left_neigh_array + 1,
+                (uint16_t *)(md_context_ptr->tx_search_luma_recon_neighbor_array16bit->left_array) +
+                    txb_origin_y,
+                sizeof(uint16_t) * tx_height * 2);
+        if (txb_origin_y != 0 && txb_origin_x != 0)
+            top_neigh_array[0] = left_neigh_array[0] =
+                ((uint16_t *)(md_context_ptr->tx_search_luma_recon_neighbor_array16bit
+                                  ->top_left_array) +
+                 MAX_PICTURE_HEIGHT_SIZE + txb_origin_x - txb_origin_y)[0];
+
+        mode = candidate_buffer_ptr->candidate_ptr->pred_mode;
+        eb_av1_predict_intra_block_16bit(
+            EB_10BIT,
+            &md_context_ptr->sb_ptr->tile_info,
+            !ED_STAGE,
+            md_context_ptr->blk_geom,
+            pcs_ptr->parent_pcs_ptr->av1_cm,
+            md_context_ptr->blk_geom->bwidth,
+            md_context_ptr->blk_geom->bheight,
+            tx_size,
+            mode,
+            candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_Y],
+#if MEM_OPT_PALETTE
+            candidate_buffer_ptr->candidate_ptr->palette_info ?
+                (candidate_buffer_ptr->candidate_ptr->palette_info->pmi.palette_size[0] > 0) : 0,
+            candidate_buffer_ptr->candidate_ptr->palette_info, //ATB MD
+#else
+            candidate_buffer_ptr->candidate_ptr->palette_info.pmi.palette_size[0] > 0,
+            &candidate_buffer_ptr->candidate_ptr->palette_info, //ATB MD
+#endif
+            candidate_buffer_ptr->candidate_ptr->filter_intra_mode,
+            top_neigh_array + 1,
+            left_neigh_array + 1,
+            candidate_buffer_ptr->prediction_ptr,
+            (md_context_ptr->blk_geom
+                 ->tx_org_x[is_inter][md_context_ptr->tx_depth][md_context_ptr->txb_itr] -
+             md_context_ptr->blk_geom->origin_x) >>
+                2,
+            (md_context_ptr->blk_geom
+                 ->tx_org_y[is_inter][md_context_ptr->tx_depth][md_context_ptr->txb_itr] -
+             md_context_ptr->blk_geom->origin_y) >>
+                2,
+            PLANE_TYPE_Y,
+            md_context_ptr->blk_geom->bsize,
+            md_context_ptr->blk_origin_x,
+            md_context_ptr->blk_origin_y,
+            md_context_ptr->blk_origin_x,
+            md_context_ptr->blk_origin_y,
+            md_context_ptr->blk_geom
+                ->tx_org_x[is_inter][md_context_ptr->tx_depth]
+                          [md_context_ptr->txb_itr], //uint32_t cuOrgX used only for prediction Ptr
+            md_context_ptr->blk_geom
+                ->tx_org_y[is_inter][md_context_ptr->tx_depth]
+                          [md_context_ptr->txb_itr], //uint32_t cuOrgY used only for prediction Ptr
+            pcs_ptr->mi_grid_base,
+            &((SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr)->seq_header);
+    }
+
+    return return_error;
+}
+#endif
 // double check the usage of tx_search_luma_recon_neighbor_array16bit
 EbErrorType av1_intra_luma_prediction(ModeDecisionContext *        md_context_ptr,
                                       PictureControlSet *          pcs_ptr,
@@ -10674,15 +10863,17 @@ void first_pass_perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_b
             if (context_ptr->source_variance < TXS_EXIT_VAR_TH && context_ptr->tx_depth == 2 && best_tx_depth == 0)
                 continue;
 #endif
+#if !FPFOPT_INTRA
         tx_reset_neighbor_arrays(pcs_ptr, context_ptr, is_inter, context_ptr->tx_depth);
+#endif
         ModeDecisionCandidateBuffer *tx_candidate_buffer = (context_ptr->tx_depth == 0)
             ? candidate_buffer
             : (context_ptr->tx_depth == 1) ? context_ptr->candidate_buffer_tx_depth_1
             : context_ptr->candidate_buffer_tx_depth_2;
         tx_candidate_buffer->candidate_ptr->tx_depth = context_ptr->tx_depth;
-
+#if !FPFOPT_INTRA
         tx_initialize_neighbor_arrays(pcs_ptr, context_ptr, is_inter);
-
+#endif
         // Initialize TU Split
         uint32_t tx_y_count_non_zero_coeffs[MAX_NUM_OF_TU_PER_CU];
         uint64_t tx_y_coeff_bits = 0;
@@ -10711,7 +10902,13 @@ void first_pass_perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_b
 
             if (!is_inter) {
                 if (context_ptr->tx_depth)
+#if FPFOPT_INTRA
+                    av1_first_pass_intra_luma_prediction(
+                input_picture_ptr,
+                input_txb_origin_index,context_ptr, pcs_ptr, tx_candidate_buffer);
+#else
                     av1_intra_luma_prediction(context_ptr, pcs_ptr, tx_candidate_buffer);
+#endif
 #if !FPFOPT_SRC_PATH
                 // Y Residual
                 residual_kernel(
@@ -10731,6 +10928,7 @@ void first_pass_perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_b
             }
 #if UNIFY_TXT
 #if FPFOPT_SRC_PATH
+#if !FPFOPT_INTRA
             EbPictureBufferDesc *recon_ptr =
                 (tx_search_skip_flag)
                 ? tx_candidate_buffer->recon_ptr
@@ -10753,8 +10951,12 @@ void first_pass_perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_b
                 0,
                 PICTURE_BUFFER_DESC_Y_FLAG,
                 context_ptr->hbd_mode_decision);
-
+#endif
+#if FPFOPT_INTRA
+            EbPictureBufferDesc *recon_ptr =
+#else
             recon_ptr =
+#endif
                 (tx_search_skip_flag)
                 ? candidate_buffer->recon_ptr
                 : context_ptr->recon_ptr[DCT_DCT];
@@ -10815,7 +11017,9 @@ void first_pass_perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_b
 
             uint32_t y_has_coeff = tx_y_count_non_zero_coeffs[context_ptr->txb_itr] > 0;
 
+#if !FPFOPT_INTRA
             tx_update_neighbor_arrays(pcs_ptr, context_ptr, tx_candidate_buffer, is_inter);
+#endif
 #if !FPFOPT_SRC_PATH
             if (y_has_coeff)
                 block_has_coeff = EB_TRUE;
