@@ -9979,6 +9979,11 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
         }
 
         //LUMA-ONLY
+#if FPFOPT_ESTBITS
+        if (scs_ptr->use_output_stat_file)
+            y_txb_coeff_bits_txt[tx_type] = 0;                
+        else
+#endif
         av1_txb_estimate_coeff_bits(
             context_ptr,
             0, //allow_update_cdf,
