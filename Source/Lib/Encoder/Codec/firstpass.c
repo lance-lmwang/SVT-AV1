@@ -466,7 +466,18 @@ extern EbErrorType av1_inter_full_cost(PictureControlSet *pcs_ptr, ModeDecisionC
 const EbPredictionFunc product_prediction_fun_table[3];
 
 const EbAv1FullCostFunc av1_product_full_cost_func_table[3];
-
+#if FIRST_PASS_OPT_AN
+void first_pass_perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_buffer,
+    ModeDecisionContext *context_ptr, PictureControlSet *pcs_ptr,
+    uint64_t ref_fast_cost, uint8_t start_tx_depth, uint8_t end_tx_depth,
+#if QP2QINDEX
+    uint32_t qindex, uint32_t *y_count_non_zero_coeffs,
+    uint64_t *y_coeff_bits,
+#else
+    uint32_t qp, uint32_t *y_count_non_zero_coeffs, uint64_t *y_coeff_bits,
+#endif
+    uint64_t *y_full_distortion);
+#endif
 void perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_buffer,
                              ModeDecisionContext *context_ptr, PictureControlSet *pcs_ptr,
                              uint64_t ref_fast_cost, uint8_t start_tx_depth, uint8_t end_tx_depth,
@@ -553,7 +564,22 @@ extern void first_pass_loop_core(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
                         context_ptr->hbd_mode_decision,
                         context_ptr->blk_geom->bwidth,
                         context_ptr->blk_geom->bheight);
-
+#if FIRST_PASS_OPT_AN
+    first_pass_perform_tx_partitioning(candidate_buffer,
+        context_ptr,
+        pcs_ptr,
+        ref_fast_cost,
+        start_tx_depth,
+        end_tx_depth,
+#if QP2QINDEX
+        context_ptr->blk_ptr->qindex,
+#else
+        context_ptr->blk_ptr->qp,
+#endif
+        &(*count_non_zero_coeffs[0]),
+        &y_coeff_bits,
+        &y_full_distortion[0]);
+#else
     perform_tx_partitioning(candidate_buffer,
                             context_ptr,
                             pcs_ptr,
@@ -568,7 +594,7 @@ extern void first_pass_loop_core(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
                             &(*count_non_zero_coeffs[0]),
                             &y_coeff_bits,
                             &y_full_distortion[0]);
-
+#endif
     candidate_ptr->chroma_distortion_inter_depth = 0;
     candidate_ptr->chroma_distortion             = 0;
 
@@ -1655,6 +1681,7 @@ extern void first_pass_md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionC
 
         context_ptr->parent_sq_pred_mode[sq_index] = candidate_buffer->candidate_ptr->pred_mode;
     }
+#if !FIRST_PASS_OPT_AN
 #if REMOVE_UNUSED_CODE_PH2
     av1_perform_inverse_transform_recon(context_ptr, candidate_buffer);
 #else
@@ -1665,6 +1692,7 @@ extern void first_pass_md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionC
                                         blk_ptr,
 #endif
                                         context_ptr->blk_geom);
+#endif
 #endif
         if (!context_ptr->blk_geom->has_uv) {
         // Store the luma data for 4x* and *x4 blocks to be used for CFL
@@ -1754,7 +1782,6 @@ extern void first_pass_md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionC
                                              j * recon_ptr->stride_cr];
                 }
             }
-
 #if FPFOPT_NO_EP 
             if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) {
                 EbPictureBufferDesc *ref_pic = ((EbReferenceObject *)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture;
@@ -1769,9 +1796,6 @@ extern void first_pass_md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionC
             }
 
 #endif
-
-
-
         } else {
             uint16_t sz = sizeof(uint16_t);
             memcpy(

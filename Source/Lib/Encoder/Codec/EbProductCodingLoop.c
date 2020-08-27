@@ -10601,6 +10601,275 @@ void update_tx_candidate_buffer(ModeDecisionCandidateBuffer *candidate_buffer,
                (context_ptr->blk_geom->bwidth * context_ptr->blk_geom->bheight << 2));
     }
 }
+#if FIRST_PASS_OPT_AN
+void first_pass_perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_buffer,
+    ModeDecisionContext *context_ptr, PictureControlSet *pcs_ptr,
+    uint64_t ref_fast_cost, uint8_t start_tx_depth, uint8_t end_tx_depth,
+#if QP2QINDEX
+    uint32_t qindex, uint32_t *y_count_non_zero_coeffs, uint64_t *y_coeff_bits,
+#else
+    uint32_t qp, uint32_t *y_count_non_zero_coeffs, uint64_t *y_coeff_bits,
+#endif
+    uint64_t *y_full_distortion) {
+#if TWOPASS_RC
+    SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
+#endif
+    uint32_t full_lambda = context_ptr->hbd_mode_decision
+        ? context_ptr->full_lambda_md[EB_10_BIT_MD]
+        : context_ptr->full_lambda_md[EB_8_BIT_MD];
+    EbPictureBufferDesc *input_picture_ptr = context_ptr->hbd_mode_decision
+        ? pcs_ptr->input_frame16bit
+        : pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
+    int32_t is_inter = (candidate_buffer->candidate_ptr->type == INTER_MODE ||
+        candidate_buffer->candidate_ptr->use_intrabc)
+        ? EB_TRUE
+        : EB_FALSE;
+
+    uint8_t  best_tx_depth = 0;
+    uint64_t best_cost_search = (uint64_t)~0;
+    uint8_t  is_best_has_coeff = 1;
+    init_tx_candidate_buffer(candidate_buffer, context_ptr, end_tx_depth);
+#if TXT_CONTROL
+    init_txt_search_ctrls(context_ptr);
+#endif
+    uint8_t tx_search_skip_flag;
+    if (context_ptr->md_staging_tx_search == 0)
+        tx_search_skip_flag = EB_TRUE;
+    else if (context_ptr->md_staging_tx_search == 1) {
+#if !UNIFY_SC_NSC
+        if (pcs_ptr->parent_pcs_ptr->sc_content_detected && context_ptr->blk_geom->shape == PART_N)
+            tx_search_skip_flag = context_ptr->tx_search_level == TX_SEARCH_FULL_LOOP ? EB_FALSE
+            : EB_TRUE;
+        else
+#endif
+            tx_search_skip_flag = context_ptr->tx_search_level == TX_SEARCH_FULL_LOOP
+#if TXT_CONTROL
+            ? get_tx_search_config(context_ptr,
+                context_ptr->blk_geom->sq_size,
+                ref_fast_cost,
+                *candidate_buffer->fast_cost_ptr)
+#else
+            ? get_skip_tx_search_flag(context_ptr->blk_geom->sq_size,
+                ref_fast_cost,
+                *candidate_buffer->fast_cost_ptr,
+                context_ptr->tx_weight)
+#endif
+            : EB_TRUE;
+    }
+    else
+        tx_search_skip_flag = context_ptr->tx_search_level == TX_SEARCH_FULL_LOOP ? EB_FALSE
+        : EB_TRUE;
+    // Transform Depth Loop
+    for (context_ptr->tx_depth = start_tx_depth; context_ptr->tx_depth <= end_tx_depth;
+        context_ptr->tx_depth++) {
+        if (pcs_ptr->parent_pcs_ptr->tx_size_early_exit) {
+            if (!is_best_has_coeff)
+                continue;
+        }
+#if TX_EARLY_EXIT
+#if TWOPASS_RC
+        if (!scs_ptr->use_output_stat_file)
+#endif
+            // Variance/cost_depth_1-to-cost_depth_0 based early txs exit
+            if (context_ptr->source_variance < TXS_EXIT_VAR_TH && context_ptr->tx_depth == 2 && best_tx_depth == 0)
+                continue;
+#endif
+        tx_reset_neighbor_arrays(pcs_ptr, context_ptr, is_inter, context_ptr->tx_depth);
+        ModeDecisionCandidateBuffer *tx_candidate_buffer = (context_ptr->tx_depth == 0)
+            ? candidate_buffer
+            : (context_ptr->tx_depth == 1) ? context_ptr->candidate_buffer_tx_depth_1
+            : context_ptr->candidate_buffer_tx_depth_2;
+        tx_candidate_buffer->candidate_ptr->tx_depth = context_ptr->tx_depth;
+
+        tx_initialize_neighbor_arrays(pcs_ptr, context_ptr, is_inter);
+
+        // Initialize TU Split
+        uint32_t tx_y_count_non_zero_coeffs[MAX_NUM_OF_TU_PER_CU];
+        uint64_t tx_y_coeff_bits = 0;
+        uint64_t tx_y_full_distortion[DIST_CALC_TOTAL] = { 0 };
+
+        context_ptr->txb_1d_offset = 0;
+        context_ptr->three_quad_energy = 0;
+        tx_candidate_buffer->candidate_ptr->y_has_coeff = 0;
+
+        uint16_t txb_count = context_ptr->blk_geom->txb_count[context_ptr->tx_depth];
+
+        uint32_t block_has_coeff = EB_FALSE;
+        for (context_ptr->txb_itr = 0; context_ptr->txb_itr < txb_count; context_ptr->txb_itr++) {
+            uint16_t tx_org_x = context_ptr->blk_geom->tx_org_x[is_inter][context_ptr->tx_depth]
+                [context_ptr->txb_itr];
+            uint16_t tx_org_y = context_ptr->blk_geom->tx_org_y[is_inter][context_ptr->tx_depth]
+                [context_ptr->txb_itr];
+            uint32_t txb_origin_index = tx_org_x +
+                (tx_org_y * tx_candidate_buffer->residual_ptr->stride_y);
+            uint32_t input_txb_origin_index = (context_ptr->sb_origin_x + tx_org_x +
+                input_picture_ptr->origin_x) +
+                ((context_ptr->sb_origin_y + tx_org_y + input_picture_ptr->origin_y) *
+                    input_picture_ptr->stride_y);
+
+            // Y Prediction
+
+            if (!is_inter) {
+                if (context_ptr->tx_depth)
+                    av1_intra_luma_prediction(context_ptr, pcs_ptr, tx_candidate_buffer);
+#if !FIRST_PASS_OPT_AN
+                // Y Residual
+                residual_kernel(
+                    input_picture_ptr->buffer_y,
+                    input_txb_origin_index,
+                    input_picture_ptr->stride_y,
+                    tx_candidate_buffer->prediction_ptr->buffer_y,
+                    txb_origin_index,
+                    tx_candidate_buffer->prediction_ptr->stride_y,
+                    (int16_t *)tx_candidate_buffer->residual_ptr->buffer_y,
+                    txb_origin_index,
+                    tx_candidate_buffer->residual_ptr->stride_y,
+                    context_ptr->hbd_mode_decision,
+                    context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr],
+                    context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]);
+#endif
+            }
+#if UNIFY_TXT
+#if FIRST_PASS_OPT_AN
+            EbPictureBufferDesc *recon_ptr =
+                (tx_search_skip_flag)
+                ? tx_candidate_buffer->recon_ptr
+                : context_ptr->recon_ptr[DCT_DCT];
+
+            picture_copy(
+                input_picture_ptr,
+                input_txb_origin_index,
+                0,
+#if UNIFY_TXT
+                recon_ptr,
+#else
+                candidate_buffer->recon_ptr,
+#endif
+                txb_origin_index,
+                0,
+                context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr],
+                context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr],
+                0,
+                0,
+                PICTURE_BUFFER_DESC_Y_FLAG,
+                context_ptr->hbd_mode_decision);
+
+            recon_ptr =
+                (tx_search_skip_flag)
+                ? candidate_buffer->recon_ptr
+                : context_ptr->recon_ptr[DCT_DCT];
+
+            picture_copy(
+                input_picture_ptr,
+                input_txb_origin_index,
+                0,
+#if UNIFY_TXT
+                recon_ptr,
+#else
+                candidate_buffer->recon_ptr,
+#endif
+                txb_origin_index,
+                0,
+                context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr],
+                context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr],
+                0,
+                0,
+                PICTURE_BUFFER_DESC_Y_FLAG,
+                context_ptr->hbd_mode_decision);
+//#else
+            //tx_type_search(pcs_ptr, context_ptr,
+            //    tx_candidate_buffer,
+            //    qindex,
+            //    tx_search_skip_flag,
+            //    &(tx_y_count_non_zero_coeffs[0]),
+            //    &tx_y_coeff_bits,
+            //    &tx_y_full_distortion[0]);
+#endif
+
+
+#else
+            if (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] <=
+                32 &&
+                context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr] <= 32)
+                if (!tx_search_skip_flag) {
+#if QP2QINDEX
+                    tx_type_search(pcs_ptr, context_ptr, tx_candidate_buffer, qindex);
+#else
+                    tx_type_search(pcs_ptr, context_ptr, tx_candidate_buffer, qp);
+#endif
+                }
+
+            product_full_loop(tx_candidate_buffer,
+                context_ptr,
+                pcs_ptr,
+                input_picture_ptr,
+#if QP2QINDEX
+                context_ptr->blk_ptr->qindex,
+#else
+                context_ptr->blk_ptr->qp,
+#endif
+                &(tx_y_count_non_zero_coeffs[0]),
+                &tx_y_coeff_bits,
+                &tx_y_full_distortion[0]);
+#endif
+
+            uint32_t y_has_coeff = tx_y_count_non_zero_coeffs[context_ptr->txb_itr] > 0;
+
+            tx_update_neighbor_arrays(pcs_ptr, context_ptr, tx_candidate_buffer, is_inter);
+#if !FIRST_PASS_OPT_AN
+            if (y_has_coeff)
+                block_has_coeff = EB_TRUE;
+
+            uint64_t current_tx_cost = RDCOST(
+                full_lambda, tx_y_coeff_bits, tx_y_full_distortion[DIST_CALC_RESIDUAL]);
+            if (current_tx_cost > best_cost_search)
+                break;
+#endif
+
+        } // Transform Loop
+        if (end_tx_depth) {
+            const uint64_t tx_size_bit = pcs_ptr->parent_pcs_ptr->frm_hdr.tx_mode == TX_MODE_SELECT
+                ? get_tx_size_bits(tx_candidate_buffer,
+                    context_ptr,
+                    pcs_ptr,
+                    context_ptr->tx_depth,
+                    block_has_coeff)
+                : 0;
+
+            const uint64_t cost = RDCOST(full_lambda,
+                tx_y_coeff_bits + tx_size_bit,
+                tx_y_full_distortion[DIST_CALC_RESIDUAL]);
+            if (cost < best_cost_search) {
+                best_cost_search = cost;
+                best_tx_depth = context_ptr->tx_depth;
+                is_best_has_coeff = block_has_coeff;
+                y_full_distortion[DIST_CALC_RESIDUAL] = tx_y_full_distortion[DIST_CALC_RESIDUAL];
+                y_full_distortion[DIST_CALC_PREDICTION] =
+                    tx_y_full_distortion[DIST_CALC_PREDICTION];
+                *y_coeff_bits = tx_y_coeff_bits;
+                for (context_ptr->txb_itr = 0; context_ptr->txb_itr < txb_count;
+                    context_ptr->txb_itr++) {
+                    y_count_non_zero_coeffs[context_ptr->txb_itr] =
+                        tx_y_count_non_zero_coeffs[context_ptr->txb_itr];
+                }
+            }
+        }
+        else {
+            y_full_distortion[DIST_CALC_RESIDUAL] = tx_y_full_distortion[DIST_CALC_RESIDUAL];
+            y_full_distortion[DIST_CALC_PREDICTION] = tx_y_full_distortion[DIST_CALC_PREDICTION];
+            *y_coeff_bits = tx_y_coeff_bits;
+            for (context_ptr->txb_itr = 0; context_ptr->txb_itr < txb_count;
+                context_ptr->txb_itr++) {
+                y_count_non_zero_coeffs[context_ptr->txb_itr] =
+                    tx_y_count_non_zero_coeffs[context_ptr->txb_itr];
+            }
+        }
+
+    } // Transform Depth Loop
+
+    update_tx_candidate_buffer(candidate_buffer, context_ptr, best_tx_depth);
+}
+#endif
 void perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_buffer,
                              ModeDecisionContext *context_ptr, PictureControlSet *pcs_ptr,
                              uint64_t ref_fast_cost, uint8_t start_tx_depth, uint8_t end_tx_depth,
