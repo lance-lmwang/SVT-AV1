@@ -12373,6 +12373,11 @@ void md_stage_2(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
         if (scs_ptr->static_config.spatial_sse_full_loop_level != DEFAULT && context_ptr->pd_pass == PD_PASS_2)
             context_ptr->md_staging_spatial_sse_full_loop_level = scs_ptr->static_config.spatial_sse_full_loop_level;
         else
+#if MDS2_TXS
+            if (context_ptr->md_staging_tx_size_mode) 
+                context_ptr->md_staging_spatial_sse_full_loop_level = EB_TRUE;
+            else 
+#endif
             context_ptr->md_staging_spatial_sse_full_loop_level = EB_FALSE;
 #else
         context_ptr->md_staging_spatial_sse_full_loop = EB_FALSE;
