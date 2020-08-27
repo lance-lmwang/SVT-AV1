@@ -529,10 +529,12 @@ extern "C" {
 #if TWOPASS_RC
 #define FORCE_DECODE_ORDER   1
 #define FIRST_PASS_SETUP     1
-#define FASTER_FIRST_PASS    1
+#define FASTER_FIRST_PASS    1 // smaller ME / HME
 #define FIX_TPL              1  // fixed tpl poc128 error
 #define FPFOPT_NO_EP         1  //bypass EncDec for 1st pass
 #define FPFOPT_ESTBITS       1  //no coeff estimation for 1st pass
+#define PASS1_CLEANUP        1  // distortion_based_modulator / init_sq_nsq_block / generate_md_stage_0_cand
+
 #endif
 #endif
 

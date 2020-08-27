@@ -729,6 +729,9 @@ int sq_block_index[TOTAL_SQ_BLOCK_COUNT] = {
     1092, 1097, 1098, 1099, 1100};
 void init_sq_nsq_block(SequenceControlSet *scs_ptr, ModeDecisionContext *context_ptr) {
     uint32_t blk_idx = 0;
+#if PASS1_CLEANUP
+    uint16_t max_blk_idx = scs_ptr->use_output_stat_file ? CU_MAX_COUNT: scs_ptr->max_block_cnt;
+#endif
     do {
         const BlockGeom *blk_geom                                       = get_blk_geom_mds(blk_idx);
         context_ptr->md_local_blk_unit[blk_idx].avail_blk_flag          = EB_FALSE;
@@ -745,7 +748,11 @@ void init_sq_nsq_block(SequenceControlSet *scs_ptr, ModeDecisionContext *context
         }
         context_ptr->md_blk_arr_nsq[blk_idx].do_not_process_block = 0;
         ++blk_idx;
+#if PASS1_CLEANUP
+    } while (blk_idx < max_blk_idx);
+#else
     } while (blk_idx < scs_ptr->max_block_cnt);
+#endif
 }
 #if !REMOVE_UNUSED_CODE
 static INLINE TranHigh check_range(TranHigh input, int32_t bd) {
