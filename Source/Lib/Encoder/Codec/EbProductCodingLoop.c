@@ -10601,7 +10601,7 @@ void update_tx_candidate_buffer(ModeDecisionCandidateBuffer *candidate_buffer,
                (context_ptr->blk_geom->bwidth * context_ptr->blk_geom->bheight << 2));
     }
 }
-#if FIRST_PASS_OPT_AN
+#if FPFOPT_SRC_PATH
 void first_pass_perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_buffer,
     ModeDecisionContext *context_ptr, PictureControlSet *pcs_ptr,
     uint64_t ref_fast_cost, uint8_t start_tx_depth, uint8_t end_tx_depth,
@@ -10712,7 +10712,7 @@ void first_pass_perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_b
             if (!is_inter) {
                 if (context_ptr->tx_depth)
                     av1_intra_luma_prediction(context_ptr, pcs_ptr, tx_candidate_buffer);
-#if !FIRST_PASS_OPT_AN
+#if !FPFOPT_SRC_PATH
                 // Y Residual
                 residual_kernel(
                     input_picture_ptr->buffer_y,
@@ -10730,7 +10730,7 @@ void first_pass_perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_b
 #endif
             }
 #if UNIFY_TXT
-#if FIRST_PASS_OPT_AN
+#if FPFOPT_SRC_PATH
             EbPictureBufferDesc *recon_ptr =
                 (tx_search_skip_flag)
                 ? tx_candidate_buffer->recon_ptr
@@ -10816,7 +10816,7 @@ void first_pass_perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_b
             uint32_t y_has_coeff = tx_y_count_non_zero_coeffs[context_ptr->txb_itr] > 0;
 
             tx_update_neighbor_arrays(pcs_ptr, context_ptr, tx_candidate_buffer, is_inter);
-#if !FIRST_PASS_OPT_AN
+#if !FPFOPT_SRC_PATH
             if (y_has_coeff)
                 block_has_coeff = EB_TRUE;
 

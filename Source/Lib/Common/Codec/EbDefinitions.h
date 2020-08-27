@@ -535,6 +535,7 @@ extern "C" {
 #define FPFOPT_ESTBITS       1  //no coeff estimation for 1st pass
 #define PASS1_CLEANUP        1  // distortion_based_modulator / init_sq_nsq_block / generate_md_stage_0_cand
 #define FPFOPT_SRC_PATH      1 // use the source path
+#define FPFOPT_MD           0//
 #endif
 #endif
 

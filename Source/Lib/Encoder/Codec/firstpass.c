@@ -466,7 +466,7 @@ extern EbErrorType av1_inter_full_cost(PictureControlSet *pcs_ptr, ModeDecisionC
 const EbPredictionFunc product_prediction_fun_table[3];
 
 const EbAv1FullCostFunc av1_product_full_cost_func_table[3];
-#if FIRST_PASS_OPT_AN
+#if FPFOPT_SRC_PATH
 void first_pass_perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_buffer,
     ModeDecisionContext *context_ptr, PictureControlSet *pcs_ptr,
     uint64_t ref_fast_cost, uint8_t start_tx_depth, uint8_t end_tx_depth,
@@ -564,7 +564,7 @@ extern void first_pass_loop_core(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
                         context_ptr->hbd_mode_decision,
                         context_ptr->blk_geom->bwidth,
                         context_ptr->blk_geom->bheight);
-#if FIRST_PASS_OPT_AN
+#if FPFOPT_SRC_PATH
     first_pass_perform_tx_partitioning(candidate_buffer,
         context_ptr,
         pcs_ptr,
@@ -612,6 +612,7 @@ extern void first_pass_loop_core(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
             : EB_FALSE;
 
     //ALL PLANE
+#if !FPFOPT_MD
     // Omar: please check if removing this is lossless, if yes remove the call and the related ported code
     av1_product_full_cost_func_table[candidate_ptr->type](pcs_ptr,
                                                           context_ptr,
@@ -625,6 +626,7 @@ extern void first_pass_loop_core(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
                                                           &cb_coeff_bits,
                                                           &cr_coeff_bits,
                                                           context_ptr->blk_geom->bsize);
+#endif
 #if SB_CLASSIFIER
     uint16_t txb_count =
         context_ptr->blk_geom->txb_count[candidate_buffer->candidate_ptr->tx_depth];
@@ -818,7 +820,10 @@ static int firstpass_inter_prediction(
         candidate_buffer->candidate_ptr->fast_luma_rate   = 0;
         candidate_buffer->candidate_ptr->fast_chroma_rate = 0;
         candidate_buffer->candidate_ptr->interp_filters   = 0;
-
+#if 0 //FPFOPT_SRC_PATH to add when the path is added
+        product_prediction_fun_table[candidate_ptr->type](
+            context_ptr->hbd_mode_decision, context_ptr, pcs_ptr, candidate_buffer);
+#else
         first_pass_loop_core(pcs_ptr,
                              blk_ptr,
                              context_ptr,
@@ -828,13 +833,18 @@ static int firstpass_inter_prediction(
                              input_origin_index,
                              blk_origin_index,
                              ref_fast_cost);
+#endif
         // To convert full-pel MV
         mv.col = candidate_buffer->candidate_ptr->motion_vector_xl0 >> 3;
         mv.row = candidate_buffer->candidate_ptr->motion_vector_yl0 >> 3;
 
+#if FPFOPT_MD
+        last_mv.col = context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].ref_mvs[1][0].as_mv.col;
+        last_mv.row = context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].ref_mvs[1][0].as_mv.row;
+#else
         last_mv.col = candidate_buffer->candidate_ptr->motion_vector_pred_x[REF_LIST_0];
         last_mv.row = candidate_buffer->candidate_ptr->motion_vector_pred_y[REF_LIST_0];
-
+#endif
         motion_error =
             (uint32_t)(spatial_full_dist_type_fun(input_picture_ptr->buffer_y,
                                                   input_origin_index,
@@ -1203,6 +1213,10 @@ void first_pass_inject_new_candidates(const SequenceControlSet *  scs_ptr,
                 cand_array[cand_total_cnt].transform_type[0] = DCT_DCT;
                 cand_array[cand_total_cnt].transform_type_uv = DCT_DCT;
 
+#if FPFOPT_MD
+                cand_array[cand_total_cnt].motion_vector_pred_x[REF_LIST_0] = 0;
+                cand_array[cand_total_cnt].motion_vector_pred_y[REF_LIST_0] = 0;
+#else
                 choose_best_av1_mv_pred(context_ptr,
                                         cand_array[cand_total_cnt].md_rate_estimation_ptr,
                                         context_ptr->blk_ptr,
@@ -1220,6 +1234,7 @@ void first_pass_inject_new_candidates(const SequenceControlSet *  scs_ptr,
                         best_pred_mv[0].as_mv.col;
                     cand_array[cand_total_cnt].motion_vector_pred_y[REF_LIST_0] =
                         best_pred_mv[0].as_mv.row;
+#endif
 
                     cand_array[cand_total_cnt].is_interintra_used = 0;
                     cand_array[cand_total_cnt].motion_mode        = SIMPLE_TRANSLATION;
@@ -1295,7 +1310,10 @@ void first_pass_inject_new_candidates(const SequenceControlSet *  scs_ptr,
 
                     cand_array[cand_total_cnt].transform_type[0] = DCT_DCT;
                     cand_array[cand_total_cnt].transform_type_uv = DCT_DCT;
-
+#if FPFOPT_MD
+                    cand_array[cand_total_cnt].motion_vector_pred_x[REF_LIST_1] = 0;
+                    cand_array[cand_total_cnt].motion_vector_pred_y[REF_LIST_1] = 0;
+#else
                     choose_best_av1_mv_pred(context_ptr,
                                             cand_array[cand_total_cnt].md_rate_estimation_ptr,
                                             context_ptr->blk_ptr,
@@ -1313,7 +1331,7 @@ void first_pass_inject_new_candidates(const SequenceControlSet *  scs_ptr,
                         best_pred_mv[0].as_mv.col;
                     cand_array[cand_total_cnt].motion_vector_pred_y[REF_LIST_1] =
                         best_pred_mv[0].as_mv.row;
-
+#endif
                         cand_array[cand_total_cnt].is_interintra_used = 0;
                         cand_array[cand_total_cnt].motion_mode        = SIMPLE_TRANSLATION;
 
@@ -1554,7 +1572,11 @@ extern void first_pass_md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionC
                                    context_ptr->blk_origin_x,
                                    context_ptr->blk_origin_y,
                                    pcs_ptr->parent_pcs_ptr->ref_frame_type_arr,
+#if FPFOPT_MD
+                                   1,
+#else
                                    pcs_ptr->parent_pcs_ptr->tot_ref_frame_types,
+#endif
                                    pcs_ptr);
     } else {
         mvp_bypass_init(pcs_ptr, context_ptr);
@@ -1681,7 +1703,7 @@ extern void first_pass_md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionC
 
         context_ptr->parent_sq_pred_mode[sq_index] = candidate_buffer->candidate_ptr->pred_mode;
     }
-#if !FIRST_PASS_OPT_AN
+#if !FPFOPT_SRC_PATH
 #if REMOVE_UNUSED_CODE_PH2
     av1_perform_inverse_transform_recon(context_ptr, candidate_buffer);
 #else
