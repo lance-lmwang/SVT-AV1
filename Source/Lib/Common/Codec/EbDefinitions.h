@@ -533,7 +533,7 @@ extern "C" {
 #define FASTER_FIRST_PASS    1
 #endif
 #endif
-
+#define TPL_C_FIX  1
 ///////// END MASTER_SYNCH
 
 #if DECOUPLE_ME_RES
