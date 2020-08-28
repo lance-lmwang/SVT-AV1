@@ -530,7 +530,9 @@ extern void first_pass_loop_core(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
     candidate_ptr->chroma_distortion_inter_depth = 0;
     // Set Skip Flag
     candidate_ptr->skip_flag = EB_FALSE;
-
+#if FPFOPT_RECON
+    if (is_inter)
+#endif
     product_prediction_fun_table[candidate_ptr->type](
         context_ptr->hbd_mode_decision, context_ptr, pcs_ptr, candidate_buffer);
 
@@ -1735,6 +1737,22 @@ extern void first_pass_md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionC
                        context_ptr->blk_geom->bwidth);
         }
     }
+#if FPFOPT_RECON
+#if FPFOPT_NO_EP 
+        uint32_t             j;
+            if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) {
+                EbPictureBufferDesc *ref_pic = ((EbReferenceObject *)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture;
+                uint8_t *src_ptr = input_picture_ptr->buffer_y + input_origin_index;//recon_ptr->buffer_y + rec_luma_offset;
+                uint8_t *dst_ptr =
+                    ref_pic->buffer_y + ref_pic->origin_x + context_ptr->blk_origin_x +
+                    (ref_pic->origin_y + context_ptr->blk_origin_y) * ref_pic->stride_y;
+                for (j = 0; j < context_ptr->blk_geom->bheight; j++)
+                    eb_memcpy(dst_ptr + j * ref_pic->stride_y,
+                        src_ptr + j * input_picture_ptr->stride_y,
+                        context_ptr->blk_geom->bwidth * sizeof(uint8_t));
+            }
+#endif
+#else
     //copy neigh recon data in blk_ptr
     {
         uint32_t             j;
@@ -1864,7 +1882,7 @@ extern void first_pass_md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionC
             }
         }
     }
-
+#endif
     context_ptr->md_local_blk_unit[blk_ptr->mds_idx].avail_blk_flag = EB_TRUE;
 }
 

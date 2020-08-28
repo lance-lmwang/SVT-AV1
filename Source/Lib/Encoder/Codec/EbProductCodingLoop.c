@@ -10635,6 +10635,7 @@ void init_tx_candidate_buffer(ModeDecisionCandidateBuffer *candidate_buffer,
                 }
             }
         } else {
+#if !FPFOPT_RECON
             // Copy pred to tx_depth_1 candidate_buffer
             {
                 EbByte src = &(candidate_buffer->prediction_ptr->buffer_y[block_index]);
@@ -10646,6 +10647,7 @@ void init_tx_candidate_buffer(ModeDecisionCandidateBuffer *candidate_buffer,
                     dst += context_ptr->candidate_buffer_tx_depth_1->prediction_ptr->stride_y;
                 }
             }
+#endif
             // Copy residual to tx_depth_1 candidate_buffer
             {
                 int16_t *src = &(
@@ -10690,6 +10692,7 @@ void init_tx_candidate_buffer(ModeDecisionCandidateBuffer *candidate_buffer,
                 }
             }
         } else {
+#if !FPFOPT_RECON
             // Copy pred to tx_depth_2 candidate_buffer
             {
                 EbByte src = &(candidate_buffer->prediction_ptr->buffer_y[block_index]);
@@ -10701,6 +10704,7 @@ void init_tx_candidate_buffer(ModeDecisionCandidateBuffer *candidate_buffer,
                     dst += context_ptr->candidate_buffer_tx_depth_2->prediction_ptr->stride_y;
                 }
             }
+#endif
             // Copy residual to tx_depth_2 candidate_buffer
             {
                 int16_t *src = &(
@@ -10901,7 +10905,9 @@ void first_pass_perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_b
             // Y Prediction
 
             if (!is_inter) {
-                if (context_ptr->tx_depth)
+#if !FPFOPT_RECON
+               // if (context_ptr->tx_depth)
+#endif
 #if FPFOPT_INTRA
                     av1_first_pass_intra_luma_prediction(
                 input_picture_ptr,
@@ -10960,7 +10966,7 @@ void first_pass_perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_b
                 (tx_search_skip_flag)
                 ? candidate_buffer->recon_ptr
                 : context_ptr->recon_ptr[DCT_DCT];
-
+#if !FPFOPT_RECON
             picture_copy(
                 input_picture_ptr,
                 input_txb_origin_index,
@@ -10978,6 +10984,7 @@ void first_pass_perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_b
                 0,
                 PICTURE_BUFFER_DESC_Y_FLAG,
                 context_ptr->hbd_mode_decision);
+#endif
 //#else
             //tx_type_search(pcs_ptr, context_ptr,
             //    tx_candidate_buffer,

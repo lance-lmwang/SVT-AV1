@@ -537,6 +537,7 @@ extern "C" {
 #define FPFOPT_SRC_PATH      1 // use the source path
 #define FPFOPT_MD           1 // update generate_av1_mvp_table, update predMV, no av1_product_full_cost_func_table
 #define FPFOPT_INTRA        1 // get neighbor pixel from source
+#define FPFOPT_RECON         1 // remove the use of recon in MD
 #endif
 #endif
 
