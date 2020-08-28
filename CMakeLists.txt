@@ -37,8 +37,8 @@ file(WRITE ${CMAKE_BINARY_DIR}/conftest.c "
 int main() {}
 ")
 
-try_compile(X86 ${CMAKE_BINARY_DIR} ${CMAKE_BINARY_DIR}/conftest.c)
-
+#try_compile(X86 ${CMAKE_BINARY_DIR} ${CMAKE_BINARY_DIR}/conftest.c)
+set(X86 FALSE)
 message(STATUS "x86 detected: ${X86}")
 
 if(X86)
