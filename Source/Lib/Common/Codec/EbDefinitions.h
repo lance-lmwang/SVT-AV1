@@ -690,6 +690,19 @@ extern "C" {
 
 #define AUG25_ADOPTS                     1 // M1, M2, and M3 adoptions
 #define AUG27_ADOPTS                     1 // M4-M7 adoptions
+
+
+// MDS2 Tuning
+#define CUT_MDS3_NIC_BY_HALF 1 
+#define EVALUATE_MDS2 0
+#if EVALUATE_MDS2
+#define MDS2_TXT 0
+#define MDS2_TXS 0
+#define MDS2_RDOQ 0
+#endif
+#define MDS2_CLASS_0_3_ONLY 0
+#define MDS2_CLASS_1_2_ONLY 0
+
 #endif
 // END  SVT_02_TEMP /////////////////////////////////////////////////////////
 

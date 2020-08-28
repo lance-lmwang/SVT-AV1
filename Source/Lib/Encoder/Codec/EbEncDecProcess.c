@@ -5716,7 +5716,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     }
     else
 #if MAR17_ADOPTIONS
+#if EVALUATE_MDS2
+        context_ptr->md_staging_mode = MD_STAGING_MODE_2;
+#else
         context_ptr->md_staging_mode = MD_STAGING_MODE_1;
+#endif
 #else
         if (enc_mode <= ENC_M4)
             context_ptr->md_staging_mode = MD_STAGING_MODE_1;
