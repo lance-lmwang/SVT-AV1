@@ -534,6 +534,9 @@ extern "C" {
 #endif
 
 #define USE_GF_UPDATE_FOR_LAMBDA         1 // Scale sse lambda based on where the frame is positioned in the miniGOP (based on TL)
+#define NEW_LAMBDA_SCALING_FACTOR        1 // Change the value of one of the parameters used during TPL scaling factor generation
+#define AUG25_ADOPTS                     1 // M1, M2, and M3 adoptions
+#define AUG27_ADOPTS                     1 // M4-M7 adoptions
 
 #endif
 
