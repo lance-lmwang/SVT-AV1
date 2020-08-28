@@ -10414,7 +10414,7 @@ void tx_type_search(PictureControlSet *pcs_ptr,
         if (y_has_coeff == 0 && tx_type != DCT_DCT) continue;
 
 #if SSSE_CLI
-#if MDS2_TXS
+#if MDS2_TXS || MDS2_V0
         // Perform T-1 if md_staging_spatial_sse_full_loop_level or  INTRA and tx_depth > 0 or
         if (context_ptr->md_staging_spatial_sse_full_loop_level || (!is_inter && candidate_buffer->candidate_ptr->tx_depth)) {
 #else
@@ -11327,7 +11327,7 @@ void perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_buffer,
             // Y Prediction
 
             if (!is_inter) {
-#if MDS2_TXS //--
+#if MDS2_TXS || MDS2_V0 //--
                 if (context_ptr->tx_depth || (context_ptr->md_staging_mode == MD_STAGING_MODE_2 && context_ptr->md_stage == MD_STAGE_3))
 #else
                 if (context_ptr->tx_depth)
@@ -12329,7 +12329,17 @@ void md_stage_2(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
         candidate_ptr->txt_level = context_ptr->md_txt_search_level;
         candidate_ptr->txs_level = 0;
 #endif
-#if MDS2_TXS
+#if MDS2_V0
+        if (candidate_ptr->cand_class == CAND_CLASS_0 || candidate_ptr->cand_class == CAND_CLASS_3) {
+            context_ptr->md_staging_tx_size_mode = 0;
+        }
+        else {
+            if (context_ptr->txs_in_inter_classes)
+                context_ptr->md_staging_tx_size_mode = 1;
+            else
+                context_ptr->md_staging_tx_size_mode = (candidate_ptr->cand_class == CAND_CLASS_0 || candidate_ptr->cand_class == CAND_CLASS_3) ? 1 : 0;
+        }
+#elif MDS2_TXS
         if (context_ptr->txs_in_inter_classes)
             context_ptr->md_staging_tx_size_mode = 1;
         else
@@ -12338,7 +12348,12 @@ void md_stage_2(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
         context_ptr->md_staging_tx_size_mode = 0;
 #endif
 #if EVALUATE_MDS2
-#if MDS2_TXT
+#if MDS2_V0
+        context_ptr->md_staging_tx_search =
+            (candidate_ptr->cand_class == CAND_CLASS_0 || candidate_ptr->cand_class == CAND_CLASS_3)
+            ? 2
+            : 0;
+#elif MDS2_TXT
         context_ptr->md_staging_tx_search =
             (candidate_ptr->cand_class == CAND_CLASS_0 || candidate_ptr->cand_class == CAND_CLASS_3)
             ? 2
@@ -12358,7 +12373,14 @@ void md_stage_2(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
                 : 1;
 #endif
 #if EVALUATE_MDS2
-#if MDS2_RDOQ
+#if MDS2_V0
+        if (candidate_ptr->cand_class == CAND_CLASS_0 || candidate_ptr->cand_class == CAND_CLASS_3) {
+            context_ptr->md_staging_skip_rdoq = EB_TRUE;
+        }
+        else {
+            context_ptr->md_staging_skip_rdoq = EB_FALSE;
+        }
+#elif MDS2_RDOQ
         context_ptr->md_staging_skip_rdoq = EB_FALSE;
 #else
         context_ptr->md_staging_skip_rdoq = EB_TRUE;
