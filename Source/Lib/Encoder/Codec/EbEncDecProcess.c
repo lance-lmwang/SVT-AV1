@@ -7517,7 +7517,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->nic_scaling_level = 1;
         else if (enc_mode <= ENC_M1)
 #if AUG25_ADOPTS
+#if AUG27_ADOPTS
+            context_ptr->nic_scaling_level = 3;
+#else
             context_ptr->nic_scaling_level = 2;
+#endif
 #else
             context_ptr->nic_scaling_level = 4;
 #endif

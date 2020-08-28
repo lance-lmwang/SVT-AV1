@@ -651,7 +651,7 @@ extern "C" {
 #define AUG5_ADOPTS                     1 // Adoptions for MR and M2
 #define NEW_LAMBDA_SCALING_FACTOR       1 // Change the value of one of the parameters used during TPL scaling factor generation
 #define LOSSLESS_OPT                    1 // Lossless opt
-#if LOSSLESS_OPT // 1st round   
+#if LOSSLESS_OPT // 1st round
 #define OPT_0                         1 // bypass distortion_based_modulator() if no nsq
 #define OPT_1                         1 // no T-1 @ PD0 and no recon samples update if context_ptr->skip_intra == 1
 #define OPT_2                         1 // bypass sse_gradian_band init if no nsq
@@ -676,10 +676,10 @@ extern "C" {
 #define USE_GF_UPDATE_FOR_LAMBDA         1 // Scale sse lambda based on where the frame is positioned in the miniGOP (based on TL)
 #define LAMBDA_UPDATE_NON_5L             1 // Update layer-based lambda scaling for non-5L mini-GOPs
 
-#if LOSSLESS_OPT  // 2nd round        
+#if LOSSLESS_OPT  // 2nd round
 #define OPT_3                            1 // Bypass ref pruning init if no mrp
 #define OPT_6                            1 // Bypass useless neighbor update if no fast rate.
-#define OPT_7                            1 // Ref_best_cost_sq_table init if  context_ptr->prune_ref_frame_for_rec_partitions only 
+#define OPT_7                            1 // Ref_best_cost_sq_table init if  context_ptr->prune_ref_frame_for_rec_partitions only
 #define OPT_8                            1 // Fast cost init post fast cand derivation
 #define OPT_9                            1 // Bypass mvp init
 #define OPT_10                           1 // Bypass useless default cost derivation

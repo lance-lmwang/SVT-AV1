@@ -657,7 +657,7 @@ typedef struct ModeDecisionContext {
     uint8_t              warped_motion_injection;
     uint8_t              unipred3x3_injection;
     uint8_t              bipred3x3_injection;
-#if !UNIFY_PME_SIGNALS    
+#if !UNIFY_PME_SIGNALS
     uint8_t              predictive_me_level;
 #if ADD_SAD_AT_PME_SIGNAL
     uint8_t              use_sad_at_pme;
