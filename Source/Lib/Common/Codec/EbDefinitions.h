@@ -27,17 +27,17 @@
 #define inline
 #endif
 
-//#if defined(_MSC_VER)
-//#if defined(_M_IX86) || defined(_M_X64)
-//#define ARCH_X86
-//#endif
-//#endif
-//
-//#if __GNUC__
-//#if defined(__i386__) || defined(__x86_64__)
-//#define ARCH_X86
-//#endif
-//#endif
+#if defined(_MSC_VER)
+#if defined(_M_IX86) || defined(_M_X64)
+#define ARCH_X86
+#endif
+#endif
+
+#if __GNUC__
+#if defined(__i386__) || defined(__x86_64__)
+#define ARCH_X86
+#endif
+#endif
 #ifdef __cplusplus
 extern "C" {
 #endif
