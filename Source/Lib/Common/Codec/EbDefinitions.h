@@ -693,8 +693,8 @@ extern "C" {
 
 
 // MDS2 Tuning
-#define CUT_MDS3_NIC_BY_HALF 1 
-#define EVALUATE_MDS2 0
+#define CUT_MDS3_NIC_BY_HALF 0 
+#define EVALUATE_MDS2 1
 #if EVALUATE_MDS2
 #define MDS2_TXT 0
 #define MDS2_TXS 0
