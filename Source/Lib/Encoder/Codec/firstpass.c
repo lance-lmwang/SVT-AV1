@@ -614,7 +614,9 @@ extern void first_pass_loop_core(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
             : EB_FALSE;
 
     //ALL PLANE
-#if !FPFOPT_MD
+#if FPFOPT_MD
+    *(candidate_buffer->full_cost_ptr) = 0;
+#else
     // Omar: please check if removing this is lossless, if yes remove the call and the related ported code
     av1_product_full_cost_func_table[candidate_ptr->type](pcs_ptr,
                                                           context_ptr,
@@ -822,9 +824,10 @@ static int firstpass_inter_prediction(
         candidate_buffer->candidate_ptr->fast_luma_rate   = 0;
         candidate_buffer->candidate_ptr->fast_chroma_rate = 0;
         candidate_buffer->candidate_ptr->interp_filters   = 0;
-#if 0 //FPFOPT_SRC_PATH to add when the path is added
+#if FPFOPT_RECON// to add when the path is added
         product_prediction_fun_table[candidate_ptr->type](
             context_ptr->hbd_mode_decision, context_ptr, pcs_ptr, candidate_buffer);
+        *(candidate_buffer->full_cost_ptr) = 0;
 #else
         first_pass_loop_core(pcs_ptr,
                              blk_ptr,
