@@ -822,7 +822,7 @@ static int firstpass_inter_prediction(
         candidate_buffer->candidate_ptr->fast_luma_rate   = 0;
         candidate_buffer->candidate_ptr->fast_chroma_rate = 0;
         candidate_buffer->candidate_ptr->interp_filters   = 0;
-#if FPFOPT_SRC_PATH
+#if 0 //FPFOPT_SRC_PATH to add when the path is added
         product_prediction_fun_table[candidate_ptr->type](
             context_ptr->hbd_mode_decision, context_ptr, pcs_ptr, candidate_buffer);
 #else
