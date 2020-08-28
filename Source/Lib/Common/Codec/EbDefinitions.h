@@ -700,8 +700,8 @@ extern "C" {
 #define MDS2_TXS 0
 #define MDS2_RDOQ 0
 #endif
-#define MDS2_CLASS_0_3_ONLY 1
-#define MDS2_CLASS_1_2_ONLY 0
+#define MDS2_CLASS_0_3_ONLY 0
+#define MDS2_CLASS_1_2_ONLY 1
 
 #endif
 // END  SVT_02_TEMP /////////////////////////////////////////////////////////
