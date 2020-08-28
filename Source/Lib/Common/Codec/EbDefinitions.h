@@ -532,6 +532,9 @@ extern "C" {
 #define FIRST_PASS_SETUP     1
 #define FASTER_FIRST_PASS    1
 #endif
+
+#define USE_GF_UPDATE_FOR_LAMBDA         1 // Scale sse lambda based on where the frame is positioned in the miniGOP (based on TL)
+
 #endif
 
 // start
