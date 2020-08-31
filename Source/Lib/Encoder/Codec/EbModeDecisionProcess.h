@@ -782,7 +782,7 @@ typedef struct ModeDecisionContext {
 #endif
     uint64_t     md_stage_1_cand_prune_th;
     uint64_t     md_stage_1_class_prune_th;
-#if DECOUPLE_MDS2_MDS3_PRUNING
+#if MDS2_V0
     uint64_t     md_stage_2_cand_prune_th;
     uint64_t     md_stage_2_class_prune_th;
     uint64_t     md_stage_3_cand_prune_th;

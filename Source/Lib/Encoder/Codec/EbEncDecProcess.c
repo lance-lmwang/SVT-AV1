@@ -5716,8 +5716,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     }
     else
 #if MAR17_ADOPTIONS
-#if EVALUATE_MDS2
-        context_ptr->md_staging_mode = MD_STAGING_MODE_2;
+#if MDS2_V0
+        if (enc_mode <= ENC_M2)
+            context_ptr->md_staging_mode = MD_STAGING_MODE_2;
+        else 
+            context_ptr->md_staging_mode = MD_STAGING_MODE_1;
 #else
         context_ptr->md_staging_mode = MD_STAGING_MODE_1;
 #endif
@@ -6398,7 +6401,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else
             context_ptr->md_stage_1_class_prune_th =
             sequence_control_set_ptr->static_config.md_stage_1_class_prune_th;
-#if DECOUPLE_MDS2_MDS3_PRUNING
+#if MDS2_V0
     // md_stage_2_cand_prune_th (for single candidate removal per class)
    // Remove candidate if deviation to the best is higher than
    // md_stage_2_cand_prune_th
@@ -6451,9 +6454,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     if (pd_pass == PD_PASS_0)
         context_ptr->md_stage_3_class_prune_th = (uint64_t)~0;
     else if (pd_pass == PD_PASS_1)
-        context_ptr->md_stage_3_class_prune_th = 25;
+        context_ptr->md_stage_3_class_prune_th = 20;
     else
-        context_ptr->md_stage_3_class_prune_th = 25;
+        context_ptr->md_stage_3_class_prune_th = 20;
 #else
     // md_stage_2_3_cand_prune_th (for single candidate removal per class)
     // Remove candidate if deviation to the best is higher than
