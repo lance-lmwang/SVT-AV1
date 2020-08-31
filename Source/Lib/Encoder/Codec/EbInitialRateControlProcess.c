@@ -1436,6 +1436,10 @@ void tpl_mc_flow_dispenser(
 #endif
 
                     if(eob) {
+                    uint32_t cu_origin_x = sb_params->origin_x + blk_stats_ptr->origin_x;
+                    uint32_t cu_origin_y = sb_params->origin_y + blk_stats_ptr->origin_y;
+                        if (pcs_ptr->picture_number == 77)
+                            printf("\n^ x %d y %d s %d ^",cu_origin_x, cu_origin_y, bsize);
                         av1_inv_transform_recon8bit((int32_t*)dqcoeff, dst_buffer, dst_buffer_stride, dst_buffer, dst_buffer_stride, TX_16X16, DCT_DCT, PLANE_TYPE_Y, eob, 0);
                     }
 
