@@ -1825,7 +1825,7 @@ EbErrorType tpl_mc_flow(
             for (uint32_t blky = 0; blky < (picture_height_in_mb << shift); blky++) {
                 memset(pcs_array[frame_idx]->tpl_stats[blky * (picture_width_in_mb << shift)], 0, (picture_width_in_mb << shift) * sizeof(TplStats));
             }
-            printf ("\n *P %lld * ",  pcs_array[frame_idx]->picture_number);
+            printf ("\n *P %lld*%lld* ",  pcs_array[frame_idx]->picture_number,pcs_array[0]->picture_number);
             tpl_mc_flow_dispenser(encode_context_ptr, scs_ptr, pcs_array[frame_idx], frame_idx);
 
         }
