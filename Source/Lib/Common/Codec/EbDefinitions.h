@@ -705,6 +705,7 @@ extern "C" {
 
 #define MDS2_V0 1 // TXT @ MDS2 if CLASS_0_3, and TXS/RDOQ @ MDS2 if CLASS_1_2.
 
+#define DECOUPLE_MDS2_MDS3_PRUNING 1
 #endif
 // END  SVT_02_TEMP /////////////////////////////////////////////////////////
 

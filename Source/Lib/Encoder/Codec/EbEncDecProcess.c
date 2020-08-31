@@ -6398,7 +6398,63 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else
             context_ptr->md_stage_1_class_prune_th =
             sequence_control_set_ptr->static_config.md_stage_1_class_prune_th;
+#if DECOUPLE_MDS2_MDS3_PRUNING
+    // md_stage_2_cand_prune_th (for single candidate removal per class)
+   // Remove candidate if deviation to the best is higher than
+   // md_stage_2_cand_prune_th
+    if (pd_pass == PD_PASS_0)
+        context_ptr->md_stage_2_cand_prune_th = (uint64_t)~0;
+    else if (pd_pass == PD_PASS_1)
+        context_ptr->md_stage_2_cand_prune_th = 5;
+    else
+        if (enc_mode <= ENC_MRS)
+            context_ptr->md_stage_2_cand_prune_th = (uint64_t)~0;
+        else
+            if (enc_mode <= ENC_MR)
+                context_ptr->md_stage_2_cand_prune_th = 45;
+            else if (enc_mode <= ENC_M9)
+                context_ptr->md_stage_2_cand_prune_th = 15;
+            else
+                context_ptr->md_stage_2_cand_prune_th = 5;
 
+    // md_stage_2_class_prune_th (for class removal)
+    // Remove class if deviation to the best is higher than
+    // md_stage_2_class_prune_th
+    if (pd_pass == PD_PASS_0)
+        context_ptr->md_stage_2_class_prune_th = (uint64_t)~0;
+    else if (pd_pass == PD_PASS_1)
+        context_ptr->md_stage_2_class_prune_th = 25;
+    else
+        context_ptr->md_stage_2_class_prune_th = 25;
+
+    // md_stage_2_cand_prune_th (for single candidate removal per class)
+   // Remove candidate if deviation to the best is higher than
+   // md_stage_2_cand_prune_th
+    if (pd_pass == PD_PASS_0)
+        context_ptr->md_stage_3_cand_prune_th = (uint64_t)~0;
+    else if (pd_pass == PD_PASS_1)
+        context_ptr->md_stage_3_cand_prune_th = 5;
+    else
+        if (enc_mode <= ENC_MRS)
+            context_ptr->md_stage_3_cand_prune_th = (uint64_t)~0;
+        else
+            if (enc_mode <= ENC_MR)
+                context_ptr->md_stage_3_cand_prune_th = 45;
+            else if (enc_mode <= ENC_M9)
+                context_ptr->md_stage_3_cand_prune_th = 15;
+            else
+                context_ptr->md_stage_3_cand_prune_th = 5;
+
+    // md_stage_2_class_prune_th (for class removal)
+    // Remove class if deviation to the best is higher than
+    // md_stage_2_class_prune_th
+    if (pd_pass == PD_PASS_0)
+        context_ptr->md_stage_3_class_prune_th = (uint64_t)~0;
+    else if (pd_pass == PD_PASS_1)
+        context_ptr->md_stage_3_class_prune_th = 25;
+    else
+        context_ptr->md_stage_3_class_prune_th = 25;
+#else
     // md_stage_2_3_cand_prune_th (for single candidate removal per class)
     // Remove candidate if deviation to the best is higher than
     // md_stage_2_3_cand_prune_th
@@ -6580,6 +6636,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else
             context_ptr->md_stage_2_3_class_prune_th =
             sequence_control_set_ptr->static_config.md_stage_2_3_class_prune_th;
+#endif
 #endif
 #if COEFF_BASED_BYPASS_NSQ && !MULTI_BAND_ACTIONS
     if (pd_pass == PD_PASS_0)

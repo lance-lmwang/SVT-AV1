@@ -14243,6 +14243,121 @@ void candidate_pruning(PictureControlSet *pcs_ptr, ModeDecisionContext *context_
     }
 #endif
 
+#if DECOUPLE_MDS2_MDS3_PRUNING
+#if CLASS_PRUNE
+void interintra_class_pruning_2(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
+    uint64_t best_md_stage_cost) {
+#else
+void interintra_class_pruning_2(ModeDecisionContext *context_ptr, uint64_t best_md_stage_cost) {
+#endif
+
+    for (CandClass cand_class_it = CAND_CLASS_0; cand_class_it < CAND_CLASS_TOTAL;
+        cand_class_it++) {
+        if (context_ptr->md_stage_2_cand_prune_th != (uint64_t)~0 ||
+            context_ptr->md_stage_2_class_prune_th != (uint64_t)~0)
+            if (context_ptr->md_stage_1_count[cand_class_it] > 0 &&
+                context_ptr->md_stage_2_count[cand_class_it] > 0 &&
+                context_ptr->bypass_md_stage_1[cand_class_it] == EB_FALSE) {
+                uint32_t *cand_buff_indices = context_ptr->cand_buff_indices[cand_class_it];
+                uint64_t  class_best_cost =
+                    *(context_ptr->candidate_buffer_ptr_array[cand_buff_indices[0]]->full_cost_ptr);
+#if CLASS_PRUNE
+                // class pruning
+#if REMOVE_MR_MACRO
+                class_pruning(pcs_ptr, context_ptr, best_md_stage_cost, class_best_cost, cand_class_it);
+#else
+#if !MRS_MODE
+                class_pruning(pcs_ptr, context_ptr, best_md_stage_cost, class_best_cost, cand_class_it);
+#endif
+#endif
+#else
+                // inter class pruning
+                if (best_md_stage_cost && class_best_cost &&
+                    ((((class_best_cost - best_md_stage_cost) * 100) / best_md_stage_cost) >
+                        context_ptr->md_stage_2_class_prune_th)) {
+                    context_ptr->md_stage_2_count[cand_class_it] = 0;
+                    continue;
+                }
+#endif
+#if !CAND_PRUN_OPT
+                // intra class pruning
+                uint32_t cand_count = 1;
+                uint64_t md_stage_2_cand_prune_th = context_ptr->md_stage_2_cand_prune_th;
+                md_stage_2_cand_prune_th = (cand_class_it == CAND_CLASS_0 ||
+#if CLASS_MERGING
+                    cand_class_it == CAND_CLASS_3) ?
+#else
+                    cand_class_it == CAND_CLASS_6 ||
+                    cand_class_it == CAND_CLASS_7) ?
+#endif
+                    (uint64_t)~0 : (context_ptr->blk_geom->shape == PART_N) ? (uint64_t)~0 :
+                    md_stage_2_cand_prune_th;
+#endif
+#if CLASS_PRUNE
+                // candidate pruning
+                if (context_ptr->md_stage_2_count[cand_class_it] > 0) {
+#endif
+#if CAND_PRUN_OPT
+                    candidate_pruning(pcs_ptr, context_ptr, class_best_cost, cand_class_it);
+#else
+                    if (class_best_cost)
+                        while (
+                            cand_count < context_ptr->md_stage_2_count[cand_class_it] &&
+                            ((((*(context_ptr->candidate_buffer_ptr_array[cand_buff_indices[cand_count]]
+                                ->full_cost_ptr) -
+                                class_best_cost) *
+                                100) /
+                                class_best_cost) < md_stage_2_cand_prune_th)) {
+                            cand_count++;
+                        }
+                    context_ptr->md_stage_2_count[cand_class_it] = cand_count;
+#endif
+#if CLASS_PRUNE
+                }
+#endif
+            }
+        context_ptr->md_stage_2_total_count += context_ptr->md_stage_2_count[cand_class_it];
+    }
+}
+
+void interintra_class_pruning_3(ModeDecisionContext *context_ptr, uint64_t best_md_stage_cost) {
+    for (CandClass cand_class_it = CAND_CLASS_0; cand_class_it < CAND_CLASS_TOTAL;
+        cand_class_it++) {
+        if (context_ptr->md_stage_3_cand_prune_th != (uint64_t)~0 ||
+            context_ptr->md_stage_3_class_prune_th != (uint64_t)~0)
+            if (context_ptr->md_stage_2_count[cand_class_it] > 0 &&
+                context_ptr->md_stage_3_count[cand_class_it] > 0 &&
+                context_ptr->bypass_md_stage_2[cand_class_it] == EB_FALSE) {
+                uint32_t *cand_buff_indices = context_ptr->cand_buff_indices[cand_class_it];
+                uint64_t  class_best_cost =
+                    *(context_ptr->candidate_buffer_ptr_array[cand_buff_indices[0]]->full_cost_ptr);
+
+                // inter class pruning
+                if (best_md_stage_cost && class_best_cost &&
+                    ((((class_best_cost - best_md_stage_cost) * 100) / best_md_stage_cost) >
+                        context_ptr->md_stage_3_class_prune_th)) {
+                    context_ptr->md_stage_3_count[cand_class_it] = 0;
+                    continue;
+                }
+
+                // intra class pruning
+                uint32_t cand_count = 1;
+                if (class_best_cost)
+                    while (
+                        cand_count < context_ptr->md_stage_3_count[cand_class_it] &&
+                        ((((*(context_ptr->candidate_buffer_ptr_array[cand_buff_indices[cand_count]]
+                            ->full_cost_ptr) -
+                            class_best_cost) *
+                            100) /
+                            class_best_cost) < context_ptr->md_stage_3_cand_prune_th)) {
+                        cand_count++;
+                    }
+                context_ptr->md_stage_3_count[cand_class_it] = cand_count;
+            }
+        context_ptr->md_stage_3_total_count += context_ptr->md_stage_3_count[cand_class_it];
+    }
+}
+#else
 #if CLASS_PRUNE
 void interintra_class_pruning_2(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
     uint64_t best_md_stage_cost) {
@@ -14356,7 +14471,7 @@ void interintra_class_pruning_3(ModeDecisionContext *context_ptr, uint64_t best_
         context_ptr->md_stage_3_total_count += context_ptr->md_stage_3_count[cand_class_it];
     }
 }
-
+#endif
 #if DEPTH_PART_CLEAN_UP && !OPT_BLOCK_INDICES_GEN_2
 EbBool is_block_allowed(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr) {
     if((context_ptr->blk_geom->sq_size <=  8 && context_ptr->blk_geom->shape != PART_N && pcs_ptr->parent_pcs_ptr->disallow_all_nsq_blocks_below_8x8) ||
