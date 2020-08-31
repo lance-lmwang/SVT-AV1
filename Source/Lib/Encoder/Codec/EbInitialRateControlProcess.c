@@ -1434,12 +1434,12 @@ void tpl_mc_flow_dispenser(
 #else
                     int rate_cost = rate_estimator(qcoeff, eob, tx_size);
 #endif
-
-                    if(eob) {
                     uint32_t cu_origin_x = sb_params->origin_x + blk_stats_ptr->origin_x;
                     uint32_t cu_origin_y = sb_params->origin_y + blk_stats_ptr->origin_y;
-                        if (pcs_ptr->picture_number == 77)
-                            printf("\n^ x %d y %d s %d ^",cu_origin_x, cu_origin_y, bsize);
+                    if(eob) {
+                    if (pcs_ptr->picture_number == 77)
+                        if (cu_origin_x  == 160 && cu_origin_y == 144)
+                        printf("\n^ x %d y %d s %d ^",cu_origin_x, cu_origin_y, bsize);
                         av1_inv_transform_recon8bit((int32_t*)dqcoeff, dst_buffer, dst_buffer_stride, dst_buffer, dst_buffer_stride, TX_16X16, DCT_DCT, PLANE_TYPE_Y, eob, 0);
                     }
 
@@ -1829,6 +1829,7 @@ EbErrorType tpl_mc_flow(
             for (uint32_t blky = 0; blky < (picture_height_in_mb << shift); blky++) {
                 memset(pcs_array[frame_idx]->tpl_stats[blky * (picture_width_in_mb << shift)], 0, (picture_width_in_mb << shift) * sizeof(TplStats));
             }
+            if (pcs_array[frame_idx]->picture_number == 77)
             printf ("\n *P %lld*%lld* ",  pcs_array[frame_idx]->picture_number,pcs_array[0]->picture_number);
             tpl_mc_flow_dispenser(encode_context_ptr, scs_ptr, pcs_array[frame_idx], frame_idx);
 
