@@ -34,7 +34,7 @@ jobs:
             allows-failure: false
             CFLAGS: -fno-omit-frame-pointer
             CXXFLAGS: -fno-omit-frame-pointer
-            svt-args: --asm 0
+            svt-args: --asm 9
 
           - sanitizer: thread
             allows-failure: true
