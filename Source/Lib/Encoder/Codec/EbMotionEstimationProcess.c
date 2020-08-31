@@ -1581,7 +1581,7 @@ void *tf_set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet
 #endif
     return NULL;
 };
-
+#if !REMOVE_TF_REF_PRUNING_FUNCS
 #if ME_HME_PRUNING_CLEANUP
 void tf_set_me_hme_ref_prune_ctrls(MeContext* context_ptr, uint8_t prune_level) {
     MeHmeRefPruneCtrls* me_hme_prune_ctrls = &context_ptr->me_hme_prune_ctrls;
@@ -1648,6 +1648,7 @@ void tf_set_me_sr_adjustment_ctrls(MeContext* context_ptr, uint8_t sr_adjustment
         break;
     }
 }
+#endif
 #endif
 /******************************************************
 * Derive ME Settings for OQ for Altref Temporal Filtering
@@ -1809,11 +1810,19 @@ EbErrorType tf_signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr
 
     // Set hme/me based reference pruning level (0-4)
     // Ref pruning is disallowed for TF in motion_estimate_sb()
+#if REMOVE_TF_REF_PRUNING_FUNCS
+    set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 0);
+#else
     tf_set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 0);
+#endif
 
     // Set hme-based me sr adjustment level
     // ME SR adjustment is disallowed for TF in motion_estimate_sb()
+#if REMOVE_TF_REF_PRUNING_FUNCS
+    set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 0);
+#else
     tf_set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 0);
+#endif
 #else
 #if ADD_ME_SIGNAL_FOR_PRUNING_TH
 #if MAR20_ADOPTIONS
