@@ -3504,16 +3504,16 @@ void eb_av1_inv_txfm_add_c(const TranLow *dqcoeff, uint8_t *dst_r, int32_t strid
         for (int32_t c = 0; c < w; ++c) tmp[r * tmp_stride + c] = dst_r[r * stride_r + c];
     }
 
-    for (int32_t r = 0; r < h; ++r) {
-        for (int32_t c = 0; c < w; ++c) 
-            if (dst_r[r * stride_r + c] > 254)
-                printf("\n-");
-    }
-    for (int32_t r = 0; r < h; ++r) {
-        for (int32_t c = 0; c < w; ++c) 
-            if (dqcoeff[r * w + c] > 600000)
-                printf("\n+");
-    }
+    //for (int32_t r = 0; r < h; ++r) {
+    //    for (int32_t c = 0; c < w; ++c) 
+    //        if (dst_r[r * stride_r + c] > 254)
+    //            printf("\n-%d,%d",c,r);
+    //}
+    //for (int32_t r = 0; r < h; ++r) {
+    //    for (int32_t c = 0; c < w; ++c) 
+    //        if (dqcoeff[r * w + c] > 600000)
+    //            printf("\n+");
+    //}
 
     highbd_inv_txfm_add(dqcoeff,
                         CONVERT_TO_BYTEPTR(tmp),
