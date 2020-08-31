@@ -3500,6 +3500,7 @@ void eb_av1_inv_txfm_add_c(const TranLow *dqcoeff, uint8_t *dst_r, int32_t strid
     int32_t tmp_stride = MAX_TX_SIZE;
     int32_t w          = tx_size_wide[tx_size];
     int32_t h          = tx_size_high[tx_size];
+
     for (int32_t r = 0; r < h; ++r) {
         for (int32_t c = 0; c < w; ++c) tmp[r * tmp_stride + c] = dst_r[r * stride_r + c];
     }

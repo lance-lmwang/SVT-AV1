@@ -1437,18 +1437,18 @@ void tpl_mc_flow_dispenser(
                     uint32_t cu_origin_x = sb_params->origin_x + blk_stats_ptr->origin_x;
                     uint32_t cu_origin_y = sb_params->origin_y + blk_stats_ptr->origin_y;
                     if(eob) {
-                        if (pcs_ptr->picture_number == 77) {
-                            if (cu_origin_x == 160 && cu_origin_y == 144) {
-                                printf("\n^ x %d y %d s %d ^", cu_origin_x, cu_origin_y, bsize);
+                       // if (pcs_ptr->picture_number == 77) {
+                         //   if (cu_origin_x == 160 && cu_origin_y == 144) {
+                        printf("\n^ x %d y %d s %d m %d ^", cu_origin_x, cu_origin_y, bsize,best_mode);
 
 
                                 for (int32_t r = 0; r < 16; ++r) {
                                     for (int32_t c = 0; c < 16; ++c)
-                                        if (dst_buffer[r * dst_buffer_stride + c] > 254)
+                                        if (dst_buffer[r * dst_buffer_stride + c] >254/* 0x00*/)
                                             printf("\n-%d,%d", c, r);
                                 }
-                            }
-                        }
+                          //  }
+                      //  }
                         av1_inv_transform_recon8bit((int32_t*)dqcoeff, dst_buffer, dst_buffer_stride, dst_buffer, dst_buffer_stride, TX_16X16, DCT_DCT, PLANE_TYPE_Y, eob, 0);
                     }
 
@@ -1813,13 +1813,16 @@ EbErrorType tpl_mc_flow(
         encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] = NULL;
     }
     EB_MALLOC_ARRAY(mc_flow_rec_picture_buffer_noref, pcs_ptr->enhanced_picture_ptr->luma_size);
+   // memset(mc_flow_rec_picture_buffer_noref,0x00,pcs_ptr->enhanced_picture_ptr->luma_size);
     for(int32_t frame_idx = 0; frame_idx < frames_in_sw; frame_idx++) {
         if (pcs_array[frame_idx]->is_used_as_reference_flag) {
             EB_MALLOC_ARRAY(encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx], pcs_ptr->enhanced_picture_ptr->luma_size);
         } else {
             encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] = mc_flow_rec_picture_buffer_noref;
         }
+     //   memset(encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx],0x00,pcs_ptr->enhanced_picture_ptr->luma_size);
     }
+    
     if (!encode_context_ptr->mc_flow_rec_picture_buffer_saved)
         EB_MALLOC_ARRAY(encode_context_ptr->mc_flow_rec_picture_buffer_saved, pcs_ptr->enhanced_picture_ptr->luma_size);
 
@@ -1838,8 +1841,8 @@ EbErrorType tpl_mc_flow(
             for (uint32_t blky = 0; blky < (picture_height_in_mb << shift); blky++) {
                 memset(pcs_array[frame_idx]->tpl_stats[blky * (picture_width_in_mb << shift)], 0, (picture_width_in_mb << shift) * sizeof(TplStats));
             }
-            if (pcs_array[frame_idx]->picture_number == 77)
-            printf ("\n *P %lld*%lld* ",  pcs_array[frame_idx]->picture_number,pcs_array[0]->picture_number);
+            //if (pcs_array[frame_idx]->picture_number == 77)
+            printf ("\n 1st*P %lld*",  pcs_array[frame_idx]->picture_number);
             tpl_mc_flow_dispenser(encode_context_ptr, scs_ptr, pcs_array[frame_idx], frame_idx);
 
         }
@@ -1894,7 +1897,7 @@ EbErrorType tpl_mc_flow(
             for (uint32_t blky = 0; blky < (picture_height_in_mb << shift); blky++) {
                 memset(pcs_array[frame_idx]->tpl_stats[blky * (picture_width_in_mb << shift)], 0, (picture_width_in_mb << shift) * sizeof(TplStats));
             }
-
+            printf ("\n 2nd*P %lld* ",  pcs_array[frame_idx]->picture_number);
             tpl_mc_flow_dispenser(encode_context_ptr, scs_ptr, pcs_array[frame_idx], frame_idx);
             if (frame_idx == 1 && pcs_array[frame_idx]->temporal_layer_index == 0) {
                 // save frame_idx1 picture buffer for next LA
@@ -2380,6 +2383,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
                             //pcs_ptr->frames_in_sw > 16/*(2 << scs_ptr->static_config.hierarchical_levels)*/ &&
 #endif
                             pcs_ptr->temporal_layer_index == 0) {
+                            printf("\ntplBase:%d",pcs_ptr->picture_number);
                             tpl_mc_flow(encode_context_ptr, scs_ptr, pcs_ptr);
                         }
 #endif
