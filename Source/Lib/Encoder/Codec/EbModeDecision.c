@@ -3275,8 +3275,8 @@ void inject_warped_motion_candidates(
             to_inject_mv_y =
                 context_ptr
                 ->sb_me_mv[context_ptr->blk_geom->blkidx_mds][REF_LIST_0][list0_ref_index][1];
-            uint8_t to_inject_ref_type = svt_get_ref_frame_type(REF_LIST_0, list0_ref_index);
 #if !REMOVE_REF_FOR_RECT_PART
+            uint8_t to_inject_ref_type = svt_get_ref_frame_type(REF_LIST_0, list0_ref_index);
             uint8_t skip_cand = check_ref_beackout(
                 context_ptr,
                 to_inject_ref_type,
@@ -3379,8 +3379,8 @@ void inject_warped_motion_candidates(
             to_inject_mv_y =
                 context_ptr
                 ->sb_me_mv[context_ptr->blk_geom->blkidx_mds][REF_LIST_1][list1_ref_index][1];
-            uint8_t to_inject_ref_type = svt_get_ref_frame_type(REF_LIST_1, list1_ref_index);
 #if !REMOVE_REF_FOR_RECT_PART
+            uint8_t to_inject_ref_type = svt_get_ref_frame_type(REF_LIST_1, list1_ref_index);
             uint8_t skip_cand = check_ref_beackout(
                 context_ptr,
                 to_inject_ref_type,

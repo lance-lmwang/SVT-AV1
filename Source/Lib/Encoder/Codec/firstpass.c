@@ -462,7 +462,11 @@ extern const EbAv1FullCostFunc svt_av1_product_full_cost_func_table[3];
 
 void perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_buffer,
                              ModeDecisionContext *context_ptr, PictureControlSet *pcs_ptr,
+#if REMOVE_MD_TXT_SEARCH_LEVEL
+                             uint8_t start_tx_depth, uint8_t end_tx_depth,
+#else
                              uint64_t ref_fast_cost, uint8_t start_tx_depth, uint8_t end_tx_depth,
+#endif
 #if QP2QINDEX
                              uint32_t qindex, uint32_t *y_count_non_zero_coeffs,
                              uint64_t *y_coeff_bits,
@@ -476,8 +480,12 @@ extern void first_pass_loop_core(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
                                  ModeDecisionCandidateBuffer *candidate_buffer,
                                  ModeDecisionCandidate *      candidate_ptr,
                                  EbPictureBufferDesc *        input_picture_ptr,
+#if REMOVE_MD_TXT_SEARCH_LEVEL
+                                 uint32_t input_origin_index, uint32_t blk_origin_index) {
+#else
                                  uint32_t input_origin_index, uint32_t blk_origin_index,
                                  uint64_t ref_fast_cost) {
+#endif
     uint64_t y_full_distortion[DIST_CALC_TOTAL];
     uint32_t count_non_zero_coeffs[3][MAX_NUM_OF_TU_PER_CU];
 
@@ -550,7 +558,9 @@ extern void first_pass_loop_core(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
     perform_tx_partitioning(candidate_buffer,
                             context_ptr,
                             pcs_ptr,
+#if !REMOVE_MD_TXT_SEARCH_LEVEL
                             ref_fast_cost,
+#endif
                             start_tx_depth,
                             end_tx_depth,
 #if QP2QINDEX
@@ -620,7 +630,11 @@ static int firstpass_intra_prediction(PictureControlSet *pcs_ptr, BlkStruct *blk
                                       ModeDecisionCandidate *      candidate_ptr,
                                       EbPictureBufferDesc *        input_picture_ptr,
                                       uint32_t input_origin_index, uint32_t blk_origin_index,
+#if REMOVE_MD_TXT_SEARCH_LEVEL
+                                      FRAME_STATS *const stats) {
+#else
                                       uint64_t ref_fast_cost, FRAME_STATS *const stats) {
+#endif
     int32_t         mb_row      = context_ptr->blk_origin_y >> 4;
     int32_t         mb_col      = context_ptr->blk_origin_x >> 4;
     const int       use_dc_pred = (mb_col || mb_row) && (!mb_col || !mb_row);
@@ -645,8 +659,12 @@ static int firstpass_intra_prediction(PictureControlSet *pcs_ptr, BlkStruct *blk
                          candidate_ptr,
                          input_picture_ptr,
                          input_origin_index,
+#if REMOVE_MD_TXT_SEARCH_LEVEL
+                         blk_origin_index);
+#else
                          blk_origin_index,
                          ref_fast_cost);
+#endif
 
     EbSpatialFullDistType spatial_full_dist_type_fun = context_ptr->hbd_mode_decision
                                                            ? full_distortion_kernel16_bits
@@ -743,7 +761,11 @@ static int firstpass_inter_prediction(
     PictureControlSet *pcs_ptr, BlkStruct *blk_ptr, ModeDecisionContext *context_ptr,
     ModeDecisionCandidateBuffer *candidate_buffer, ModeDecisionCandidate *candidate_ptr,
     EbPictureBufferDesc *input_picture_ptr, uint32_t input_origin_index, uint32_t blk_origin_index,
+#if REMOVE_MD_TXT_SEARCH_LEVEL
+    uint32_t fast_candidate_total_count, const int this_intra_error,
+#else
     uint64_t ref_fast_cost, uint32_t fast_candidate_total_count, const int this_intra_error,
+#endif
     /*int *raw_motion_err_list, */ FRAME_STATS *stats) {
 
     int32_t        mb_row = context_ptr->blk_origin_y >> 4;
@@ -793,8 +815,12 @@ static int firstpass_inter_prediction(
                              candidate_ptr,
                              input_picture_ptr,
                              input_origin_index,
+#if REMOVE_MD_TXT_SEARCH_LEVEL
+                             blk_origin_index);
+#else
                              blk_origin_index,
                              ref_fast_cost);
+#endif
         // To convert full-pel MV
         mv.col = candidate_buffer->candidate_ptr->motion_vector_xl0 >> 3;
         mv.row = candidate_buffer->candidate_ptr->motion_vector_yl0 >> 3;
@@ -959,10 +985,10 @@ extern EbErrorType first_pass_signal_derivation_block(
 
     context_ptr->compound_types_to_try = MD_COMP_AVG;
 
+#if !REMOVE_SIMILARITY_FEATS
     BlkStruct *similar_cu = &context_ptr->md_blk_arr_nsq[context_ptr->similar_blk_mds];
     if (context_ptr->compound_types_to_try > MD_COMP_AVG && context_ptr->similar_blk_avail) {
         int32_t is_src_compound = similar_cu->pred_mode >= NEAREST_NEARESTMV;
-#if !REMOVE_SIMILARITY_FEATS
 #if INTER_COMP_REDESIGN
         if (context_ptr->inter_comp_ctrls.similar_previous_blk == 1) {
 #else
@@ -977,21 +1003,21 @@ extern EbErrorType first_pass_signal_derivation_block(
 #endif
             context_ptr->compound_types_to_try = !is_src_compound ? MD_COMP_AVG : similar_cu->interinter_comp.type;
         }
-#endif
         }
+#endif
 #if INTER_COMP_REDESIGN
     // Do not add MD_COMP_WEDGE  beyond this point
     if (get_wedge_params_bits(context_ptr->blk_geom->bsize) == 0)
         context_ptr->compound_types_to_try = MIN(context_ptr->compound_types_to_try, MD_COMP_DIFF0);
 #endif
     context_ptr->inject_inter_candidates = 1;
+#if !REMOVE_SIMILARITY_FEATS
     if (context_ptr->pd_pass > PD_PASS_1 && context_ptr->similar_blk_avail) {
         int32_t is_src_intra = similar_cu->pred_mode <= PAETH_PRED;
-#if !REMOVE_SIMILARITY_FEATS
         if (context_ptr->intra_similar_mode)
             context_ptr->inject_inter_candidates = is_src_intra ? 0 : context_ptr->inject_inter_candidates;
-#endif
     }
+#endif
 
     return return_error;
 }
@@ -1118,8 +1144,9 @@ extern void first_pass_md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionC
     context_ptr->inject_inter_candidates = 1;
     generate_md_stage_0_cand(
         context_ptr->sb_ptr, context_ptr, &fast_candidate_total_count, pcs_ptr);
-
+#if !REMOVE_MD_TXT_SEARCH_LEVEL
     uint64_t ref_fast_cost = MAX_MODE_COST;
+#endif
 
     int32_t        mb_row = context_ptr->blk_origin_y >> 4;
     int32_t        mb_col = context_ptr->blk_origin_x >> 4;
@@ -1143,7 +1170,9 @@ extern void first_pass_md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionC
                                                       input_picture_ptr,
                                                       input_origin_index,
                                                       blk_origin_index,
+#if !REMOVE_MD_TXT_SEARCH_LEVEL
                                                       ref_fast_cost,
+#endif
                                                       mb_stats);
 
     int this_inter_error = this_intra_error;
@@ -1156,7 +1185,9 @@ extern void first_pass_md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionC
                                                       input_picture_ptr,
                                                       input_origin_index,
                                                       blk_origin_index,
+#if !REMOVE_MD_TXT_SEARCH_LEVEL
                                                       ref_fast_cost,
+#endif
                                                       fast_candidate_total_count,
                                                       this_intra_error,
                                                       //raw_motion_err_list,
