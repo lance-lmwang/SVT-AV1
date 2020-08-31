@@ -7356,7 +7356,9 @@ uint32_t product_full_mode_decision(
 #endif
     uint32_t                     *best_intra_mode)
 {
+#if !REMOVE_REF_FOR_RECT_PART
     uint32_t                  cand_index;
+#endif
     uint64_t                  lowest_cost = 0xFFFFFFFFFFFFFFFFull;
     uint64_t                  lowest_intra_cost = 0xFFFFFFFFFFFFFFFFull;
     uint32_t                  lowest_cost_index = 0;
@@ -7399,7 +7401,11 @@ uint32_t product_full_mode_decision(
 
     // Find the candidate with the lowest cost
     for (uint32_t i = 0; i < candidate_total_count; ++i) {
+#if REMOVE_REF_FOR_RECT_PART
+        uint32_t cand_index = best_candidate_index_array[i];
+#else
         cand_index = best_candidate_index_array[i];
+#endif
 
         // Compute fullCostBis
         if ((*(buffer_ptr_array[cand_index]->full_cost_ptr) < lowest_intra_cost) && buffer_ptr_array[cand_index]->candidate_ptr->type == INTRA_MODE) {

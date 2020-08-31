@@ -13063,7 +13063,9 @@ static void search_best_independent_uv_mode(PictureControlSet *  pcs_ptr,
         : context_ptr->md_enable_smooth ? UV_SMOOTH_H_PRED : UV_D67_PRED;
 
     uint8_t uv_mode_start                           = UV_DC_PRED;
+#if !REMOVE_INTRA_CHROMA_FOLLOWS_LUMA
     uint8_t disable_z2_prediction                   = 0;
+#endif
     uint8_t disable_angle_prediction                = 0;
     uint8_t directional_mode_skip_mask[INTRA_MODES] = {0};
 #if !REMOVE_INTRA_CHROMA_FOLLOWS_LUMA
@@ -13126,9 +13128,11 @@ static void search_best_independent_uv_mode(PictureControlSet *  pcs_ptr,
                              : uv_angle_delta_counter - (uv_angle_delta_candidate_count >> 1)),
                     -MAX_ANGLE_DELTA,
                     MAX_ANGLE_DELTA);
+#if !REMOVE_INTRA_CHROMA_FOLLOWS_LUMA
                 int32_t p_angle = mode_to_angle_map[(PredictionMode)uv_mode] +
                     uv_angle_delta * ANGLE_STEP;
                 if (!disable_z2_prediction || (uv_angle_delta <= 1 && p_angle >= -1)) {
+#endif
                     candidate_array[uv_mode_total_count].type                       = INTRA_MODE;
                     candidate_array[uv_mode_total_count].distortion_ready           = 0;
                     candidate_array[uv_mode_total_count].use_intrabc                = 0;
@@ -13161,7 +13165,9 @@ static void search_best_independent_uv_mode(PictureControlSet *  pcs_ptr,
                         frm_hdr->reduced_tx_set);
 
                     uv_mode_total_count++;
+#if !REMOVE_INTRA_CHROMA_FOLLOWS_LUMA
                 }
+#endif
             }
         }
     }
