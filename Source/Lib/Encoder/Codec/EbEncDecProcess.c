@@ -5716,7 +5716,14 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     }
     else
 #if MAR17_ADOPTIONS
+#if MDS2_V0
+        if (enc_mode <= ENC_M1)
+            context_ptr->md_staging_mode = MD_STAGING_MODE_2;
+        else 
+            context_ptr->md_staging_mode = MD_STAGING_MODE_1;
+#else
         context_ptr->md_staging_mode = MD_STAGING_MODE_1;
+#endif
 #else
         if (enc_mode <= ENC_M4)
             context_ptr->md_staging_mode = MD_STAGING_MODE_1;
@@ -6342,59 +6349,117 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 
     // md_stage_1_class_prune_th (for class removal)
     // Remove class if deviation to the best higher than TH_C
-    if (pd_pass == PD_PASS_0)
-        context_ptr->md_stage_1_class_prune_th = (uint64_t)~0;
-    else if (pd_pass == PD_PASS_1)
-        context_ptr->md_stage_1_class_prune_th = 100;
-    else
+        if (pd_pass == PD_PASS_0)
+            context_ptr->md_stage_1_class_prune_th = (uint64_t)~0;
+        else if (pd_pass == PD_PASS_1)
+            context_ptr->md_stage_1_class_prune_th = 100;
+        else
 #if PRESETS_SHIFT
 #if APR25_10AM_ADOPTIONS
 #if UNIFY_SC_NSC
 #if AUG27_ADOPTS
-        if (enc_mode <= ENC_M5)
+            if (enc_mode <= ENC_M5)
 #else
 #if AUG25_ADOPTS
-        if (enc_mode <= ENC_M3)
+            if (enc_mode <= ENC_M3)
 #else
-        if (enc_mode <= ENC_M2)
+            if (enc_mode <= ENC_M2)
 #endif
 #endif
 #else
 #if PRESET_SHIFITNG
-        if (enc_mode <= ENC_M2 ||
+            if (enc_mode <= ENC_M2 ||
 #else
-        if (enc_mode <= ENC_M4 ||
+                if (enc_mode <= ENC_M4 ||
 #endif
-            pcs_ptr->parent_pcs_ptr->sc_content_detected)
+                    pcs_ptr->parent_pcs_ptr->sc_content_detected)
 #endif
 #else
 #if APR23_ADOPTIONS_2
-        if (enc_mode <= ENC_M5 ||
-            pcs_ptr->parent_pcs_ptr->sc_content_detected)
+                if (enc_mode <= ENC_M5 ||
+                    pcs_ptr->parent_pcs_ptr->sc_content_detected)
 #else
-        if (enc_mode <= ENC_M2 ||
-            pcs_ptr->parent_pcs_ptr->sc_content_detected)
+                if (enc_mode <= ENC_M2 ||
+                    pcs_ptr->parent_pcs_ptr->sc_content_detected)
 #endif
 #endif
 #else
 #if MAR12_ADOPTIONS
-        if (enc_mode <= ENC_M3 ||
-            pcs_ptr->parent_pcs_ptr->sc_content_detected)
+                if (enc_mode <= ENC_M3 ||
+                    pcs_ptr->parent_pcs_ptr->sc_content_detected)
 #else
 #if MAR11_ADOPTIONS
-        if (enc_mode <= ENC_M2 ||
-            pcs_ptr->parent_pcs_ptr->sc_content_detected)
+                if (enc_mode <= ENC_M2 ||
+                    pcs_ptr->parent_pcs_ptr->sc_content_detected)
 #else
-        if (enc_mode <= ENC_M3 ||
-            pcs_ptr->parent_pcs_ptr->sc_content_detected)
+                if (enc_mode <= ENC_M3 ||
+                    pcs_ptr->parent_pcs_ptr->sc_content_detected)
 #endif
 #endif
 #endif
-            context_ptr->md_stage_1_class_prune_th = (uint64_t)~0;
+                    context_ptr->md_stage_1_class_prune_th = (uint64_t)~0;
+                else
+
+#if MDS2_V0
+                    context_ptr->md_stage_1_class_prune_th = 100;
+    // md_stage_2_cand_prune_th (for single candidate removal per class)
+   // Remove candidate if deviation to the best is higher than
+   // md_stage_2_cand_prune_th
+    if (pd_pass == PD_PASS_0)
+        context_ptr->md_stage_2_cand_prune_th = (uint64_t)~0;
+    else if (pd_pass == PD_PASS_1)
+        context_ptr->md_stage_2_cand_prune_th = 5;
+    else
+        if (enc_mode <= ENC_MRS)
+            context_ptr->md_stage_2_cand_prune_th = (uint64_t)~0;
         else
+            if (enc_mode <= ENC_MR)
+                context_ptr->md_stage_2_cand_prune_th = 45;
+            else if (enc_mode <= ENC_M9)
+                context_ptr->md_stage_2_cand_prune_th = 15;
+            else
+                context_ptr->md_stage_2_cand_prune_th = 5;
+
+    // md_stage_2_class_prune_th (for class removal)
+    // Remove class if deviation to the best is higher than
+    // md_stage_2_class_prune_th
+    if (pd_pass == PD_PASS_0)
+        context_ptr->md_stage_2_class_prune_th = (uint64_t)~0;
+    else if (pd_pass == PD_PASS_1)
+        context_ptr->md_stage_2_class_prune_th = 25;
+    else
+        context_ptr->md_stage_2_class_prune_th = 25;
+
+    // md_stage_2_cand_prune_th (for single candidate removal per class)
+   // Remove candidate if deviation to the best is higher than
+   // md_stage_2_cand_prune_th
+    if (pd_pass == PD_PASS_0)
+        context_ptr->md_stage_3_cand_prune_th = (uint64_t)~0;
+    else if (pd_pass == PD_PASS_1)
+        context_ptr->md_stage_3_cand_prune_th = 5;
+    else
+        if (enc_mode <= ENC_MRS)
+            context_ptr->md_stage_3_cand_prune_th = (uint64_t)~0;
+        else
+            if (enc_mode <= ENC_MR)
+                context_ptr->md_stage_3_cand_prune_th = 45;
+            else if (enc_mode <= ENC_M9)
+                context_ptr->md_stage_3_cand_prune_th = 15;
+            else
+                context_ptr->md_stage_3_cand_prune_th = 5;
+
+    // md_stage_2_class_prune_th (for class removal)
+    // Remove class if deviation to the best is higher than
+    // md_stage_2_class_prune_th
+    if (pd_pass == PD_PASS_0)
+        context_ptr->md_stage_3_class_prune_th = (uint64_t)~0;
+    else if (pd_pass == PD_PASS_1)
+        context_ptr->md_stage_3_class_prune_th = 25;
+    else
+        context_ptr->md_stage_3_class_prune_th = 25;
+#else
             context_ptr->md_stage_1_class_prune_th =
             sequence_control_set_ptr->static_config.md_stage_1_class_prune_th;
-
     // md_stage_2_3_cand_prune_th (for single candidate removal per class)
     // Remove candidate if deviation to the best is higher than
     // md_stage_2_3_cand_prune_th
@@ -6576,6 +6641,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else
             context_ptr->md_stage_2_3_class_prune_th =
             sequence_control_set_ptr->static_config.md_stage_2_3_class_prune_th;
+#endif
 #endif
 #if COEFF_BASED_BYPASS_NSQ && !MULTI_BAND_ACTIONS
     if (pd_pass == PD_PASS_0)
@@ -7490,13 +7556,21 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     // 0 OFF - TXS in intra classes only
     // 1 ON - TXS in all classes
     // 2 ON - INTER TXS restricted to max 1 depth
+#if MDS2_V0 //-----
+    if (enc_mode <= ENC_MRS)
+        context_ptr->md_staging_tx_size_level = 1;
+    else if (enc_mode <= ENC_M0)
+        context_ptr->md_staging_tx_size_level = 2;
+    else
+        context_ptr->md_staging_tx_size_level = 0;
+#else
     if (enc_mode <= ENC_MRS)
         context_ptr->txs_in_inter_classes = 1;
     else if (enc_mode <= ENC_M0)
         context_ptr->txs_in_inter_classes = 2;
     else
         context_ptr->txs_in_inter_classes = 0;
-
+#endif
     //{10, 8},   // level0
     //{ 8,8 },    // level1
     //{ 7,8 },    // level2

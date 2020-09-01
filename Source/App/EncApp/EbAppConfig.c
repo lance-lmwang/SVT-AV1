@@ -170,8 +170,9 @@
 #define SUPER_BLOCK_SIZE_TOKEN "-sb-size"
 #define TILE_ROW_TOKEN "-tile-rows"
 #define TILE_COL_TOKEN "-tile-columns"
-
+#if 0//!MDS2_V0
 #define SQ_WEIGHT_TOKEN "-sqw"
+#endif
 #define CHROMA_MODE_TOKEN "-chroma-mode"
 #define DISABLE_CFL_TOKEN "-dcfl"
 
@@ -202,11 +203,12 @@
 #define EVENT_FILE_MAX_VAR_LEN 256
 #define BUFFER_FILE_MAX_ARG_COUNT 320
 #define BUFFER_FILE_MAX_VAR_LEN 128
-
+#if 0//!MDS2_V0
 #define MDS_1_PRUNE_C_TH "-mds-1-class-th"
 #define MDS_1_PRUNE_S_TH "-mds-1-cand-th"
 #define MDS_2_3_PRUNE_C_TH "-mds-2-3-class-th"
 #define MDS_2_3_PRUNE_S_TH "-mds-2-3-cand-th"
+#endif
 //double dash
 #define PRESET_TOKEN "--preset"
 #define QP_FILE_NEW_TOKEN "--qpfile"
@@ -774,7 +776,7 @@ static void set_target_socket(const char *value, EbConfig *cfg) {
 static void set_unrestricted_motion_vector(const char *value, EbConfig *cfg) {
     cfg->unrestricted_motion_vector = (EbBool)strtol(value, NULL, 0);
 };
-
+#if 0//!MDS2_V0
 static void set_square_weight(const char *value, EbConfig *cfg) {
     cfg->sq_weight = (uint64_t)strtoul(value, NULL, 0);
     if (cfg->sq_weight == 0) cfg->sq_weight = (uint32_t)~0;
@@ -799,7 +801,7 @@ static void set_md_stage_2_3_cand_prune_th(const char *value, EbConfig *cfg) {
     cfg->md_stage_2_3_cand_prune_th = (uint64_t)strtoul(value, NULL, 0);
     if (cfg->md_stage_2_3_cand_prune_th == 0) cfg->md_stage_2_3_cand_prune_th = (uint64_t)~0;
 }
-
+#endif
 enum CfgType {
     SINGLE_INPUT, // Configuration parameters that have only 1 value input
     ARRAY_INPUT // Configuration parameters that have multiple values as input
@@ -1326,6 +1328,7 @@ ConfigEntry config_entry_specific[] = {
       "extra reference frame for the base-layer picture(0: OFF[default], 1: ON)",
       set_enable_overlays},
      // --- end: ALTREF_FILTERING_SUPPORT
+#if 0//!MDS2_V0
      {SINGLE_INPUT,
       SQ_WEIGHT_TOKEN,
       "Determines if HA, HB, VA, VB, H4 and V4 shapes could be skipped based on the cost of SQ, H "
@@ -1347,7 +1350,7 @@ ConfigEntry config_entry_specific[] = {
       MDS_2_3_PRUNE_S_TH,
       "Set MD Stage 2/3 prune candidate threshold[5,50]",
       set_md_stage_2_3_cand_prune_th},
-
+#endif
      {SINGLE_INPUT, STAT_REPORT_NEW_TOKEN, "Stat Report", set_stat_report},
 #if 1 // CDEF_CLI
      {SINGLE_INPUT,
@@ -1627,12 +1630,13 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, SUPERRES_DENOM, "SuperresDenom", set_superres_denom},
     {SINGLE_INPUT, SUPERRES_KF_DENOM, "SuperresKfDenom", set_superres_kf_denom},
     {SINGLE_INPUT, SUPERRES_QTHRES, "SuperresQthres", set_superres_qthres},
-
+#if 0//!MDS2_V0
     {SINGLE_INPUT, SQ_WEIGHT_TOKEN, "SquareWeight", set_square_weight},
     {SINGLE_INPUT, MDS_1_PRUNE_C_TH, "MdFastPruneClassThreshold", set_md_stage_1_class_prune_th },
     {SINGLE_INPUT, MDS_1_PRUNE_S_TH, "MdFastPruneCandThreshold", set_md_stage_1_cand_prune_th },
     {SINGLE_INPUT, MDS_2_3_PRUNE_C_TH, "MdFullPruneClassThreshold", set_md_stage_2_3_class_prune_th },
     {SINGLE_INPUT, MDS_2_3_PRUNE_S_TH, "MdFullPruneCandThreshold", set_md_stage_2_3_cand_prune_th },
+#endif
     // double dash
 #if 1//REMOVE_MR_MACRO
     {SINGLE_INPUT, PRESET_TOKEN, "Encoder mode/Preset used[-2,-1,0,..,8]", set_enc_mode},
@@ -1883,14 +1887,14 @@ void eb_config_ctor(EbConfig *config_ptr) {
     config_ptr->superres_kf_denom = 8; // no scaling
     config_ptr->superres_qthres   = 43; // random threshold for now
     // end - super-resolution support
-
+#if 0//!MDS2_V0
     config_ptr->sq_weight                 = 100;
 
     config_ptr->md_stage_1_cand_prune_th  = 75;
     config_ptr->md_stage_1_class_prune_th = 100;
     config_ptr->md_stage_2_3_cand_prune_th  = 15;
     config_ptr->md_stage_2_3_class_prune_th = 25;
-
+#endif
     return;
 }
 

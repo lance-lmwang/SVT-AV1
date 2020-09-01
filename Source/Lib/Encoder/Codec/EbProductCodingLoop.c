@@ -2171,6 +2171,10 @@ void scale_nics(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr) {
             DIVIDE_AND_ROUND(context_ptr->md_stage_1_count[cidx] * scale_num, scale_denum));
         context_ptr->md_stage_2_count[cidx] = MAX(min_nics,
             DIVIDE_AND_ROUND(context_ptr->md_stage_2_count[cidx] * scale_num, scale_denum));
+#if MDS2_V0
+        context_ptr->md_stage_3_count[cidx] = MAX(min_nics,
+            DIVIDE_AND_ROUND(context_ptr->md_stage_3_count[cidx] * scale_num, scale_denum));
+#endif
     }
 }
 #endif
@@ -2565,6 +2569,21 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
                     context_ptr->md_stage_2_count[CAND_CLASS_3] =
                         (pcs_ptr->slice_type == I_SLICE) ? 8 :
                         (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 4 : 2;
+
+#if MDS2_V0
+                    context_ptr->md_stage_3_count[CAND_CLASS_0] =
+                        (pcs_ptr->slice_type == I_SLICE) ? 16 :
+                        (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 8 : 4;
+                    context_ptr->md_stage_3_count[CAND_CLASS_1] =
+                        (pcs_ptr->slice_type == I_SLICE) ? 0 :
+                        (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 8 : 4;
+                    context_ptr->md_stage_3_count[CAND_CLASS_2] =
+                        (pcs_ptr->slice_type == I_SLICE) ? 0 :
+                        (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 8 : 4;
+                    context_ptr->md_stage_3_count[CAND_CLASS_3] =
+                        (pcs_ptr->slice_type == I_SLICE) ? 4 :
+                        (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 2 : 1;
+#endif
 #if !UNIFY_SC_NSC
                 }
 #endif
@@ -3953,6 +3972,7 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
         }
 #endif
 #endif
+#if !MDS2_V0
         // Set md_stage_3 NICs
 
         context_ptr->md_stage_3_count[CAND_CLASS_0] =
@@ -3974,6 +3994,7 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
             (context_ptr->md_stage_2_count[CAND_CLASS_7] + 1) >> 1;
         context_ptr->md_stage_3_count[CAND_CLASS_8] =
             (context_ptr->md_stage_2_count[CAND_CLASS_8] + 1) >> 1;
+#endif
 #endif
     }
 #if SOFT_CYCLES_REDUCTION && !SWITCH_MODE_BASED_ON_STATISTICS
@@ -10363,7 +10384,12 @@ void tx_type_search(PictureControlSet *pcs_ptr,
         if (y_has_coeff == 0 && tx_type != DCT_DCT) continue;
 
 #if SSSE_CLI
+#if MDS2_V0 //-----
+        // Perform T-1 if md_staging_spatial_sse_full_loop_level or  INTRA and tx_depth > 0
+        if (context_ptr->md_staging_spatial_sse_full_loop_level || (!is_inter && candidate_buffer->candidate_ptr->tx_depth)) {
+#else
         if (context_ptr->md_staging_spatial_sse_full_loop_level) {
+#endif
 #else
         if (context_ptr->md_staging_spatial_sse_full_loop) {
 #endif
@@ -11271,7 +11297,12 @@ void perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_buffer,
             // Y Prediction
 
             if (!is_inter) {
+#if MDS2_V0 //-----------------
+                // This check assumes no txs search @ a previous md_stage()
                 if (context_ptr->tx_depth)
+#else
+                if (context_ptr->tx_depth)
+#endif
                     av1_intra_luma_prediction(context_ptr, pcs_ptr, tx_candidate_buffer);
 
                 // Y Residual
@@ -11923,7 +11954,11 @@ void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *b
     }
 #if RESTRICT_INTER_TXS_DEPTH
 #if MOVE_SIGNALS_TO_MD
+#if MDS2_V0 //-----
+    if (is_inter && (context_ptr->md_staging_tx_size_level))
+#else
     if (is_inter && (context_ptr->txs_in_inter_classes == 2))
+#endif
 #else
     if (is_inter && (pcs_ptr->parent_pcs_ptr->txs_in_inter_classes == 2))
 #endif
@@ -12269,8 +12304,20 @@ void md_stage_2(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
         candidate_ptr->txt_level = context_ptr->md_txt_search_level;
         candidate_ptr->txs_level = 0;
 #endif
+#if MDS2_V0 //-----
+        context_ptr->md_staging_tx_size_mode = (candidate_ptr->cand_class == CAND_CLASS_0 || candidate_ptr->cand_class == CAND_CLASS_3) ?
+            0 :
+            (context_ptr->md_staging_tx_size_level) ?
+            1 : 0 ;
+#else
         context_ptr->md_staging_tx_size_mode = 0;
-
+#endif
+#if MDS2_V0
+        context_ptr->md_staging_tx_search =
+            (candidate_ptr->cand_class == CAND_CLASS_0 || candidate_ptr->cand_class == CAND_CLASS_3)
+            ? 2
+            : 0;
+#else
         context_ptr->md_staging_tx_search =
             (candidate_ptr->cand_class == CAND_CLASS_0 ||
 #if CLASS_MERGING
@@ -12280,7 +12327,14 @@ void md_stage_2(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
 #endif
                 ? 2
                 : 1;
+#endif
+#if MDS2_V0
+        context_ptr->md_staging_skip_rdoq = (candidate_ptr->cand_class == CAND_CLASS_0 || candidate_ptr->cand_class == CAND_CLASS_3) ?
+            EB_TRUE :
+            EB_FALSE;
+#else
         context_ptr->md_staging_skip_rdoq                 = EB_FALSE;
+#endif
         context_ptr->md_staging_skip_full_chroma          = EB_TRUE;
 #if REFACTOR_SIGNALS
 #if IFS_PUSH_BACK_STAGE_3
@@ -12308,7 +12362,11 @@ void md_stage_2(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
         if (scs_ptr->static_config.spatial_sse_full_loop_level != DEFAULT && context_ptr->pd_pass == PD_PASS_2)
             context_ptr->md_staging_spatial_sse_full_loop_level = scs_ptr->static_config.spatial_sse_full_loop_level;
         else
+#if MDS2_V0
+            context_ptr->md_staging_spatial_sse_full_loop_level = context_ptr->spatial_sse_full_loop_level;
+#else
             context_ptr->md_staging_spatial_sse_full_loop_level = EB_FALSE;
+#endif
 #else
         context_ptr->md_staging_spatial_sse_full_loop = EB_FALSE;
 #endif
@@ -12519,7 +12577,11 @@ void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
 #endif
         if (pcs_ptr->parent_pcs_ptr->txs_in_inter_classes)
 #else
+#if MDS2_V0 //-----
+        if (context_ptr->md_staging_tx_size_level)
+#else
         if (context_ptr->txs_in_inter_classes)
+#endif
 #endif
             context_ptr->md_staging_tx_size_mode = 1;
         else
@@ -14132,6 +14194,121 @@ void candidate_pruning(PictureControlSet *pcs_ptr, ModeDecisionContext *context_
     }
 #endif
 
+#if MDS2_V0
+#if CLASS_PRUNE
+void interintra_class_pruning_2(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
+    uint64_t best_md_stage_cost) {
+#else
+void interintra_class_pruning_2(ModeDecisionContext *context_ptr, uint64_t best_md_stage_cost) {
+#endif
+
+    for (CandClass cand_class_it = CAND_CLASS_0; cand_class_it < CAND_CLASS_TOTAL;
+        cand_class_it++) {
+        if (context_ptr->md_stage_2_cand_prune_th != (uint64_t)~0 ||
+            context_ptr->md_stage_2_class_prune_th != (uint64_t)~0)
+            if (context_ptr->md_stage_1_count[cand_class_it] > 0 &&
+                context_ptr->md_stage_2_count[cand_class_it] > 0 &&
+                context_ptr->bypass_md_stage_1[cand_class_it] == EB_FALSE) {
+                uint32_t *cand_buff_indices = context_ptr->cand_buff_indices[cand_class_it];
+                uint64_t  class_best_cost =
+                    *(context_ptr->candidate_buffer_ptr_array[cand_buff_indices[0]]->full_cost_ptr);
+#if CLASS_PRUNE
+                // class pruning
+#if REMOVE_MR_MACRO
+                class_pruning(pcs_ptr, context_ptr, best_md_stage_cost, class_best_cost, cand_class_it);
+#else
+#if !MRS_MODE
+                class_pruning(pcs_ptr, context_ptr, best_md_stage_cost, class_best_cost, cand_class_it);
+#endif
+#endif
+#else
+                // inter class pruning
+                if (best_md_stage_cost && class_best_cost &&
+                    ((((class_best_cost - best_md_stage_cost) * 100) / best_md_stage_cost) >
+                        context_ptr->md_stage_2_class_prune_th)) {
+                    context_ptr->md_stage_2_count[cand_class_it] = 0;
+                    continue;
+                }
+#endif
+#if !CAND_PRUN_OPT
+                // intra class pruning
+                uint32_t cand_count = 1;
+                uint64_t md_stage_2_cand_prune_th = context_ptr->md_stage_2_cand_prune_th;
+                md_stage_2_cand_prune_th = (cand_class_it == CAND_CLASS_0 ||
+#if CLASS_MERGING
+                    cand_class_it == CAND_CLASS_3) ?
+#else
+                    cand_class_it == CAND_CLASS_6 ||
+                    cand_class_it == CAND_CLASS_7) ?
+#endif
+                    (uint64_t)~0 : (context_ptr->blk_geom->shape == PART_N) ? (uint64_t)~0 :
+                    md_stage_2_cand_prune_th;
+#endif
+#if CLASS_PRUNE
+                // candidate pruning
+                if (context_ptr->md_stage_2_count[cand_class_it] > 0) {
+#endif
+#if CAND_PRUN_OPT
+                    candidate_pruning(pcs_ptr, context_ptr, class_best_cost, cand_class_it);
+#else
+                    if (class_best_cost)
+                        while (
+                            cand_count < context_ptr->md_stage_2_count[cand_class_it] &&
+                            ((((*(context_ptr->candidate_buffer_ptr_array[cand_buff_indices[cand_count]]
+                                ->full_cost_ptr) -
+                                class_best_cost) *
+                                100) /
+                                class_best_cost) < md_stage_2_cand_prune_th)) {
+                            cand_count++;
+                        }
+                    context_ptr->md_stage_2_count[cand_class_it] = cand_count;
+#endif
+#if CLASS_PRUNE
+                }
+#endif
+            }
+        context_ptr->md_stage_2_total_count += context_ptr->md_stage_2_count[cand_class_it];
+    }
+}
+
+void interintra_class_pruning_3(ModeDecisionContext *context_ptr, uint64_t best_md_stage_cost) {
+    for (CandClass cand_class_it = CAND_CLASS_0; cand_class_it < CAND_CLASS_TOTAL;
+        cand_class_it++) {
+        if (context_ptr->md_stage_3_cand_prune_th != (uint64_t)~0 ||
+            context_ptr->md_stage_3_class_prune_th != (uint64_t)~0)
+            if (context_ptr->md_stage_2_count[cand_class_it] > 0 &&
+                context_ptr->md_stage_3_count[cand_class_it] > 0 &&
+                context_ptr->bypass_md_stage_2[cand_class_it] == EB_FALSE) {
+                uint32_t *cand_buff_indices = context_ptr->cand_buff_indices[cand_class_it];
+                uint64_t  class_best_cost =
+                    *(context_ptr->candidate_buffer_ptr_array[cand_buff_indices[0]]->full_cost_ptr);
+
+                // inter class pruning
+                if (best_md_stage_cost && class_best_cost &&
+                    ((((class_best_cost - best_md_stage_cost) * 100) / best_md_stage_cost) >
+                        context_ptr->md_stage_3_class_prune_th)) {
+                    context_ptr->md_stage_3_count[cand_class_it] = 0;
+                    continue;
+                }
+
+                // intra class pruning
+                uint32_t cand_count = 1;
+                if (class_best_cost)
+                    while (
+                        cand_count < context_ptr->md_stage_3_count[cand_class_it] &&
+                        ((((*(context_ptr->candidate_buffer_ptr_array[cand_buff_indices[cand_count]]
+                            ->full_cost_ptr) -
+                            class_best_cost) *
+                            100) /
+                            class_best_cost) < context_ptr->md_stage_3_cand_prune_th)) {
+                        cand_count++;
+                    }
+                context_ptr->md_stage_3_count[cand_class_it] = cand_count;
+            }
+        context_ptr->md_stage_3_total_count += context_ptr->md_stage_3_count[cand_class_it];
+    }
+}
+#else
 #if CLASS_PRUNE
 void interintra_class_pruning_2(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
     uint64_t best_md_stage_cost) {
@@ -14245,7 +14422,7 @@ void interintra_class_pruning_3(ModeDecisionContext *context_ptr, uint64_t best_
         context_ptr->md_stage_3_total_count += context_ptr->md_stage_3_count[cand_class_it];
     }
 }
-
+#endif
 #if DEPTH_PART_CLEAN_UP && !OPT_BLOCK_INDICES_GEN_2
 EbBool is_block_allowed(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr) {
     if((context_ptr->blk_geom->sq_size <=  8 && context_ptr->blk_geom->shape != PART_N && pcs_ptr->parent_pcs_ptr->disallow_all_nsq_blocks_below_8x8) ||

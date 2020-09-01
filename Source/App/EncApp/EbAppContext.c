@@ -273,14 +273,13 @@ EbErrorType copy_configuration_parameters(EbConfig *config, EbAppContext *callba
         callback_data->eb_enc_parameters.hme_level2_search_area_in_height_array[hme_region_index] =
             config->hme_level2_search_area_in_height_array[hme_region_index];
     }
-
+#if 0//!MDS2_V0
     callback_data->eb_enc_parameters.sq_weight                 = config->sq_weight;
-
     callback_data->eb_enc_parameters.md_stage_1_cand_prune_th  = config->md_stage_1_cand_prune_th;
     callback_data->eb_enc_parameters.md_stage_1_class_prune_th = config->md_stage_1_class_prune_th;
     callback_data->eb_enc_parameters.md_stage_2_3_cand_prune_th  = config->md_stage_2_3_cand_prune_th;
     callback_data->eb_enc_parameters.md_stage_2_3_class_prune_th = config->md_stage_2_3_class_prune_th;
-
+#endif
     // Prediction Structure
     callback_data->eb_enc_parameters.enable_manual_pred_struct    = config->enable_manual_pred_struct;
     if (callback_data->eb_enc_parameters.enable_manual_pred_struct) {
