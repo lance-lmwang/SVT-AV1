@@ -7983,6 +7983,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else
             context_ptr->md_subpel_me_level = 2;
 
+#if SHUT_SUBPEL_ME
+    context_ptr->md_subpel_me_level = 0;
+#endif
+
+
     md_subpel_me_controls(context_ptr, context_ptr->md_subpel_me_level);
 
     if (pd_pass == PD_PASS_0)

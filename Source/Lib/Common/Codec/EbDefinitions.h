@@ -697,8 +697,9 @@ extern "C" {
 #define PRED_ONLY_ALL     0
 #define BYPASS_PD0        0
 #define SHUT_RDOQ         0
-#define SHUT_PME    1
-#define SHUT_SUBPEL 1
+#define SHUT_PME          0
+#define SHUT_SUBPEL_ME    1
+#define SHUT_SUBPEL_PME   1
 #define SHUT_TXT    1
 #define SHUT_TXS    1
 
