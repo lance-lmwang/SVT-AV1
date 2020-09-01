@@ -713,7 +713,7 @@ extern "C" {
 #define SHUT_SG           0
 #define SHUT_WN           0
 
-#define SHUT_TXS          1
+#define SHUT_TXS          0
 #define SHUT_WARP         1
 
 #endif
