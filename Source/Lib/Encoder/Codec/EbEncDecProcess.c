@@ -5926,7 +5926,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             if (enc_mode <= ENC_M8)
 #endif
 #endif
+#if SHUT_RDOQ
+                context_ptr->rdoq_level = EB_FALSE;
+#else
                 context_ptr->rdoq_level = EB_TRUE;
+#endif
             else
                 context_ptr->rdoq_level = EB_FALSE;
         else
