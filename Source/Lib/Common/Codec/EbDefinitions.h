@@ -707,7 +707,8 @@ extern "C" {
 #define NIC_1_MDS1        0
 #define BYPASS_MDS1       0
 
-#define SHUT_ADAPT_ME     1 
+#define SHUT_ADAPT_ME     0 
+#define SHUT_CDEF         1 
 
 #define SHUT_TXS          1
 #define SHUT_WARP         1

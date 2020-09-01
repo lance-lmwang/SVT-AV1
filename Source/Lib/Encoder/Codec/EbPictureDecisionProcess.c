@@ -2154,6 +2154,10 @@ EbErrorType signal_derivation_multi_processes_oq(
     }
     else
         pcs_ptr->cdef_level = 0;
+
+#if SHUT_CDEF
+    pcs_ptr->cdef_level = 0;
+#endif
 #else
     // CDEF Level                                   Settings
     // 0                                            OFF
