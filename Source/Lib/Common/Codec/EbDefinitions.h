@@ -690,6 +690,23 @@ extern "C" {
 
 #define AUG25_ADOPTS                     1 // M1, M2, and M3 adoptions
 #define AUG27_ADOPTS                     1 // M4-M7 adoptions
+
+
+// Build M8
+#define PRED_ONLY_B_SLICE 1
+#define PRED_ONLY_ALL     1
+#define SHUT_RDOQ   1
+#define SHUT_PME    1
+#define SHUT_SUBPEL 1
+#define SHUT_TXT    1
+#define SHUT_TXS    1
+
+#define SHUT_WARP   1
+#define BYPASS_PD0  1
+
+#define NIC_1_MDS1  1
+#define BYPASS_MDS1 1
+
 #endif
 // END  SVT_02_TEMP /////////////////////////////////////////////////////////
 
