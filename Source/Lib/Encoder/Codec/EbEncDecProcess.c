@@ -7883,6 +7883,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else
             context_ptr->md_sq_mv_search_level = 3;
 #endif
+#if SHUT_ADAPT_ME
+    context_ptr->md_sq_mv_search_level = 0;
+#endif
     md_sq_motion_search_controls(context_ptr, context_ptr->md_sq_mv_search_level);
 #endif
 #if ADD_MD_NSQ_SEARCH
