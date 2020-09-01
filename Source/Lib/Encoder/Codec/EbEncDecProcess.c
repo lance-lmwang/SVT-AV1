@@ -7554,13 +7554,21 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     // 0 OFF - TXS in intra classes only
     // 1 ON - TXS in all classes
     // 2 ON - INTER TXS restricted to max 1 depth
+#if b //-----
+    if (enc_mode <= ENC_MRS)
+        context_ptr->md_staging_tx_size_level = 1;
+    else if (enc_mode <= ENC_M0)
+        context_ptr->md_staging_tx_size_level = 2;
+    else
+        context_ptr->md_staging_tx_size_level = 0;
+#else
     if (enc_mode <= ENC_MRS)
         context_ptr->txs_in_inter_classes = 1;
     else if (enc_mode <= ENC_M0)
         context_ptr->txs_in_inter_classes = 2;
     else
         context_ptr->txs_in_inter_classes = 0;
-
+#endif
     //{10, 8},   // level0
     //{ 8,8 },    // level1
     //{ 7,8 },    // level2

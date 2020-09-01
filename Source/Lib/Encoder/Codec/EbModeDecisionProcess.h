@@ -1031,7 +1031,11 @@ typedef struct ModeDecisionContext {
     int16_t sprs_lev0_end_y;
 #endif
 #if MOVE_SIGNALS_TO_MD
+#if MDS2_V0
+    uint8_t md_staging_tx_size_level;
+#else
     uint8_t txs_in_inter_classes;
+#endif
     uint8_t nic_scaling_level;
     uint8_t inter_compound_mode;
 #endif

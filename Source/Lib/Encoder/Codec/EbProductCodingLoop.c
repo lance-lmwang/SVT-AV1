@@ -11297,8 +11297,9 @@ void perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_buffer,
             // Y Prediction
 
             if (!is_inter) {
-#if MDS2_V0  //-----
-                if (context_ptr->tx_depth || (context_ptr->md_staging_mode == MD_STAGING_MODE_2 && context_ptr->md_stage == MD_STAGE_3))
+#if MDS2_V0 //-----------------
+                // This check assumes no txs search @ a previous md_stage()
+                if (context_ptr->tx_depth)
 #else
                 if (context_ptr->tx_depth)
 #endif
@@ -11953,7 +11954,11 @@ void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *b
     }
 #if RESTRICT_INTER_TXS_DEPTH
 #if MOVE_SIGNALS_TO_MD
+#if MDS2_V0 //-----
+    if (is_inter && (context_ptr->md_staging_tx_size_level))
+#else
     if (is_inter && (context_ptr->txs_in_inter_classes == 2))
+#endif
 #else
     if (is_inter && (pcs_ptr->parent_pcs_ptr->txs_in_inter_classes == 2))
 #endif
@@ -12300,15 +12305,10 @@ void md_stage_2(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
         candidate_ptr->txs_level = 0;
 #endif
 #if MDS2_V0 //-----
-        if (candidate_ptr->cand_class == CAND_CLASS_0 || candidate_ptr->cand_class == CAND_CLASS_3) {
-            context_ptr->md_staging_tx_size_mode = 0;
-        }
-        else {
-            if (context_ptr->txs_in_inter_classes)
-                context_ptr->md_staging_tx_size_mode = 1;
-            else
-                context_ptr->md_staging_tx_size_mode = (candidate_ptr->cand_class == CAND_CLASS_0 || candidate_ptr->cand_class == CAND_CLASS_3) ? 1 : 0;
-        }
+        context_ptr->md_staging_tx_size_mode = (candidate_ptr->cand_class == CAND_CLASS_0 || candidate_ptr->cand_class == CAND_CLASS_3) ?
+            0 :
+            (context_ptr->md_staging_tx_size_level) ?
+            1 : 0 ;
 #else
         context_ptr->md_staging_tx_size_mode = 0;
 #endif
@@ -12329,12 +12329,9 @@ void md_stage_2(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
                 : 1;
 #endif
 #if MDS2_V0
-        if (candidate_ptr->cand_class == CAND_CLASS_0 || candidate_ptr->cand_class == CAND_CLASS_3) {
-            context_ptr->md_staging_skip_rdoq = EB_TRUE;
-        }
-        else {
-            context_ptr->md_staging_skip_rdoq = EB_FALSE;
-        }
+        context_ptr->md_staging_skip_rdoq = (candidate_ptr->cand_class == CAND_CLASS_0 || candidate_ptr->cand_class == CAND_CLASS_3) ?
+            EB_TRUE :
+            EB_FALSE;
 #else
         context_ptr->md_staging_skip_rdoq                 = EB_FALSE;
 #endif
@@ -12580,7 +12577,11 @@ void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
 #endif
         if (pcs_ptr->parent_pcs_ptr->txs_in_inter_classes)
 #else
+#if MDS2_V0 //-----
+        if (context_ptr->md_staging_tx_size_level)
+#else
         if (context_ptr->txs_in_inter_classes)
+#endif
 #endif
             context_ptr->md_staging_tx_size_mode = 1;
         else
