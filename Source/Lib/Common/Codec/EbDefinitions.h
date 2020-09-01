@@ -716,6 +716,7 @@ extern "C" {
 #define SHUT_TXS          0
 #define SHUT_WARP         0
 
+#define FIX_HME_REF_COUNT 1
 #endif
 // END  SVT_02_TEMP /////////////////////////////////////////////////////////
 
