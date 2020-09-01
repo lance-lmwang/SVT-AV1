@@ -4004,6 +4004,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #else
                 context_ptr->tx_search_level = TX_SEARCH_DCT_TX_TYPES;
 #endif
+#if SHUT_TXT_ALL
+    context_ptr->tx_search_level = TX_SEARCH_DCT_DCT_ONLY;
+#endif
+ 
 #else
     // Tx_search Level                                Settings
     // 0                                              OFF
