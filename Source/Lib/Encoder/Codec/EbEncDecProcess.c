@@ -3999,7 +3999,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             if(pcs_ptr->parent_pcs_ptr->slice_type == I_SLICE)
                 context_ptr->tx_search_level = TX_SEARCH_ALL_TX_TYPES;
             else
+#if SHUT_TXT_B_SLICE
+                context_ptr->tx_search_level = TX_SEARCH_DCT_DCT_ONLY;
+#else
                 context_ptr->tx_search_level = TX_SEARCH_DCT_TX_TYPES;
+#endif
 #else
     // Tx_search Level                                Settings
     // 0                                              OFF

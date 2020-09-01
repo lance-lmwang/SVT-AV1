@@ -699,15 +699,14 @@ extern "C" {
 #define SHUT_RDOQ         0
 #define SHUT_PME          0
 #define SHUT_SUBPEL_ME    0
-#define SHUT_SUBPEL_PME   1
-#define SHUT_TXT    1
-#define SHUT_TXS    1
+#define SHUT_SUBPEL_PME   0
 
-#define SHUT_WARP   1
-
-
-#define NIC_1_MDS1  1
-#define BYPASS_MDS1 1
+#define SHUT_TXT_B_SLICE  1
+#define SHUT_TXT_ALL      1
+#define SHUT_TXS          1
+#define SHUT_WARP         1
+#define NIC_1_MDS1        1
+#define BYPASS_MDS1       1
 
 #endif
 // END  SVT_02_TEMP /////////////////////////////////////////////////////////
