@@ -740,7 +740,7 @@ typedef struct EbSvtAv1EncConfiguration {
     uint8_t superres_denom;
     uint8_t superres_kf_denom;
     uint8_t superres_qthres;
-#if !DECOUPLE_MDS2_MDS3_PRUNING
+#if 0//!MDS2_V0
     uint32_t sq_weight;
 
     uint64_t md_stage_1_cand_prune_th;
