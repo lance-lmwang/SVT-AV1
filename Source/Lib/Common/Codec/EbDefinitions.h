@@ -692,7 +692,7 @@ extern "C" {
 #define AUG27_ADOPTS                     1 // M4-M7 adoptions
 
 #define MDS2_V0                          1 // TXT @ MDS2 if CLASS_0_3, and TXS/RDOQ @ MDS2 if CLASS_1_2 + CLASS_TH=20 
-
+#define TUNE_MDS2_PRUNING                1
 #endif
 // END  SVT_02_TEMP /////////////////////////////////////////////////////////
 

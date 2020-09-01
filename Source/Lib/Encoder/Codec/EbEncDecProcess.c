@@ -6453,10 +6453,17 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     // md_stage_2_class_prune_th
     if (pd_pass == PD_PASS_0)
         context_ptr->md_stage_3_class_prune_th = (uint64_t)~0;
+#if TUNE_MDS2_PRUNING
+    else if (pd_pass == PD_PASS_1)
+        context_ptr->md_stage_3_class_prune_th = 25;
+    else
+        context_ptr->md_stage_3_class_prune_th = 25;
+#else
     else if (pd_pass == PD_PASS_1)
         context_ptr->md_stage_3_class_prune_th = 20;
     else
         context_ptr->md_stage_3_class_prune_th = 20;
+#endif
 #else
             context_ptr->md_stage_1_class_prune_th =
             sequence_control_set_ptr->static_config.md_stage_1_class_prune_th;
