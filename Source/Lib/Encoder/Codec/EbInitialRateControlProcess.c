@@ -1800,12 +1800,14 @@ EbErrorType tpl_mc_flow(
         encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] = NULL;
     }
     EB_MALLOC_ARRAY(mc_flow_rec_picture_buffer_noref, pcs_ptr->enhanced_picture_ptr->luma_size);
+    memset(mc_flow_rec_picture_buffer_noref,0x00,pcs_ptr->enhanced_picture_ptr->luma_size);
     for(int32_t frame_idx = 0; frame_idx < frames_in_sw; frame_idx++) {
         if (pcs_array[frame_idx]->is_used_as_reference_flag) {
             EB_MALLOC_ARRAY(encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx], pcs_ptr->enhanced_picture_ptr->luma_size);
         } else {
             encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] = mc_flow_rec_picture_buffer_noref;
         }
+        memset(encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx],0x00,pcs_ptr->enhanced_picture_ptr->luma_size);
     }
     if (!encode_context_ptr->mc_flow_rec_picture_buffer_saved)
         EB_MALLOC_ARRAY(encode_context_ptr->mc_flow_rec_picture_buffer_saved, pcs_ptr->enhanced_picture_ptr->luma_size);
