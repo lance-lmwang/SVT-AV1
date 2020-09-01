@@ -704,7 +704,7 @@ extern "C" {
 #define SHUT_TXT_B_SLICE  0
 #define SHUT_TXT_ALL      0
 
-#define NIC_1_MDS1        1
+#define NIC_1_MDS1        0
 #define BYPASS_MDS1       1
 #define SHUT_TXS          1
 #define SHUT_WARP         1

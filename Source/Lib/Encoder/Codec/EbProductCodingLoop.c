@@ -2184,7 +2184,11 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
     // Step 1: derive bypass_stage1 flags
     if (context_ptr->md_staging_mode == MD_STAGING_MODE_1 ||
         context_ptr->md_staging_mode == MD_STAGING_MODE_2)
+#if BYPASS_MDS1
+        memset(context_ptr->bypass_md_stage_1, EB_TRUE, CAND_CLASS_TOTAL);
+#else
         memset(context_ptr->bypass_md_stage_1, EB_FALSE, CAND_CLASS_TOTAL);
+#endif
     else
         memset(context_ptr->bypass_md_stage_1, EB_TRUE, CAND_CLASS_TOTAL);
 
@@ -4006,6 +4010,14 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
 
     if (use_nic_1_last_stage) {
         for (uint8_t cidx = 0; cidx < CAND_CLASS_TOTAL; ++cidx) {
+#if BYPASS_MDS1
+            if (context_ptr->bypass_md_stage_1[cidx] && context_ptr->bypass_md_stage_2[cidx]) {
+                context_ptr->md_stage_1_count[cidx] = 1;
+                context_ptr->md_stage_1_count[cidx] = 1;
+                context_ptr->md_stage_1_count[cidx] = 1;
+                context_ptr->md_stage_1_count[cidx] = 1;
+            } else
+#endif
             if (context_ptr->bypass_md_stage_2[cidx]) {
                 context_ptr->md_stage_2_count[cidx] = 1;
                 context_ptr->md_stage_2_count[cidx] = 1;
