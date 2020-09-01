@@ -1437,18 +1437,19 @@ void tpl_mc_flow_dispenser(
                     uint32_t cu_origin_x = sb_params->origin_x + blk_stats_ptr->origin_x;
                     uint32_t cu_origin_y = sb_params->origin_y + blk_stats_ptr->origin_y;
                     if(eob) {
-                       // if (pcs_ptr->picture_number == 77) {
-                         //   if (cu_origin_x == 160 && cu_origin_y == 144) {
-                        printf("\n^ x %d y %d s %d m %d ^", cu_origin_x, cu_origin_y, bsize,best_mode);
-
-
+                        if (pcs_ptr->picture_number == 108) {//96
+                            if (cu_origin_x == 304 && cu_origin_y == 128) {
+                                printf("\n^ x %d y %d s %d m %d  row %d col %d^", cu_origin_x, cu_origin_y, bsize, best_mode , final_best_mv.row,final_best_mv.col);
                                 for (int32_t r = 0; r < 16; ++r) {
-                                    for (int32_t c = 0; c < 16; ++c)
-                                        if (dst_buffer[r * dst_buffer_stride + c] >254/* 0x00*/)
-                                            printf("\n-%d,%d", c, r);
+                                    for (int32_t c = 0; c < 16; ++c) {
+                                        printf("\n-%d,%d", c, r);
+                                        if (dst_buffer[r * dst_buffer_stride + c]> 254/* 0xFE*/) {
+                                            printf("\n");
+                                        }
+                                    }
                                 }
-                          //  }
-                      //  }
+                            }
+                        }
                         av1_inv_transform_recon8bit((int32_t*)dqcoeff, dst_buffer, dst_buffer_stride, dst_buffer, dst_buffer_stride, TX_16X16, DCT_DCT, PLANE_TYPE_Y, eob, 0);
                     }
 
@@ -1813,14 +1814,14 @@ EbErrorType tpl_mc_flow(
         encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] = NULL;
     }
     EB_MALLOC_ARRAY(mc_flow_rec_picture_buffer_noref, pcs_ptr->enhanced_picture_ptr->luma_size);
-   // memset(mc_flow_rec_picture_buffer_noref,0x00,pcs_ptr->enhanced_picture_ptr->luma_size);
+   // memset(mc_flow_rec_picture_buffer_noref,0xFE,pcs_ptr->enhanced_picture_ptr->luma_size);
     for(int32_t frame_idx = 0; frame_idx < frames_in_sw; frame_idx++) {
         if (pcs_array[frame_idx]->is_used_as_reference_flag) {
             EB_MALLOC_ARRAY(encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx], pcs_ptr->enhanced_picture_ptr->luma_size);
         } else {
             encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] = mc_flow_rec_picture_buffer_noref;
         }
-     //   memset(encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx],0x00,pcs_ptr->enhanced_picture_ptr->luma_size);
+    //    memset(encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx],0xFE,pcs_ptr->enhanced_picture_ptr->luma_size);
     }
     
     if (!encode_context_ptr->mc_flow_rec_picture_buffer_saved)
