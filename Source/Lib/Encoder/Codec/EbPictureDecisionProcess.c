@@ -2329,6 +2329,9 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
 #endif
 #endif
+#if SHUT_SG
+    cm->sg_filter_mode = 0;
+#endif
     // WN Level                                     Settings
     // 0                                            OFF
     // 1                                            3-Tap luma/ 3-Tap chroma
