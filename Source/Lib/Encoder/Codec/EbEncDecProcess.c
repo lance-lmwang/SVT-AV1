@@ -7945,6 +7945,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->md_pme_level = 2;
         else
             context_ptr->md_pme_level = 3;
+#if SHUT_PME
+    context_ptr->md_pme_level = 0;
+#endif
     md_pme_search_controls(context_ptr, context_ptr->md_pme_level);
 #endif
 
