@@ -2386,6 +2386,12 @@ EbErrorType signal_derivation_multi_processes_oq(
 #if MAR12_M8_ADOPTIONS
         else
             cm->wn_filter_mode = 2;
+
+
+#if SHUT_WN
+    cm->wn_filter_mode = 0;
+#endif
+
 #else
         else if (pcs_ptr->enc_mode <= ENC_M7)
             cm->wn_filter_mode = 2;
