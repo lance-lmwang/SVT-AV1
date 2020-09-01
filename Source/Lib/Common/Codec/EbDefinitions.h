@@ -693,7 +693,7 @@ extern "C" {
 
 
 // Build M8
-#define PRED_ONLY_B_SLICE 1
+#define PRED_ONLY_B_SLICE 0
 #define PRED_ONLY_ALL     1
 #define SHUT_RDOQ   1
 #define SHUT_PME    1
