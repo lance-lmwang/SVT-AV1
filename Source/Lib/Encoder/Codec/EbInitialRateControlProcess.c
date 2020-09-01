@@ -1479,9 +1479,38 @@ void tpl_mc_flow_dispenser(
         }
     }
 
-#if FIX_TPL_NON16ALIGN
-    uint32_t offset_x = input_picture_ptr->width & 0xff;
-    uint32_t offset_y = input_picture_ptr->height & 0xff;
+
+#define MIN_TPL_BLOCK_SIZE 16
+    uint32_t          pad_right;
+    uint32_t          pad_bottom;
+    // Update picture width, and picture height
+    if (input_picture_ptr->width % MIN_TPL_BLOCK_SIZE) {
+        pad_right = MIN_TPL_BLOCK_SIZE - (scs_ptr->max_input_luma_width % MIN_TPL_BLOCK_SIZE);
+        //scs_ptr->max_input_luma_width = input_picture_ptr->width + pad_right;
+    } else {
+        pad_right = 0;
+    }
+
+    if (input_picture_ptr->height % MIN_TPL_BLOCK_SIZE) {
+        pad_bottom = MIN_TPL_BLOCK_SIZE - (input_picture_ptr->height% MIN_TPL_BLOCK_SIZE);
+        //scs_ptr->max_input_luma_height = input_picture_ptr->height + pad_bottom;
+    } else {
+        pad_bottom = 0;
+    }
+
+        // Input Picture Padding
+    pad_input_picture(
+        &encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx][input_picture_ptr->origin_x + input_picture_ptr->origin_y * input_picture_ptr->stride_y],
+        input_picture_ptr->stride_y,
+        (input_picture_ptr->width - pad_right),
+        (input_picture_ptr->height - pad_bottom),
+        pad_right,
+        pad_bottom);
+
+    //temp_src_pic0 = src_pic + padding_width + padding_height * src_stride;
+#if !FIX_TPL_NON16ALIGN
+    uint32_t offset_x = input_picture_ptr->width & 0xF;
+    uint32_t offset_y = input_picture_ptr->height & 0xF;
 #else
     uint32_t offset_x = 0;
     uint32_t offset_y = 0;
