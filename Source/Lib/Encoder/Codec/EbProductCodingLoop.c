@@ -4020,6 +4020,15 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
             }
         }
     }
+
+#if NIC_1_MDS1
+    for (uint8_t cidx = 0; cidx < CAND_CLASS_TOTAL; ++cidx) {
+            context_ptr->md_stage_1_count[cidx] = 1;
+            context_ptr->md_stage_1_count[cidx] = 1;
+            context_ptr->md_stage_1_count[cidx] = 1;
+            context_ptr->md_stage_1_count[cidx] = 1;
+        }
+#endif
 #endif
 
     // Step 3: update count for md_stage_1 and d_stage_2 if bypassed (no NIC
