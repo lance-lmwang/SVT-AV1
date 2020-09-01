@@ -8019,6 +8019,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->md_subpel_pme_level = 1;
         else
             context_ptr->md_subpel_pme_level = 2;
+#if SHUT_SUBPEL_PME
+    context_ptr->md_subpel_pme_level = 0;
+#endif
 
     md_subpel_pme_controls(context_ptr, context_ptr->md_subpel_pme_level);
 #else
