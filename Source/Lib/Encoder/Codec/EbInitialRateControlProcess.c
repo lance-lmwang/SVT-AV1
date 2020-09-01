@@ -1438,16 +1438,16 @@ void tpl_mc_flow_dispenser(
                     uint32_t cu_origin_y = sb_params->origin_y + blk_stats_ptr->origin_y;
                     //if (pcs_ptr->picture_number == 108) {//96
                         // if (cu_origin_x == 304 && cu_origin_y == 128) {
-                            //printf("\n^ x %d y %d s %d m %d  row %d col %d^", cu_origin_x, cu_origin_y, bsize, best_mode , final_best_mv.row,final_best_mv.col);
-                            //for (int32_t r = 0; r < 16; ++r) {
-                            //    for (int32_t c = 0; c < 16; ++c) {
-                            //        if (dst_buffer[r * dst_buffer_stride + c]> 254/* 0xFE*/) {
-                            //            printf("\n-%d,%d", c, r);
-                            //        }
-                            //    }
+                            printf("\n^ x %d y %d s %d m %d  row %d col %d^", cu_origin_x, cu_origin_y, bsize, best_mode , final_best_mv.row,final_best_mv.col);
+                            for (int32_t r = 0; r < 16; ++r) {
+                                for (int32_t c = 0; c < 16; ++c) {
+                                    if (dst_buffer[r * dst_buffer_stride + c]> 254/* 0xFE*/) {
+                                        printf("\n-%d,%d", c, r);
+                                    }
+                                }
                             //   }
                         // }
-                            //}
+                            }
                     if(eob) {
                         av1_inv_transform_recon8bit((int32_t*)dqcoeff, dst_buffer, dst_buffer_stride, dst_buffer, dst_buffer_stride, TX_16X16, DCT_DCT, PLANE_TYPE_Y, eob, 0);
                     }
@@ -1842,7 +1842,7 @@ EbErrorType tpl_mc_flow(
                 memset(pcs_array[frame_idx]->tpl_stats[blky * (picture_width_in_mb << shift)], 0, (picture_width_in_mb << shift) * sizeof(TplStats));
             }
             //if (pcs_array[frame_idx]->picture_number == 77)
-            printf ("\n 1st*P %lld,%d*",  pcs_array[frame_idx]->picture_number,pcs_array[frame_idx]->slice_type);
+            printf ("\n 1st*P %lld*",  pcs_array[frame_idx]->picture_number);
             tpl_mc_flow_dispenser(encode_context_ptr, scs_ptr, pcs_array[frame_idx], frame_idx);
 
         }
@@ -1897,7 +1897,7 @@ EbErrorType tpl_mc_flow(
             for (uint32_t blky = 0; blky < (picture_height_in_mb << shift); blky++) {
                 memset(pcs_array[frame_idx]->tpl_stats[blky * (picture_width_in_mb << shift)], 0, (picture_width_in_mb << shift) * sizeof(TplStats));
             }
-            printf ("\n 2nd*P %lld,%d* ",  pcs_array[frame_idx]->picture_number,pcs_array[frame_idx]->slice_type);
+            printf ("\n 2nd*P %lld* ",  pcs_array[frame_idx]->picture_number);
             tpl_mc_flow_dispenser(encode_context_ptr, scs_ptr, pcs_array[frame_idx], frame_idx);
             if (frame_idx == 1 && pcs_array[frame_idx]->temporal_layer_index == 0) {
                 // save frame_idx1 picture buffer for next LA
@@ -2383,7 +2383,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
                             //pcs_ptr->frames_in_sw > 16/*(2 << scs_ptr->static_config.hierarchical_levels)*/ &&
 #endif
                             pcs_ptr->temporal_layer_index == 0) {
-                            printf("\ntplBase:%d,%d",pcs_ptr->picture_number,pcs_ptr->slice_type);
+                            printf("\ntplBase:%d",pcs_ptr->picture_number);
                             tpl_mc_flow(encode_context_ptr, scs_ptr, pcs_ptr);
                         }
 #endif
