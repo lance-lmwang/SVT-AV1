@@ -2658,6 +2658,9 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
     else
         pcs_ptr->tx_size_search_mode = 0;
+#if SHUT_TXS
+    pcs_ptr->tx_size_search_mode = 0;
+#endif
 #if SHUT_FEATURE_INTERACTIONS
     pcs_ptr->tx_size_search_mode = 1;
 #endif
