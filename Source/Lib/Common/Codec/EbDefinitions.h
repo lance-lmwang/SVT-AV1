@@ -720,7 +720,9 @@ extern "C" {
 
 #define SHUT_TF           0
 
-#define UNIPRED_BASE      1
+#define UNIPRED_BASE      0
+
+#define PUSH_TH           1
 #endif
 // END  SVT_02_TEMP /////////////////////////////////////////////////////////
 

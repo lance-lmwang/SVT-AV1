@@ -1787,7 +1787,11 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *mdctxt, uint
 
         depth_refinement_ctrls->enabled = 1;
         depth_refinement_ctrls->parent_to_current_th = -10;
+#if PUSH_TH
+        depth_refinement_ctrls->sub_to_current_th = -10;
+#else
         depth_refinement_ctrls->sub_to_current_th = 5;
+#endif
         break;
     default:
         assert(0);
