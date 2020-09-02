@@ -718,7 +718,9 @@ extern "C" {
 
 #define FIX_HME_REF_COUNT 1
 
-#define SHUT_TF           1
+#define SHUT_TF           0
+
+#define UNIPRED_BASE      1
 #endif
 // END  SVT_02_TEMP /////////////////////////////////////////////////////////
 
