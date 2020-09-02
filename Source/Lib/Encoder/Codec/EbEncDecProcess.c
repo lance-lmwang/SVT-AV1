@@ -11079,14 +11079,17 @@ uint8_t is_child_to_current_deviation_small(SequenceControlSet *scs_ptr,
     }
 
 #if COST_RANGE_BASED_TH
+    int64_t sub_to_current_th = context_ptr->depth_refinement_ctrls.sub_to_current_th;
+#if 0
     uint32_t full_lambda = context_ptr->hbd_mode_decision ?
         context_ptr->full_lambda_md[EB_10_BIT_MD] :
         context_ptr->full_lambda_md[EB_8_BIT_MD];
-
-    int64_t sub_to_current_th = context_ptr->depth_refinement_ctrls.sub_to_current_th;
     uint64_t cost_th = RDCOST(full_lambda, 16, 500 * blk_geom->bwidth * blk_geom->bheight);
     
     if (context_ptr->md_local_blk_unit[blk_geom->sqi_mds].default_cost > cost_th)
+        sub_to_current_th -= 15;
+#endif
+    if(blk_geom->sq_size > 8)
         sub_to_current_th -= 15;
 
     if (child_to_current_deviation <= sub_to_current_th)
