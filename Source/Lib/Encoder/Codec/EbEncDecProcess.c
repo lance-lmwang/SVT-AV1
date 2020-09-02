@@ -11089,7 +11089,7 @@ uint8_t is_child_to_current_deviation_small(SequenceControlSet *scs_ptr,
     if (context_ptr->md_local_blk_unit[blk_geom->sqi_mds].default_cost > cost_th)
         sub_to_current_th -= 15;
 #endif
-    if(blk_geom->sq_size > 8)
+    if(blk_geom->sq_size > 16)
         sub_to_current_th -= 15;
 
     if (child_to_current_deviation <= sub_to_current_th)
