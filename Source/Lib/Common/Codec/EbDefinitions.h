@@ -722,7 +722,9 @@ extern "C" {
 
 #define UNIPRED_BASE      0
 
-#define PUSH_TH           1
+#define PUSH_TH           0
+#define COST_RANGE_BASED_TH 1
+
 #endif
 // END  SVT_02_TEMP /////////////////////////////////////////////////////////
 
